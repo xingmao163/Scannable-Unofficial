@@ -1,0 +1,143 @@
+# Scannable-Unofficial
+
+<div align="center">
+
+**[English](#english)** | **[中文](#中文)**
+
+*A handheld scanner mod with swappable modules for Minecraft 1.21.1 NeoForge*
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)](https://www.minecraft.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.228-orange)](https://neoforged.net/)
+
+</div>
+
+---
+
+<a name="english"></a>
+## English
+
+### 📖 Overview
+
+**Scannable-Unofficial** is an unofficial NeoForge 1.21.1 port of the [Scannable](https://www.curseforge.com/minecraft/mc-mods/scannable) mod developed by [Florian "Sangar" Nücke](https://github.com/MightyPirates). This mod adds a scanner that can detect various objects in the Minecraft world through different modules.
+
+### ✨ Features
+
+- **🔍 Modular Scanner System**: Install different modules to scan for specific targets
+- **🔋 Energy-Based Operation**: Configurable whether scanning consumes energy
+- **🎯 Multiple Module Types**:
+  - **Range Module**: Increases scan radius by 50%
+  - **Block Module**: Detects specific blocks (configurable by right-clicking)
+  - **Entity Module**: Detects specific entities (configurable by right-clicking)
+  - **Fluid Module**: Detects fluid blocks (water, lava)
+  - **Friendly Entity Module**: Detects animals, villagers, and other friendly entities
+  - **Hostile Entity Module**: Detects monsters and hostile entities
+  - **Item Module**: Scans specific items in containers (configurable by right-clicking)
+- **🎨 Visual Feedback**: Progress indicator, overlay rendering, and sound effects
+- **⚙️ Extensive Configuration**: Customize energy costs, scan ranges, and ignored blocks
+- **🔌 JEI Integration**: Supports using JEI for module configuration
+- **🌍 Language Support**: Supports multiple language translations
+
+### 🚀 Getting Started
+
+#### Installation
+
+1. Install [NeoForge 21.1.228](https://neoforged.net/) for Minecraft 1.21.1
+2. Download the latest `Scannable-Unofficial-x.x.x.jar` from the [Releases](../../releases) page
+3. Place the JAR file in your Minecraft `mods` folder
+4. Launch the game
+
+#### Basic Usage
+
+1. **Craft a Scanner**: Find it in the creative tab or craft it
+2. **Install Modules**: Shift+right-click the scanner to open its GUI and install modules
+3. **Configure Modules**: Right-click on blocks/entities with configurable modules to set targets
+4. **Scan**: Hold right-click to scan your surroundings
+5. **View Results**: Detected objects appear as markers in your world
+
+### 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+### 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Original Mod**: Scannable by Florian "Sangar" Nücke (MIT License)
+**Port**: Scannable-Unofficial by starmao (MIT License)
+**Assets**: CC0 1.0 Universal (Public Domain)
+
+### 🙏 Acknowledgments
+
+- Original Scannable mod by [Florian "Sangar" Nücke](https://github.com/MightyPirates)
+- NeoForge team for the excellent modding platform
+- All contributors and testers
+
+---
+
+<a name="中文"></a>
+## 中文
+
+### 📖 概述
+
+**Scannable-Unofficial** 是 [Florian "Sangar" Nücke](https://github.com/MightyPirates)开发的 Scannable(https://www.curseforge.com/minecraft/mc-mods/scannable) 模组的 NeoForge1.21.1 非官方版本。该模组添加了一个扫描器，可通过不同的模块扫描 Minecraft 世界中的各种物体。
+
+### ✨ 特性
+
+- **🔍 模块化扫描系统**：安装不同模块以扫描特定目标
+- **🔋 基于能量的操作**：可配置扫描是否消耗能量
+- **🎯 多种模块类型**：
+  - **范围模块**：增加扫描范围 50%
+  - **方块模块**：检测特定方块（右键配置）
+  - **实体模块**：检测特定实体（右键配置）
+  - **流体模块**：检测流体方块（水、熔岩）
+  - **友好生物模块**：检测动物、村民等友好生物
+  - **敌对生物模块**：检测怪物和敌对实体
+  - **物品模块**：扫描容器中的特定物品（右键配置）
+- **🎨 视觉反馈**：进度指示器、叠加渲染和音效
+- **⚙️ 广泛配置**：自定义能量消耗、扫描范围和忽略方块
+- **🔌 JEI 集成**：支持使用JEI进行模块配置
+- **🌍 语言支持**：支持多种语言翻译
+
+### 🚀 快速开始
+
+#### 安装
+
+1. 为 Minecraft 1.21.1 安装 [NeoForge 21.1.228](https://neoforged.net/)
+2. 从 [发布页面](../../releases) 下载最新的 `Scannable-Unofficial-x.x.x.jar`
+3. 将 JAR 文件放入 Minecraft 的 `mods` 文件夹
+4. 启动游戏
+
+#### 基本使用
+
+1. **制作扫描器**：在创造标签页中找到它或制作它
+2. **安装模块**：Shift+右键单击扫描器打开其 GUI 并安装模块
+3. **配置模块**：使用可配置模块右键单击方块/实体以设置目标
+4. **扫描**：按住右键扫描周围环境
+5. **查看结果**：检测到的物体作为标记出现在您的世界中
+
+### 🤝 贡献
+
+欢迎贡献！请随时提交问题和拉取请求。
+
+### 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
+
+**原始模组**：Florian "Sangar" Nücke 的 Scannable（MIT 许可证）
+**移植**：starmao 的 Scannable-Unofficial（MIT 许可证）
+**资源**：CC0 1.0 通用（公共领域）
+
+### 🙏 致谢
+
+- [Florian "Sangar" Nücke](https://github.com/MightyPirates) 的原始 Scannable 模组
+- NeoForge 团队提供的优秀模组制作平台
+- 所有贡献者和测试者
+
+---
+
+<div align="center">
+
+**[⬆ Back to Top](#scannable-unofficial)**
+
+</div>

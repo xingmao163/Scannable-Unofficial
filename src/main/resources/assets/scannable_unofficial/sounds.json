@@ -1,0 +1,16 @@
+{
+    "scanner_charge": {
+        "category": "player",
+        "subtitle": "Scanner charging",
+        "sounds": [
+            "scannable_unofficial:scanner_charge"
+        ]
+    },
+    "scanner_activate": {
+        "category": "player",
+        "subtitle": "Scanner activated",
+        "sounds": [
+            "scannable_unofficial:scanner_activate"
+        ]
+    }
+}

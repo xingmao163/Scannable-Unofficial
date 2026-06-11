@@ -1,0 +1,45 @@
+{
+  "itemGroup.scannable_unofficial": "扫描器",
+
+  "item.scannable_unofficial.scanner": "扫描器",
+  "item.scannable_unofficial.range_module": "模块：范围",
+  "item.scannable_unofficial.fluid_module": "模块：流体",
+  "item.scannable_unofficial.friendly_entity_module": "模块：友好生物",
+  "item.scannable_unofficial.hostile_entity_module": "模块：敌对生物",
+  "item.scannable_unofficial.entity_module": "模块：实体",
+  "item.scannable_unofficial.block_module": "模块：方块",
+  "item.scannable_unofficial.item_module": "模块：物品",
+  "item.scannable_unofficial.blank_module": "空白模块",
+
+  "tooltip.scannable_unofficial.scanner.energy": "能量：%s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "能量消耗：%s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "总计：%s FE/次扫描",
+  "tooltip.scannable_unofficial.scanner.active_modules": "已激活",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "未激活",
+
+  "item.scannable_unofficial.range_module.desc": "增加扫描范围50%%",
+  "item.scannable_unofficial.fluid_module.desc": "检测流体方块（水和熔岩）",
+  "item.scannable_unofficial.friendly_entity_module.desc": "检测友好生物（动物、村民等）",
+  "item.scannable_unofficial.hostile_entity_module.desc": "检测敌对生物（怪物）",
+  "item.scannable_unofficial.entity_module.desc": "右击实体配置要检测的实体类型",
+  "item.scannable_unofficial.block_module.desc": "右击方块配置要检测的方块类型",
+  "item.scannable_unofficial.blank_module.desc": "一个无功能的占位模块",
+  "item.scannable_unofficial.item_module.desc": "扫描容器中是否有指定物品",
+
+  "tooltip.scannable_unofficial.scanner.block_module.list": "已选择的方块：",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "已选择的实体：",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "已选择的物品：",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§c物品模块未配置目标物品！请手持模块右击打开配置界面",
+  "message.scannable_unofficial.scanner.no_modules": "未安装扫描模块！",
+  "message.scannable_unofficial.scanner.no_energy": "能量不足！",
+  "message.scannable_unofficial.scanner.no_free_slots": "没有空位！",
+
+  "gui.scannable_unofficial.scanner.active_modules": "模块",
+  "gui.scannable_unofficial.scanner.inactive_modules": "未激活",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s（%sm）",
+  "gui.scannable_unofficial.scanner.block_module.list": "方块",
+  "gui.scannable_unofficial.scanner.entity_module.list": "实体",
+  "gui.scannable_unofficial.scanner.item_module.list": "物品"
+}

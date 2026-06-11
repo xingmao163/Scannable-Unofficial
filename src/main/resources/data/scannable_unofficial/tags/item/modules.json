@@ -1,0 +1,11 @@
+{
+  "values": [
+    "scannable_unofficial:blank_module",
+    "scannable_unofficial:range_module",
+    "scannable_unofficial:entity_module",
+    "scannable_unofficial:friendly_entity_module",
+    "scannable_unofficial:hostile_entity_module",
+    "scannable_unofficial:block_module",
+    "scannable_unofficial:fluid_module"
+  ]
+}

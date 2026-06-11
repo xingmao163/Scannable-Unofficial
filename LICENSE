@@ -1,0 +1,36 @@
+This project is a derivative work of Scannable by Florian "Sangar" Nücke,
+originally for Minecraft 1.18.2-1.20.4, ported to Minecraft 1.21.1 NeoForge by starmao.
+
+Modifications and new code for the 1.21.1 port are Copyright (c) 2025 starmao,
+and are also licensed under the MIT License (see below).
+
+The original code is Copyright (c) 2017-2023 Florian "Sangar" Nücke, and is
+licensed under the MIT License.
+
+-------------------------------------------------------------------------------
+MIT License (full text follows)
+-------------------------------------------------------------------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+All assets (textures, models, sounds, localization strings) in this mod are in the public domain, under CC0 1.0 Universal, unless noted otherwise.
+
+Original assets by Florian "Sangar" Nücke – CC0.
+Modifications and new assets for the 1.21.1 port by starmao – also CC0.
