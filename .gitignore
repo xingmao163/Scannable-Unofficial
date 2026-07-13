@@ -10,6 +10,7 @@ build/
 *.iml
 *.ipr
 .vscode/
+.claude/
 
 ### Minecraft runs ###
 run/
@@ -17,7 +18,12 @@ run/
 repo/
 !**/src/**/repo/
 **/src/generated/**/.cache/
+neoforge/run/
 
 ### OS ###
 .DS_Store
 Thumbs.db
+.gitignore
+repomix-output.xml
+.ccto/
+CLAUDE.md

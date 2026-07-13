@@ -6,3 +6,6 @@ pluginManagement {
 }
 
 rootProject.name = "Scannable-Unofficial"
+
+include 'common'
+include 'neoforge'
