@@ -86,14 +86,38 @@ neoForge {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all',
-                    '--output', file('src/generated/resources/').getAbsolutePath(),
-                    '--existing', file('src/main/resources/').getAbsolutePath()
-            if (versionOverrideResources.exists()) {
-                programArguments.add '--existing'
-                programArguments.add versionOverrideResources.absolutePath
+        if (targetVersion == '1.21.1' || targetVersion == '1.21.2' || targetVersion == '1.21.3') {
+            data {
+                data()
+                programArguments.addAll '--mod', project.mod_id, '--all',
+                        '--output', file('src/generated/resources/').getAbsolutePath(),
+                        '--existing', file('src/main/resources/').getAbsolutePath()
+                if (versionOverrideResources.exists()) {
+                    programArguments.add '--existing'
+                    programArguments.add versionOverrideResources.absolutePath
+                }
+            }
+        }
+        if (targetVersion == '1.21.4') {
+            serverData {
+                serverData()
+                programArguments.addAll '--mod', project.mod_id, '--all',
+                        '--output', file('src/generated/resources/').getAbsolutePath(),
+                        '--existing', file('src/main/resources/').getAbsolutePath()
+                if (versionOverrideResources.exists()) {
+                    programArguments.add '--existing'
+                    programArguments.add versionOverrideResources.absolutePath
+                }
+            }
+            clientData {
+                clientData()
+                programArguments.addAll '--mod', project.mod_id, '--all',
+                        '--output', file('src/generated/resources/').getAbsolutePath(),
+                        '--existing', file('src/main/resources/').getAbsolutePath()
+                if (versionOverrideResources.exists()) {
+                    programArguments.add '--existing'
+                    programArguments.add versionOverrideResources.absolutePath
+                }
             }
         }
         configureEach {
@@ -102,6 +126,12 @@ neoForge {
         }
     }
 
+    if (targetVersion == '1.21.4') {
+        tasks.register('runData') {
+            dependsOn 'runClientData', 'runServerData'
+            description = 'Run both client and server data generators'
+        }
+    }
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)

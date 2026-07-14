@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "scanner_module",
+  "ingredients": [
+    "scannable_unofficial:blank_module",
+    "#c:stones"
+  ],
+  "result": {
+    "count": 1,
+    "id": "scannable_unofficial:block_module"
+  }
+}
