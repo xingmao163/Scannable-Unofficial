@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "scannable_unofficial:item/friendly_entity_module"
+  }
+}

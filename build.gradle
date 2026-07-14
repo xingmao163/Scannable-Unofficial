@@ -2,6 +2,30 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.141' apply false
 }
 
+apply from: 'gradle/versions.gradle'
+
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
+}
+
+supportedVersions.each { v ->
+    def safeName = v.name.replace('.', '_').replace('-', '_')
+    def taskName = "buildMc${safeName}"
+
+    tasks.register(taskName, Exec) {
+        group = 'build'
+        description = "Build for Minecraft ${v.name}"
+        workingDir = rootProject.rootDir
+        if (System.properties['os.name'].toLowerCase(Locale.ROOT).contains('windows')) {
+            commandLine 'cmd', '/c', 'gradlew.bat', ':neoforge:build', "-PtargetVersion=${v.name}"
+        } else {
+            commandLine './gradlew', ':neoforge:build', "-PtargetVersion=${v.name}"
+        }
+    }
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Build for all supported Minecraft versions'
+    dependsOn tasks.matching { it.name.startsWith('buildMc') && it.name != 'buildAll' }
 }

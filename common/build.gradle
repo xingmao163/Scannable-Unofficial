@@ -5,9 +5,31 @@ plugins {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+apply from: '../gradle/versions.gradle'
+
+def targetVersion = findProperty('targetVersion') ?: '1.21.1'
+def vcfg = supportedVersions.find { it.name == targetVersion }
+if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
+
+ext.neo_version = vcfg.neo_version
+
+def overrideSrc = file("../versions/${targetVersion}/common/src/main/java")
+if (overrideSrc.exists()) {
+    def mergedSrc = layout.buildDirectory.dir("mergedSrc/${targetVersion}/java")
+    tasks.register('mergeCommonSources', Sync) {
+        from 'src/main/java'
+        from overrideSrc
+        into mergedSrc
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    sourceSets.main.java.srcDirs = [mergedSrc]
+    tasks.named('compileJava').configure { dependsOn 'mergeCommonSources' }
+} else {
+    sourceSets.main.java.srcDirs = [file('src/main/java')]
+}
+
 neoForge {
     version = project.neo_version
-
     runs {
     }
 }

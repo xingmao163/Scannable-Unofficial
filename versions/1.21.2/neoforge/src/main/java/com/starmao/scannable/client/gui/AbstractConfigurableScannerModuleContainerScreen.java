@@ -76,7 +76,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
             int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
             int y = SLOTS_ORIGIN_Y;
             if (isHovering(x, y, 16, 16, mouseX, mouseY)) {
-                renderSlotHighlight(graphics, x, y, 400);
+                graphics.fill(x, y, x + 16, y + 16, 0x80FFFFFF);
             }
             if (slot < items.size()) {
                 renderConfiguredItem(graphics, items.get(slot), x, y);
@@ -88,7 +88,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
-        graphics.blit(BACKGROUND, x, y, 0, 0, imageWidth, imageHeight);
+        graphics.blit(net.minecraft.client.renderer.RenderType.GUI_TEXTURED, BACKGROUND, x, y, 0, 0, imageWidth, imageHeight, 256, 256);
     }
 
     @Override
@@ -109,7 +109,6 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @SuppressWarnings("null")
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         if (slot != null) {

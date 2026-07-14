@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "blank_module",
+  "key": {
+    "c": "minecraft:clay_ball",
+    "g": "#c:dyes/green",
+    "n": "#c:nuggets/gold",
+    "r": "#c:dusts/glowstone"
+  },
+  "pattern": [
+    "ggg",
+    "crc",
+    "cnc"
+  ],
+  "result": {
+    "count": 1,
+    "id": "scannable_unofficial:blank_module"
+  }
+}

@@ -1,0 +1,297 @@
+package com.starmao.scannable.common.item;
+
+import com.starmao.scannable.client.ScanManager;
+import com.starmao.scannable.client.audio.SoundManager;
+import com.starmao.scannable.common.config.Constants;
+import com.starmao.scannable.common.config.Strings;
+import com.starmao.scannable.common.container.ScannerContainerMenu;
+import com.starmao.scannable.common.inventory.ScannerContainer;
+import com.starmao.scannable.common.energy.ItemEnergyStorage;
+import com.starmao.scannable.common.network.message.S2CItemScanResult;
+import com.starmao.scannable.common.scanning.ItemScannerService;
+import com.starmao.scannable.Scannable;
+import com.starmao.scannable.common.network.data.ItemScanResultData;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public final class ScannerItem extends ModItem {
+    public static boolean isScanner(ItemStack stack) {
+        return stack.getItem() instanceof ScannerItem;
+    }
+
+    public ScannerItem(Item.Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+
+        ItemEnergyStorage.of(stack).ifPresent(energy ->
+                tooltip.add(Strings.energyStorage(energy.getEnergyStored(), energy.getMaxEnergyStored())));
+
+        ScannerContainer container = ScannerContainer.of(stack);
+
+        Container activeModules = container.getActiveModules();
+        boolean hasActive = false;
+        for (int i = 0; i < activeModules.getContainerSize(); i++) {
+            ItemStack module = activeModules.getItem(i);
+            if (module.isEmpty()) continue;
+            if (!hasActive) {
+                tooltip.add(Component.empty());
+                tooltip.add(Component.translatable("tooltip.scannable_unofficial.scanner.active_modules")
+                        .withStyle(ChatFormatting.GRAY, ChatFormatting.UNDERLINE));
+                hasActive = true;
+            }
+            int cost = ModuleHelper.getEnergyCost(module);
+            Component name = module.getHoverName().copy().withStyle(ChatFormatting.WHITE);
+            if (cost > 0) {
+                tooltip.add(Component.literal(" ")
+                        .append(name)
+                        .append(Component.literal(" (").withStyle(ChatFormatting.DARK_GRAY))
+                        .append(Component.literal(String.valueOf(cost)).withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(" FE)").withStyle(ChatFormatting.DARK_GRAY)));
+            } else {
+                tooltip.add(Component.literal(" ").append(name));
+            }
+        }
+
+        Container inactiveModules = container.getInactiveModules();
+        boolean hasInactive = false;
+        for (int i = 0; i < inactiveModules.getContainerSize(); i++) {
+            ItemStack module = inactiveModules.getItem(i);
+            if (module.isEmpty()) continue;
+            if (!hasInactive) {
+                tooltip.add(Component.empty());
+                tooltip.add(Component.translatable("tooltip.scannable_unofficial.scanner.inactive_modules")
+                        .withStyle(ChatFormatting.GRAY, ChatFormatting.UNDERLINE));
+                hasInactive = true;
+            }
+            tooltip.add(Component.literal(" ")
+                    .append(module.getHoverName().copy().withStyle(ChatFormatting.DARK_GRAY)));
+        }
+
+        if (hasActive) {
+            int totalCost = 0;
+            for (int i = 0; i < activeModules.getContainerSize(); i++) {
+                totalCost += ModuleHelper.getEnergyCost(activeModules.getItem(i));
+            }
+            if (totalCost <= 0) totalCost = 75;
+            tooltip.add(Component.empty());
+            tooltip.add(Strings.totalEnergyCost(totalCost));
+        }
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        return (int) (getRelativeEnergy(stack) * MAX_BAR_WIDTH);
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        return Mth.hsvToRgb(getRelativeEnergy(stack) / 3f, 1, 1);
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return oldStack.getItem() != newStack.getItem() || slotChanged;
+    }
+
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (player.isShiftKeyDown()) {
+            if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(new MenuProvider() {
+                    @Override
+                    public Component getDisplayName() {
+                        return stack.getHoverName();
+                    }
+
+                    @Override
+                    public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+                        return new ScannerContainerMenu(id, inv, hand, ScannerContainer.of(stack));
+                    }
+                }, buf -> buf.writeEnum(hand));
+            }
+        } else {
+            List<ItemStack> modules = new ArrayList<>();
+            if (!collectModules(stack, modules)) {
+                if (!level.isClientSide()) {
+                    player.displayClientMessage(Strings.MESSAGE_NO_SCAN_MODULES, true);
+                }
+                player.getCooldowns().addCooldown(stack, 10);
+                return InteractionResult.FAIL;
+            }
+
+            if (!tryConsumeEnergy(player, stack, modules, true)) {
+                if (!level.isClientSide()) {
+                    player.displayClientMessage(Strings.MESSAGE_NOT_ENOUGH_ENERGY, true);
+                }
+                player.getCooldowns().addCooldown(stack, 10);
+                return InteractionResult.FAIL;
+            }
+
+            player.startUsingItem(hand);
+            if (level.isClientSide()) {
+                final List<ItemStack> nonItemModules = new ArrayList<>();
+                for (final ItemStack m : modules) {
+                    if (!(m.getItem() instanceof ConfigurableItemScannerModuleItem)) {
+                        nonItemModules.add(m);
+                    }
+                }
+                if (!nonItemModules.isEmpty()) {
+                    ScanManager.beginScan(player, nonItemModules);
+                }
+                SoundManager.playChargingSound();
+            }
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return Constants.SCAN_DURATION_TICKS;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int count) {
+        super.onUseTick(level, entity, stack, count);
+        if (entity.level().isClientSide()) {
+            ScanManager.updateScan(entity, false);
+        }
+    }
+
+    @Override
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        if (level.isClientSide()) {
+            ScanManager.cancelScan();
+            SoundManager.stopChargingSound();
+        }
+        return super.releaseUsing(stack, level, entity, timeLeft);
+    }
+
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return stack;
+        }
+
+        List<ItemStack> modules = new ArrayList<>();
+        if (!collectModules(stack, modules)) {
+            return stack;
+        }
+
+        boolean hasEnergy = tryConsumeEnergy(player, stack, modules, false);
+
+        if (level.isClientSide()) {
+            finishScanClient(player, stack, modules, hasEnergy);
+        } else if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            finishScanServer(serverPlayer, stack, level);
+        }
+
+        player.getCooldowns().addCooldown(stack, Constants.SCAN_COOLDOWN_TICKS);
+        return stack;
+    }
+
+    private static void finishScanClient(final LivingEntity entity, final ItemStack stack,
+                                         final List<ItemStack> modules, final boolean hasEnergy) {
+        SoundManager.stopChargingSound();
+        if (hasEnergy) {
+            ScanManager.updateScan(entity, true);
+            SoundManager.playActivateSound();
+        } else {
+            ScanManager.cancelScan();
+        }
+    }
+
+    private static void finishScanServer(final ServerPlayer player, final ItemStack stack, final Level level) {
+        final ScannerContainer scannerContainer = ScannerContainer.of(stack);
+        final var activeModules = scannerContainer.getActiveModules();
+
+        List<ResourceLocation> targetItemIds = List.of();
+        for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
+            final ItemStack module = activeModules.getItem(slot);
+            if (module.isEmpty()) continue;
+            if (module.getItem() instanceof ConfigurableItemScannerModuleItem moduleItem) {
+                targetItemIds = moduleItem.getIds(module);
+                break;
+            }
+        }
+
+        if (!targetItemIds.isEmpty()) {
+            final Vec3 center = player.position();
+            final int scanRadius = 64;
+            final List<ItemScanResultData> results = ItemScannerService.scan(
+                    level, center, scanRadius, targetItemIds);
+
+            Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
+
+            if (!results.isEmpty()) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        player, new S2CItemScanResult(center, results));
+            }
+        }
+    }
+
+    private static float getRelativeEnergy(ItemStack stack) {
+        return ItemEnergyStorage.of(stack)
+                .map(storage -> storage.getEnergyStored() / (float) storage.getMaxEnergyStored())
+                .orElse(0f);
+    }
+
+    private static boolean tryConsumeEnergy(Player player, ItemStack scanner, List<ItemStack> modules, boolean simulate) {
+        if (player.isCreative()) return true;
+
+        Optional<ItemEnergyStorage> energyStorage = ItemEnergyStorage.of(scanner);
+        if (energyStorage.isEmpty()) return false;
+
+        long totalCost = 0;
+        for (ItemStack module : modules) {
+            totalCost += ModuleHelper.getEnergyCost(module);
+        }
+        if (totalCost <= 0) totalCost = 75;
+
+        long extracted = energyStorage.get().extractEnergy(totalCost, simulate);
+        return extracted >= totalCost;
+    }
+
+    private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
+        ScannerContainer container = ScannerContainer.of(scanner);
+        Container activeModules = container.getActiveModules();
+        boolean hasScannerModules = false;
+        for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
+            ItemStack module = activeModules.getItem(slot);
+            if (module.isEmpty()) continue;
+            modules.add(module);
+            hasScannerModules |= ModuleHelper.hasResultProvider(module);
+        }
+        return hasScannerModules;
+    }
+}

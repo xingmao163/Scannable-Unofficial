@@ -10,14 +10,14 @@ import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.config.ClientConfig;
-import com.starmao.scannable.client.shader.Shaders;
 import com.starmao.scannable.common.scanning.filter.IgnoredBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.CompiledShaderProgram;
+import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -64,12 +64,17 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         results.clear();
 
         Map<Integer, List<Predicate<BlockState>>> filterByRadius = new HashMap<>();
+        com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] initialize: {} modules, base radius={}", modules.size(), radius);
         for (ItemStack stack : modules) {
             Optional<ScannerModule> capability = ModuleHelper.getModule(stack);
             capability.ifPresent(module -> {
+                com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] module={} isBlockScanner={}",
+                        module.getClass().getSimpleName(), module instanceof BlockScannerModule);
                 if (module instanceof BlockScannerModule blockModule) {
                     Predicate<BlockState> filter = blockModule.getFilter(stack);
                     int localRadius = (int) Math.ceil(blockModule.adjustLocalRange(this.radius));
+                    com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] filter={}, localRadius={}",
+                            filter.getClass().getSimpleName(), localRadius);
                     filterByRadius.computeIfAbsent(localRadius, r -> new ArrayList<>()).add(filter);
                 }
             });
@@ -80,6 +85,8 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
 
         if (!radii.isEmpty()) {
             this.radius = radii.get(0);
+            com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] {} filter layers, max radius={}",
+                    radii.size(), this.radius);
             for (int r : radii) {
                 scanFilterLayers.add(new ScanFilterLayer(r, filterByRadius.get(r)));
             }
@@ -216,7 +223,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 DefaultVertexFormat.POSITION_TEX_COLOR,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getScanResultShader))
+                        .setShaderState(RenderStateShard.POSITION_TEXTURE_COLOR_SHADER)
                         .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .setCullState(RenderStateShard.NO_CULL)
@@ -225,11 +232,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
     }
 
     private void renderBlocks(PoseStack poseStack, Camera renderInfo, float partialTicks, List<ScanResult> results) {
-        ShaderInstance shader = Shaders.getScanResultShader();
-        if (shader == null) return;
-
-        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
-
         // Live hide-broken-blocks update: prune cells that no longer match and rebuild affected VBOs
         Level level = Minecraft.getInstance().level;
         Player viewer = Minecraft.getInstance().player;
@@ -244,6 +246,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
 
         RenderType renderType = getBlockScanResultRenderLayer();
         renderType.setupRenderState();
+        CompiledShaderProgram shader = RenderSystem.getShader();
         for (ScanResult result : results) {
             BlockScanResult blockResult = (BlockScanResult) result;
             VertexBuffer vbo = blockResult.vbo;
@@ -287,7 +290,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         return root != null;
     }
 
-    @SuppressWarnings("null")
     @Nullable
     private BlockScanResult tryAddToCluster(Map<BlockPos, BlockScanResult> clusters, BlockPos pos,
                                              BlockPos clusterPos, @Nullable BlockScanResult root) {
@@ -407,18 +409,10 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
             BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             render(buffer, new PoseStack());
             if (vbo == null) {
-                vbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                vbo = new VertexBuffer(com.mojang.blaze3d.buffers.BufferUsage.DYNAMIC_WRITE);
             }
-            final VertexBuffer vbo2 = vbo;
-            if (vbo2 != null) {
-                vbo2.bind();
-            } else {
-            }
-            final VertexBuffer vbo3 = vbo;
-            if (vbo3 != null) {
-                vbo3.upload(buffer.buildOrThrow());
-            } else {
-            }
+            vbo.bind();
+            vbo.upload(buffer.buildOrThrow());
             VertexBuffer.unbind();
         }
 

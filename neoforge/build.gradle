@@ -5,6 +5,21 @@ plugins {
     id 'idea'
 }
 
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+apply from: '../gradle/versions.gradle'
+
+def targetVersion = findProperty('targetVersion') ?: '1.21.1'
+def vcfg = supportedVersions.find { it.name == targetVersion }
+if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
+
+ext.minecraft_version     = vcfg.minecraft_version
+ext.minecraft_version_range = vcfg.minecraft_version_range
+ext.neo_version           = vcfg.neo_version
+ext.parchment_minecraft_version = vcfg.parchment_minecraft
+ext.parchment_mappings_version  = vcfg.parchment_mappings
+ext.jei_version           = vcfg.jei_version
+
 evaluationDependsOn(':common')
 
 version = mod_version
@@ -14,7 +29,40 @@ base {
     archivesName = "Scannable_Unofficial-Neo${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+def versionOverrideJava = file("../versions/${targetVersion}/neoforge/src/main/java")
+def versionOverrideResources = file("../versions/${targetVersion}/neoforge/src/main/resources")
+
+if (versionOverrideJava.exists()) {
+    def mergedJava = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/java")
+    tasks.register('mergeNeoforgeSources', Sync) {
+        from 'src/main/java'
+        from versionOverrideJava
+        into mergedJava
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    sourceSets.main.java.srcDirs = [mergedJava]
+    tasks.named('compileJava').configure { dependsOn 'mergeNeoforgeSources' }
+} else {
+    sourceSets.main.java.srcDirs = [file('src/main/java')]
+}
+
+if (versionOverrideResources.exists()) {
+    def mergedResources = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/resources")
+    tasks.register('mergeNeoforgeResources', Sync) {
+        from 'src/main/resources'
+        from versionOverrideResources
+        into mergedResources
+        exclude('**/*.bbmodel')
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    sourceSets.main.resources.srcDirs = [mergedResources]
+    tasks.named('processResources').configure { dependsOn 'mergeNeoforgeResources' }
+} else {
+    sourceSets.main.resources {
+        srcDir('src/main/resources')
+        exclude('**/*.bbmodel')
+    }
+}
 
 neoForge {
     version = project.neo_version
@@ -29,23 +77,25 @@ neoForge {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         server {
             server()
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         data {
             data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+            if (versionOverrideResources.exists()) {
+                programArguments.add '--existing'
+                programArguments.add versionOverrideResources.absolutePath
+            }
         }
-
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
@@ -62,7 +112,6 @@ neoForge {
 
 sourceSets.main.resources {
     srcDir('src/generated/resources')
-    exclude('**/*.bbmodel')
     exclude('src/generated/**/.cache')
 }
 
@@ -80,8 +129,14 @@ repositories {
 dependencies {
     implementation project(':common')
 
-    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    if (jei_version) {
+        compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+        localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    }
+}
+
+tasks.named("processResources", ProcessResources) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

@@ -43,10 +43,9 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
     protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
-        graphics.blit(BACKGROUND, x, y, 0, 0, imageWidth, imageHeight);
+        graphics.blit(net.minecraft.client.renderer.RenderType.GUI_TEXTURED, BACKGROUND, x, y, 0, 0, imageWidth, imageHeight, 256, 256);
     }
 
-    @SuppressWarnings("null")
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         if (slot != null) {
