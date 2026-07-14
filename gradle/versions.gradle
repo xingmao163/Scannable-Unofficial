@@ -26,7 +26,7 @@ ext {
             minecraft_version_range : '[1.21.3]',
             neo_version             : '21.3.96',
             parchment_minecraft     : '1.21.3',
-            parchment_mappings      : '2024.11.10',
+            parchment_mappings      : '2024.12.07',
             jei_version             : '',
             status                  : 'stable',
         ],

@@ -12,10 +12,11 @@
 
 **[English](#english)** | **[中文](#中文)**
 
-*A handheld scanner mod with swappable modules for Minecraft 1.21.1 NeoForge*
+*A handheld scanner mod with swappable modules for Minecraft 1.21.x NeoForge*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)](https://www.minecraft.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.2-brightgreen)](https://www.minecraft.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-21.1.228-orange)](https://neoforged.net/)
 
 </div>
@@ -27,7 +28,7 @@
 
 ### 📖 Overview
 
-**Scannable-Unofficial** is an unofficial NeoForge 1.21.1 port of the [Scannable](https://www.curseforge.com/minecraft/mc-mods/scannable) mod developed by [Florian "Sangar" Nücke](https://github.com/MightyPirates). This mod adds a scanner that can detect various objects in the Minecraft world through different modules.
+**Scannable-Unofficial** is an unofficial NeoForge 1.21.x port of the [Scannable](https://www.curseforge.com/minecraft/mc-mods/scannable) mod developed by [Florian "Sangar" Nücke](https://github.com/MightyPirates). This mod adds a scanner that can detect various objects in the Minecraft world through different modules.
 
 ### ✨ Features
 
@@ -47,13 +48,6 @@
 - **🌍 Language Support**: Supports multiple language translations
 
 ### 🚀 Getting Started
-
-#### Installation
-
-1. Install [NeoForge 21.1.228](https://neoforged.net/) for Minecraft 1.21.1
-2. Download the latest `Scannable-Unofficial-x.x.x.jar` from the [Releases](../../releases) page
-3. Place the JAR file in your Minecraft `mods` folder
-4. Launch the game
 
 #### Basic Usage
 
@@ -88,7 +82,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 📖 概述
 
-**Scannable-Unofficial** 是 [Florian "Sangar" Nücke](https://github.com/MightyPirates)开发的 [Scannable](https://www.curseforge.com/minecraft/mc-mods/scannable) 模组的 NeoForge1.21.1 非官方版本。该模组添加了一个扫描器，可通过不同的模块扫描 Minecraft 世界中的各种物体。
+**Scannable-Unofficial** 是 [Florian "Sangar" Nücke](https://github.com/MightyPirates)开发的 [Scannable](https://www.curseforge.com/minecraft/mc-mods/scannable) 模组的 NeoForge1.21.x 非官方版本。该模组添加了一个扫描器，可通过不同的模块扫描 Minecraft 世界中的各种物体。
 
 ### ✨ 特性
 
@@ -108,13 +102,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **🌍 语言支持**：支持多种语言翻译
 
 ### 🚀 快速开始
-
-#### 安装
-
-1. 为 Minecraft 1.21.1 安装 [NeoForge 21.1.228](https://neoforged.net/)
-2. 从 [发布页面](../../releases) 下载最新的 `Scannable-Unofficial-x.x.x.jar`
-3. 将 JAR 文件放入 Minecraft 的 `mods` 文件夹
-4. 启动游戏
 
 #### 基本使用
 
