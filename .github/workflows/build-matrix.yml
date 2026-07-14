@@ -3,6 +3,10 @@ name: Build Matrix
 on:
   workflow_dispatch:
     inputs:
+      target_version:
+        description: Specific version to build (e.g. 1.21.1). Leave empty to build all stable versions.
+        required: false
+        default: ""
       include_beta:
         description: Include beta-only NeoForge targets
         required: false
@@ -27,21 +31,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  resolve-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      stable: ${{ steps.versions.outputs.stable }}
+      beta: ${{ steps.versions.outputs.beta }}
+    steps:
+      - id: versions
+        run: |
+          TARGET="${{ github.event.inputs.target_version || '' }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$TARGET" ]; then
+            echo "stable=[\"$TARGET\"]" >> "$GITHUB_OUTPUT"
+            echo "beta=[]" >> "$GITHUB_OUTPUT"
+          else
+            echo 'stable=["1.21.1","1.21.3","1.21.4","1.21.5","1.21.8","1.21.10","1.21.11"]' >> "$GITHUB_OUTPUT"
+            echo 'beta=["1.21.2","1.21.6","1.21.7","1.21.9"]' >> "$GITHUB_OUTPUT"
+          fi
+
   stable-build:
+    needs: [resolve-versions]
     name: Stable ${{ matrix.mc }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        mc:
-          - 1.21.1
-          - 1.21.3
-          - 1.21.4
-          - 1.21.5
-          - 1.21.8
-          - 1.21.10
-          - 1.21.11
+        mc: ${{ fromJSON(needs.resolve-versions.outputs.stable) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -76,18 +91,15 @@ jobs:
           if-no-files-found: error
 
   beta-build:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.include_beta == 'true' }}
+    needs: [resolve-versions]
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.include_beta == 'true' && fromJSON(needs.resolve-versions.outputs.beta).length > 0 }}
     name: Beta ${{ matrix.mc }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        mc:
-          - 1.21.2
-          - 1.21.6
-          - 1.21.7
-          - 1.21.9
+        mc: ${{ fromJSON(needs.resolve-versions.outputs.beta) }}
 
     steps:
       - uses: actions/checkout@v4
