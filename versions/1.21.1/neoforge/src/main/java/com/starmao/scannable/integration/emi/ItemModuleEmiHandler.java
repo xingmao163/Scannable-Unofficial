@@ -5,8 +5,7 @@ import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
 import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.runtime.EmiDrawContext;
-import net.minecraft.client.gui.DrawContext;
+import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 
@@ -23,13 +22,19 @@ public class ItemModuleEmiHandler implements EmiDragDropHandler<ConfigurableItem
             final int x,
             final int y) {
 
-        // Extract ItemStack from EmiIngredient
-        final var itemStackOpt = ingredient.getItemStack();
-        if (itemStackOpt.isEmpty()) {
+        // Extract first EmiStack from ingredient
+        final var stacks = ingredient.getEmiStacks();
+        if (stacks.isEmpty()) {
             return false;
         }
 
-        final Item item = itemStackOpt.get().getItem();
+        final EmiStack emiStack = stacks.get(0);
+        final var itemStack = emiStack.getItemStack();
+        if (itemStack.isEmpty()) {
+            return false;
+        }
+
+        final Item item = itemStack.getItem();
 
         // Calculate which slot was clicked
         final int slotIndex = calculateSlotIndex(screen, x, y);
@@ -45,28 +50,6 @@ public class ItemModuleEmiHandler implements EmiDragDropHandler<ConfigurableItem
                 key.location())));
 
         return true;
-    }
-
-    @Override
-    public void render(
-            final ConfigurableItemScannerModuleContainerScreen screen,
-            final EmiIngredient dragged,
-            final DrawContext draw,
-            final int mouseX,
-            final int mouseY,
-            final float delta) {
-
-        final EmiDrawContext context = EmiDrawContext.wrap(draw);
-        final int guiLeft = screen.getGuiLeft();
-        final int guiTop = screen.getGuiTop();
-        final int originX = guiLeft + ConfigurableItemScannerModuleContainerScreen.SLOTS_ORIGIN_X;
-        final int originY = guiTop + ConfigurableItemScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
-        final int slotSize = ConfigurableItemScannerModuleContainerScreen.SLOT_SIZE;
-
-        // Highlight all 5 slots
-        for (int i = 0; i < 5; i++) {
-            context.fill(originX + i * slotSize, originY, slotSize, slotSize, 0x8822BB33);
-        }
     }
 
     /**

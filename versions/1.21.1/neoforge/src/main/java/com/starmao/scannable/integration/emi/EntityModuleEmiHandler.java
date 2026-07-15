@@ -5,10 +5,10 @@ import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
 import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.runtime.EmiDrawContext;
-import net.minecraft.client.gui.DrawContext;
+import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.SpawnEggItem;
 
 /**
  * Drag-drop handler for the configurable entity scanner module screen.
@@ -23,14 +23,23 @@ public class EntityModuleEmiHandler implements EmiDragDropHandler<ConfigurableEn
             final int x,
             final int y) {
 
-        // Extract ItemStack from EmiIngredient
-        final var itemStackOpt = ingredient.getItemStack();
-        if (itemStackOpt.isEmpty()) {
+        // Extract first EmiStack from ingredient
+        final var stacks = ingredient.getEmiStacks();
+        if (stacks.isEmpty()) {
             return false;
         }
 
-        final var itemStack = itemStackOpt.get();
-        final EntityType<?> entityType = EntityType.getEntityTypeFromItem(itemStack.getItem());
+        final EmiStack emiStack = stacks.get(0);
+        final var itemStack = emiStack.getItemStack();
+        if (itemStack.isEmpty()) {
+            return false;
+        }
+
+        // Get entity type from spawn egg
+        if (!(itemStack.getItem() instanceof SpawnEggItem egg)) {
+            return false;
+        }
+        final EntityType<?> entityType = egg.getType(itemStack);
         if (entityType == null) {
             return false;
         }
@@ -49,28 +58,6 @@ public class EntityModuleEmiHandler implements EmiDragDropHandler<ConfigurableEn
                 key.location())));
 
         return true;
-    }
-
-    @Override
-    public void render(
-            final ConfigurableEntityScannerModuleContainerScreen screen,
-            final EmiIngredient dragged,
-            final DrawContext draw,
-            final int mouseX,
-            final int mouseY,
-            final float delta) {
-
-        final EmiDrawContext context = EmiDrawContext.wrap(draw);
-        final int guiLeft = screen.getGuiLeft();
-        final int guiTop = screen.getGuiTop();
-        final int originX = guiLeft + ConfigurableEntityScannerModuleContainerScreen.SLOTS_ORIGIN_X;
-        final int originY = guiTop + ConfigurableEntityScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
-        final int slotSize = ConfigurableEntityScannerModuleContainerScreen.SLOT_SIZE;
-
-        // Highlight all 5 slots
-        for (int i = 0; i < 5; i++) {
-            context.fill(originX + i * slotSize, originY, slotSize, slotSize, 0x8822BB33);
-        }
     }
 
     /**
