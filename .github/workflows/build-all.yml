@@ -44,8 +44,8 @@ jobs:
             echo "stable=[\"$TARGET\"]" >> "$GITHUB_OUTPUT"
             echo "beta=[]" >> "$GITHUB_OUTPUT"
           else
-            echo 'stable=["1.21.1","1.21.3","1.21.4","1.21.5","1.21.8","1.21.10","1.21.11"]' >> "$GITHUB_OUTPUT"
-            echo 'beta=["1.21.2","1.21.6","1.21.7","1.21.9"]' >> "$GITHUB_OUTPUT"
+            echo 'stable=["1.21.1","1.21.3","1.21.4"]' >> "$GITHUB_OUTPUT"
+            echo 'beta=["1.21.2"]' >> "$GITHUB_OUTPUT"
           fi
 
   stable-build:
