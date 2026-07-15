@@ -50,7 +50,7 @@ ext {
             parchment_mappings      : '2025.07.20',
             jei_version             : '29.6.2.31',
             emi_version             : '',
-            status                  : 'stable',
+            status                  : 'pending',
         ],
     ]
 

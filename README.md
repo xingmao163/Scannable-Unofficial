@@ -49,6 +49,28 @@
 - **🔌 JEI/EMI Integration**: Supports using JEI/EMI for module configuration
 - **🌍 Language Support**: Supports multiple language translations
 
+### 📦 Version Support
+
+| Minecraft | NeoForge | Status |
+|-----------|----------|--------|
+| 1.21.1 | 21.1.236 | ✓ Stable |
+| 1.21.2 | 21.2.1 | ✓ Stable |
+| 1.21.3 | 21.3.96 | ✓ Stable |
+| 1.21.4 | 21.4.157 | ✓ Stable |
+| 26.1.2 | 26.1.2.71 | ⏳ Ready (Waiting for Parchment) |
+
+#### 26.1.2 Status
+
+NeoForge 26.1.2 support implementation is complete and ready:
+- Version configuration added to `gradle/versions.gradle`
+- Version-specific source code overrides created
+- Build scripts configured
+- Multi-version build system verified (1.21.1-1.21.4 passing)
+
+**Temporary Limitation:** Waiting for Parchment 26.1.2 mappings release. Once Parchment is published, 26.1.2 JAR can be built directly.
+
+**Track Progress:** See GitHub Issues or Parchment project official release page
+
 ### 🚀 Getting Started
 
 #### Basic Usage
@@ -94,6 +116,28 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - **⚙️ 广泛配置**：自定义能量消耗、扫描范围和忽略方块
 - **🔌 JEI/EMI 集成**：支持使用JEI/EMI进行模块配置
 - **🌍 语言支持**：支持多种语言翻译
+
+### 📦 版本支持
+
+| Minecraft | NeoForge | 状态 |
+|-----------|----------|------|
+| 1.21.1 | 21.1.236 | ✓ 稳定 |
+| 1.21.2 | 21.2.1 | ✓ 稳定 |
+| 1.21.3 | 21.3.96 | ✓ 稳定 |
+| 1.21.4 | 21.4.157 | ✓ 稳定 |
+| 26.1.2 | 26.1.2.71 | ⏳ 就绪（等待Parchment映射） |
+
+#### 26.1.2 状态说明
+
+NeoForge 26.1.2 支持的代码已完成准备：
+- 版本配置已添加到 `gradle/versions.gradle`
+- 版本特定源代码覆盖已创建
+- 构建脚本已配置
+- 多版本构建系统已验证（1.21.1-1.21.4 通过）
+
+**暂时限制：** 等待 Parchment 26.1.2 映射发布。一旦 Parchment 发布，可直接构建 26.1.2 JAR。
+
+**追踪进度：** 见 GitHub Issues 或 Parchment 项目官方发布页面
 
 ### 🚀 快速开始
 
