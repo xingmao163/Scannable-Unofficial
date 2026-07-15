@@ -5,6 +5,8 @@ import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
 import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.runtime.EmiDrawContext;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 
@@ -47,6 +49,28 @@ public class EntityModuleEmiHandler implements EmiDragDropHandler<ConfigurableEn
                 key.location())));
 
         return true;
+    }
+
+    @Override
+    public void render(
+            final ConfigurableEntityScannerModuleContainerScreen screen,
+            final EmiIngredient dragged,
+            final DrawContext draw,
+            final int mouseX,
+            final int mouseY,
+            final float delta) {
+
+        final EmiDrawContext context = EmiDrawContext.wrap(draw);
+        final int guiLeft = screen.getGuiLeft();
+        final int guiTop = screen.getGuiTop();
+        final int originX = guiLeft + ConfigurableEntityScannerModuleContainerScreen.SLOTS_ORIGIN_X;
+        final int originY = guiTop + ConfigurableEntityScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
+        final int slotSize = ConfigurableEntityScannerModuleContainerScreen.SLOT_SIZE;
+
+        // Highlight all 5 slots
+        for (int i = 0; i < 5; i++) {
+            context.fill(originX + i * slotSize, originY, slotSize, slotSize, 0x8822BB33);
+        }
     }
 
     /**

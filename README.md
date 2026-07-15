@@ -16,10 +16,10 @@
 
 [![](https://cf.way2muchnoise.eu/full_1573137_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/scannable-unofficial)
 [![](https://img.shields.io/modrinth/dt/zOhPHOSZ?logo=modrinth&style=plastic)](https://modrinth.com/mod/scannable-unofficial)
-*[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)](https://www.minecraft.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)](https://www.minecraft.net/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.2-brightgreen)](https://www.minecraft.net/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.3-brightgreen)](https://www.minecraft.net/)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.4-brightgreen)](https://www.minecraft.net/)*
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.4-brightgreen)](https://www.minecraft.net/)
 
 </div>
 
@@ -46,7 +46,7 @@
   - **Item Module**: Scans specific items in containers (configurable by right-clicking)
 - **🎨 Visual Feedback**: Progress indicator, overlay rendering, and sound effects
 - **⚙️ Extensive Configuration**: Customize energy costs, scan ranges, and ignored blocks
-- **🔌 JEI Integration**: Supports using JEI for module configuration
+- **🔌 JEI/EMI Integration**: Supports using JEI/EMI for module configuration
 - **🌍 Language Support**: Supports multiple language translations
 
 ### 🚀 Getting Started
@@ -100,7 +100,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - **物品模块**：扫描容器中的特定物品（右键配置）
 - **🎨 视觉反馈**：进度指示器、叠加渲染和音效
 - **⚙️ 广泛配置**：自定义能量消耗、扫描范围和忽略方块
-- **🔌 JEI 集成**：支持使用JEI进行模块配置
+- **🔌 JEI/EMI 集成**：支持使用JEI/EMI进行模块配置
 - **🌍 语言支持**：支持多种语言翻译
 
 ### 🚀 快速开始
