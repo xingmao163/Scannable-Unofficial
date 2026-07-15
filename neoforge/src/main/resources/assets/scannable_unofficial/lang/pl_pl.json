@@ -1,0 +1,48 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "item.scannable_unofficial.scanner": "Skaner",
+  "item.scannable_unofficial.range_module": "Moduł zasięgu",
+  "item.scannable_unofficial.fluid_module": "Moduł płynów",
+  "item.scannable_unofficial.friendly_entity_module": "Moduł przyjaznych istot",
+  "item.scannable_unofficial.hostile_entity_module": "Moduł wrogich istot",
+  "item.scannable_unofficial.entity_module": "Moduł istot",
+  "item.scannable_unofficial.block_module": "Moduł bloków",
+  "item.scannable_unofficial.item_module": "Moduł przedmiotów",
+  "item.scannable_unofficial.blank_module": "Pusty moduł",
+
+  "item.scannable_unofficial.range_module.desc": "Zwiększa promień skanowania o 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "Wykrywa bloki płynów, takie jak woda i lawa",
+  "item.scannable_unofficial.friendly_entity_module.desc": "Wykrywa przyjazne istoty, takie jak zwierzęta i mieszkańcy",
+  "item.scannable_unofficial.hostile_entity_module.desc": "Wykrywa wrogie istoty, takie jak potwory",
+  "item.scannable_unofficial.entity_module.desc": "Kliknij PPM na istotę, aby skonfigurować określone typy istot do wykrywania",
+  "item.scannable_unofficial.block_module.desc": "Kliknij PPM na blok, aby skonfigurować określone bloki do wykrywania",
+  "item.scannable_unofficial.blank_module.desc": "Moduł zastępczy bez funkcji",
+  "item.scannable_unofficial.item_module.desc": "Skanuje pojemniki w poszukiwaniu skonfigurowanych przedmiotów",
+
+  "container.scannable_unofficial.scanner": "Skaner",
+  "container.scannable_unofficial.block_module": "Moduł bloków",
+  "container.scannable_unofficial.entity_module": "Moduł istot",
+
+  "gui.scannable_unofficial.scanner.active_modules": "Aktywne moduły",
+  "gui.scannable_unofficial.scanner.inactive_modules": "Nieaktywne",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "Wybrane bloki:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "Wybrane istoty:",
+  "gui.scannable_unofficial.scanner.item_module.list": "Wybrane przedmioty:",
+
+  "tooltip.scannable_unofficial.scanner.energy": "Energia: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "Koszt energii: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "Razem: %s FE na skan",
+  "tooltip.scannable_unofficial.scanner.active_modules": "Aktywne moduły",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "Nieaktywne",
+  "tooltip.scannable_unofficial.scanner.block_module.list": "Wybrane bloki:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "Wybrane istoty:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "Wybrane przedmioty:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cModuł przedmiotów nie ma skonfigurowanych przedmiotów! Kliknij PPM, aby otworzyć konfigurację",
+  "message.scannable_unofficial.scanner.no_modules": "Nie zainstalowano modułów skanowania!",
+  "message.scannable_unofficial.scanner.no_energy": "Za mało energii!",
+  "message.scannable_unofficial.scanner.no_free_slots": "Brak wolnych miejsc!"
+}

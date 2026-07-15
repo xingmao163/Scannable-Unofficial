@@ -1,6 +1,5 @@
 package com.starmao.scannable.datagen;
 
-import com.starmao.scannable.Scannable;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 public final class DataGeneration {
@@ -15,8 +14,7 @@ public final class DataGeneration {
     public static void onGatherDataClient(final GatherDataEvent.Client event) {
         var output = event.getGenerator().getPackOutput();
         event.addProvider(new ModItemModelProvider(output));
-        event.addProvider(new ModLanguageProvider(output, Scannable.MOD_ID, "en_us"));
-        event.addProvider(new ModChineseLanguageProvider(output, Scannable.MOD_ID, "zh_cn"));
+        // Languages are maintained manually in src/main/resources/assets/scannable_unofficial/lang/*.json
     }
 
     private DataGeneration() {

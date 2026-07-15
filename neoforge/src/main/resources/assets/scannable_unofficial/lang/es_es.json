@@ -1,0 +1,49 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "container.scannable_unofficial.scanner": "Escáner",
+  "container.scannable_unofficial.block_module": "Módulo de bloques",
+  "container.scannable_unofficial.entity_module": "Módulo de entidades",
+
+  "tooltip.scannable_unofficial.scanner.energy": "Energía: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "Costo de energía: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "Total: %s FE por escaneo",
+  "tooltip.scannable_unofficial.scanner.active_modules": "Módulos activos",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "Inactivo",
+
+  "item.scannable_unofficial.range_module.desc": "Aumenta el radio de escaneo en un 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "Detecta bloques de fluidos como agua y lava",
+  "item.scannable_unofficial.friendly_entity_module.desc": "Detecta entidades amistosas como animales y aldeanos",
+  "item.scannable_unofficial.hostile_entity_module.desc": "Detecta entidades hostiles como monstruos",
+  "item.scannable_unofficial.entity_module.desc": "Haz clic derecho en una entidad para configurar tipos de entidad específicos a detectar",
+  "item.scannable_unofficial.block_module.desc": "Haz clic derecho en un bloque para configurar bloques específicos a detectar",
+  "item.scannable_unofficial.blank_module.desc": "Un módulo de relleno sin función",
+  "item.scannable_unofficial.item_module.desc": "Escanea contenedores en busca de objetos configurados",
+
+  "tooltip.scannable_unofficial.scanner.block_module.list": "Bloques seleccionados:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "Entidades seleccionadas:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "Objetos seleccionados:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§c¡El módulo de objetos no tiene objetos configurados! Haz clic derecho para abrir la configuración",
+  "message.scannable_unofficial.scanner.no_modules": "¡No hay módulos de escaneo instalados!",
+  "message.scannable_unofficial.scanner.no_energy": "¡No hay suficiente energía!",
+  "message.scannable_unofficial.scanner.no_free_slots": "¡No hay espacios libres!",
+
+  "gui.scannable_unofficial.scanner.active_modules": "Módulos activos",
+  "gui.scannable_unofficial.scanner.inactive_modules": "Inactivo",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "Bloques seleccionados:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "Entidades seleccionadas:",
+  "gui.scannable_unofficial.scanner.item_module.list": "Objetos seleccionados:",
+
+  "item.scannable_unofficial.scanner": "Escáner",
+  "item.scannable_unofficial.range_module": "Módulo de alcance",
+  "item.scannable_unofficial.fluid_module": "Módulo de fluidos",
+  "item.scannable_unofficial.friendly_entity_module": "Módulo de entidades amistosas",
+  "item.scannable_unofficial.hostile_entity_module": "Módulo de entidades hostiles",
+  "item.scannable_unofficial.entity_module": "Módulo de entidades",
+  "item.scannable_unofficial.block_module": "Módulo de bloques",
+  "item.scannable_unofficial.item_module": "Módulo de objetos",
+  "item.scannable_unofficial.blank_module": "Módulo en blanco"
+}

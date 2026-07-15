@@ -1,0 +1,49 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "container.scannable_unofficial.scanner": "Сканер",
+  "container.scannable_unofficial.block_module": "Модуль блоков",
+  "container.scannable_unofficial.entity_module": "Модуль существ",
+
+  "tooltip.scannable_unofficial.scanner.energy": "Энергия: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "Затраты энергии: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "Всего: %s FE за сканирование",
+  "tooltip.scannable_unofficial.scanner.active_modules": "Активные модули",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "Неактивно",
+
+  "item.scannable_unofficial.range_module.desc": "Увеличивает радиус сканирования на 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "Обнаруживает блоки жидкостей, такие как вода и лава",
+  "item.scannable_unofficial.friendly_entity_module.desc": "Обнаруживает дружелюбных существ, таких как животные и жители",
+  "item.scannable_unofficial.hostile_entity_module.desc": "Обнаруживает враждебных существ, таких как монстры",
+  "item.scannable_unofficial.entity_module.desc": "Нажмите ПКМ по существу, чтобы настроить типы существ для обнаружения",
+  "item.scannable_unofficial.block_module.desc": "Нажмите ПКМ по блоку, чтобы настроить блоки для обнаружения",
+  "item.scannable_unofficial.blank_module.desc": "Заглушка модуля без функции",
+  "item.scannable_unofficial.item_module.desc": "Сканирует контейнеры на наличие настроенных предметов",
+
+  "tooltip.scannable_unofficial.scanner.block_module.list": "Выбранные блоки:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "Выбранные существа:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "Выбранные предметы:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cМодуль предметов не настроен! Нажмите ПКМ, чтобы открыть настройки",
+  "message.scannable_unofficial.scanner.no_modules": "Модули сканирования не установлены!",
+  "message.scannable_unofficial.scanner.no_energy": "Недостаточно энергии!",
+  "message.scannable_unofficial.scanner.no_free_slots": "Нет свободных слотов!",
+
+  "gui.scannable_unofficial.scanner.active_modules": "Активные модули",
+  "gui.scannable_unofficial.scanner.inactive_modules": "Неактивно",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "Выбранные блоки:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "Выбранные существа:",
+  "gui.scannable_unofficial.scanner.item_module.list": "Выбранные предметы:",
+
+  "item.scannable_unofficial.scanner": "Сканер",
+  "item.scannable_unofficial.range_module": "Модуль дальности",
+  "item.scannable_unofficial.fluid_module": "Модуль жидкостей",
+  "item.scannable_unofficial.friendly_entity_module": "Модуль дружелюбных существ",
+  "item.scannable_unofficial.hostile_entity_module": "Модуль враждебных существ",
+  "item.scannable_unofficial.entity_module": "Модуль существ",
+  "item.scannable_unofficial.block_module": "Модуль блоков",
+  "item.scannable_unofficial.item_module": "Модуль предметов",
+  "item.scannable_unofficial.blank_module": "Пустой модуль"
+}

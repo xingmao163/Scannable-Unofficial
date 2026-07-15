@@ -1,0 +1,48 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "item.scannable_unofficial.scanner": "เครื่องสแกน",
+  "item.scannable_unofficial.range_module": "โมดูลระยะ",
+  "item.scannable_unofficial.fluid_module": "โมดูลของเหลว",
+  "item.scannable_unofficial.friendly_entity_module": "โมดูลสิ่งมีชีวิตที่เป็นมิตร",
+  "item.scannable_unofficial.hostile_entity_module": "โมดูลสิ่งมีชีวิตที่เป็นศัตรู",
+  "item.scannable_unofficial.entity_module": "โมดูลสิ่งมีชีวิต",
+  "item.scannable_unofficial.block_module": "โมดูลบล็อก",
+  "item.scannable_unofficial.item_module": "โมดูลไอเทม",
+  "item.scannable_unofficial.blank_module": "โมดูลเปล่า",
+
+  "item.scannable_unofficial.range_module.desc": "เพิ่มรัศมีการสแกน 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "ตรวจจับบล็อกของเหลว เช่น น้ำและลาวา",
+  "item.scannable_unofficial.friendly_entity_module.desc": "ตรวจจับสิ่งมีชีวิตที่เป็นมิตร เช่น สัตว์และชาวบ้าน",
+  "item.scannable_unofficial.hostile_entity_module.desc": "ตรวจจับสิ่งมีชีวิตที่เป็นศัตรู เช่น มอนสเตอร์",
+  "item.scannable_unofficial.entity_module.desc": "คลิกขวาที่สิ่งมีชีวิตเพื่อกำหนดประเภทสิ่งมีชีวิตที่จะตรวจจับ",
+  "item.scannable_unofficial.block_module.desc": "คลิกขวาที่บล็อกเพื่อกำหนดบล็อกที่จะตรวจจับ",
+  "item.scannable_unofficial.blank_module.desc": "โมดูลตัวแทนที่ไม่มีฟังก์ชัน",
+  "item.scannable_unofficial.item_module.desc": "สแกนภาชนะเพื่อหาไอเทมที่กำหนดค่าไว้",
+
+  "container.scannable_unofficial.scanner": "เครื่องสแกน",
+  "container.scannable_unofficial.block_module": "โมดูลบล็อก",
+  "container.scannable_unofficial.entity_module": "โมดูลสิ่งมีชีวิต",
+
+  "gui.scannable_unofficial.scanner.active_modules": "โมดูลที่ทำงานอยู่",
+  "gui.scannable_unofficial.scanner.inactive_modules": "ไม่ได้ใช้งาน",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "บล็อกที่เลือก:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "สิ่งมีชีวิตที่เลือก:",
+  "gui.scannable_unofficial.scanner.item_module.list": "ไอเทมที่เลือก:",
+
+  "tooltip.scannable_unofficial.scanner.energy": "พลังงาน: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "ต้นทุนพลังงาน: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "รวม: %s FE ต่อการสแกน",
+  "tooltip.scannable_unofficial.scanner.active_modules": "โมดูลที่ทำงานอยู่",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "ไม่ได้ใช้งาน",
+  "tooltip.scannable_unofficial.scanner.block_module.list": "บล็อกที่เลือก:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "สิ่งมีชีวิตที่เลือก:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "ไอเทมที่เลือก:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cโมดูลไอเทมไม่มีไอเทมที่กำหนดค่า! คลิกขวาเพื่อเปิดการกำหนดค่า",
+  "message.scannable_unofficial.scanner.no_modules": "ไม่มีการติดตั้งโมดูลสแกน!",
+  "message.scannable_unofficial.scanner.no_energy": "พลังงานไม่เพียงพอ!",
+  "message.scannable_unofficial.scanner.no_free_slots": "ไม่มีช่องว่าง!"
+}

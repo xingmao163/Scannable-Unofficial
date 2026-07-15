@@ -1,0 +1,49 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "container.scannable_unofficial.scanner": "スキャナー",
+  "container.scannable_unofficial.block_module": "ブロックモジュール",
+  "container.scannable_unofficial.entity_module": "エンティティモジュール",
+
+  "tooltip.scannable_unofficial.scanner.energy": "エネルギー：%s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "エネルギー消費：%s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "合計：%s FE/スキャン",
+  "tooltip.scannable_unofficial.scanner.active_modules": "アクティブモジュール",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "未活性",
+
+  "item.scannable_unofficial.range_module.desc": "スキャン範囲を50％拡大する",
+  "item.scannable_unofficial.fluid_module.desc": "水や溶岩などの流体ブロックを検出する",
+  "item.scannable_unofficial.friendly_entity_module.desc": "動物や村人などの友好エンティティを検出する",
+  "item.scannable_unofficial.hostile_entity_module.desc": "モンスターなどの敵対エンティティを検出する",
+  "item.scannable_unofficial.entity_module.desc": "エンティティを右クリックして検出するエンティティタイプを設定する",
+  "item.scannable_unofficial.block_module.desc": "ブロックを右クリックして検出するブロックを設定する",
+  "item.scannable_unofficial.blank_module.desc": "機能のないプレースホルダーモジュール",
+  "item.scannable_unofficial.item_module.desc": "設定されたアイテムを容器内でスキャンする",
+
+  "tooltip.scannable_unofficial.scanner.block_module.list": "選択されたブロック：",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "選択されたエンティティ：",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "選択されたアイテム：",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cアイテムモジュールにアイテムが設定されていません！右クリックで設定を開く",
+  "message.scannable_unofficial.scanner.no_modules": "スキャンモジュールがインストールされていません！",
+  "message.scannable_unofficial.scanner.no_energy": "エネルギーが足りません！",
+  "message.scannable_unofficial.scanner.no_free_slots": "空きスロットがありません！",
+
+  "gui.scannable_unofficial.scanner.active_modules": "アクティブモジュール",
+  "gui.scannable_unofficial.scanner.inactive_modules": "未活性",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "選択されたブロック：",
+  "gui.scannable_unofficial.scanner.entity_module.list": "選択されたエンティティ：",
+  "gui.scannable_unofficial.scanner.item_module.list": "選択されたアイテム：",
+
+  "item.scannable_unofficial.scanner": "スキャナー",
+  "item.scannable_unofficial.range_module": "範囲モジュール",
+  "item.scannable_unofficial.fluid_module": "流体モジュール",
+  "item.scannable_unofficial.friendly_entity_module": "友好エンティティモジュール",
+  "item.scannable_unofficial.hostile_entity_module": "敵対エンティティモジュール",
+  "item.scannable_unofficial.entity_module": "エンティティモジュール",
+  "item.scannable_unofficial.block_module": "ブロックモジュール",
+  "item.scannable_unofficial.item_module": "アイテムモジュール",
+  "item.scannable_unofficial.blank_module": "空モジュール"
+}

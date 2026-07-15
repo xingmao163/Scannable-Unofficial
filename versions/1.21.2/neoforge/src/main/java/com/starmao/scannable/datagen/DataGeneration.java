@@ -1,11 +1,9 @@
 package com.starmao.scannable.datagen;
 
-import com.starmao.scannable.Scannable;
-import net.minecraft.data.DataProvider;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Entry point for all data generation (item models, recipes, tags, languages).
+ * Entry point for all data generation (item models, recipes, tags).
  *
  * <p>Registered as a mod event listener from the main mod class.
  * Triggered by the {@code runData} Gradle task. Output is written to
@@ -29,10 +27,7 @@ public final class DataGeneration {
         // -- Client-side providers --
         generator.addProvider(event.includeClient(),
                 new ModItemModelProvider(output, existingFileHelper));
-        generator.addProvider(event.includeClient(),
-                new ModLanguageProvider(output, Scannable.MOD_ID, "en_us"));
-        generator.addProvider(event.includeClient(),
-                new ModChineseLanguageProvider(output, Scannable.MOD_ID, "zh_cn"));
+        // Languages are maintained manually in src/main/resources/assets/scannable_unofficial/lang/*.json
     }
 
     private DataGeneration() {

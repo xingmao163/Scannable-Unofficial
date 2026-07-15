@@ -10,6 +10,7 @@ import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.config.ClientConfig;
+import com.starmao.scannable.client.shader.Shaders;
 import com.starmao.scannable.common.scanning.filter.IgnoredBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -223,7 +224,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 DefaultVertexFormat.POSITION_TEX_COLOR,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(RenderStateShard.POSITION_TEXTURE_COLOR_SHADER)
+                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders.SCAN_RESULT))
                         .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .setCullState(RenderStateShard.NO_CULL)
@@ -247,6 +248,9 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         RenderType renderType = getBlockScanResultRenderLayer();
         renderType.setupRenderState();
         CompiledShaderProgram shader = RenderSystem.getShader();
+        if (shader != null) {
+            shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+        }
         for (ScanResult result : results) {
             BlockScanResult blockResult = (BlockScanResult) result;
             VertexBuffer vbo = blockResult.vbo;

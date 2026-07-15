@@ -20,7 +20,6 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.2-brightgreen)](https://www.minecraft.net/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.3-brightgreen)](https://www.minecraft.net/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.4-brightgreen)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.228-orange)](https://neoforged.net/)
 
 </div>
 

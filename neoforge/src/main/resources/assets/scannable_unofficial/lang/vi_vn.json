@@ -1,0 +1,48 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "item.scannable_unofficial.scanner": "Máy quét",
+  "item.scannable_unofficial.range_module": "Mô-đun tầm xa",
+  "item.scannable_unofficial.fluid_module": "Mô-đun chất lỏng",
+  "item.scannable_unofficial.friendly_entity_module": "Mô-đun thực thể thân thiện",
+  "item.scannable_unofficial.hostile_entity_module": "Mô-đun thực thể thù địch",
+  "item.scannable_unofficial.entity_module": "Mô-đun thực thể",
+  "item.scannable_unofficial.block_module": "Mô-đun khối",
+  "item.scannable_unofficial.item_module": "Mô-đun vật phẩm",
+  "item.scannable_unofficial.blank_module": "Mô-đun trống",
+
+  "item.scannable_unofficial.range_module.desc": "Tăng bán kính quét lên 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "Phát hiện các khối chất lỏng như nước và dung nham",
+  "item.scannable_unofficial.friendly_entity_module.desc": "Phát hiện các thực thể thân thiện như động vật và dân làng",
+  "item.scannable_unofficial.hostile_entity_module.desc": "Phát hiện các thực thể thù địch như quái vật",
+  "item.scannable_unofficial.entity_module.desc": "Nhấp chuột phải vào thực thể để cấu hình loại thực thể cần phát hiện",
+  "item.scannable_unofficial.block_module.desc": "Nhấp chuột phải vào khối để cấu hình loại khối cần phát hiện",
+  "item.scannable_unofficial.blank_module.desc": "Mô-đun giữ chỗ không có chức năng",
+  "item.scannable_unofficial.item_module.desc": "Quét các thùng chứa để tìm vật phẩm đã cấu hình",
+
+  "container.scannable_unofficial.scanner": "Máy quét",
+  "container.scannable_unofficial.block_module": "Mô-đun khối",
+  "container.scannable_unofficial.entity_module": "Mô-đun thực thể",
+
+  "gui.scannable_unofficial.scanner.active_modules": "Mô-đun hoạt động",
+  "gui.scannable_unofficial.scanner.inactive_modules": "Không hoạt động",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "Các khối đã chọn:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "Các thực thể đã chọn:",
+  "gui.scannable_unofficial.scanner.item_module.list": "Các vật phẩm đã chọn:",
+
+  "tooltip.scannable_unofficial.scanner.energy": "Năng lượng: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "Chi phí năng lượng: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "Tổng cộng: %s FE mỗi lần quét",
+  "tooltip.scannable_unofficial.scanner.active_modules": "Mô-đun hoạt động",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "Không hoạt động",
+  "tooltip.scannable_unofficial.scanner.block_module.list": "Các khối đã chọn:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "Các thực thể đã chọn:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "Các vật phẩm đã chọn:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cMô-đun vật phẩm chưa được cấu hình vật phẩm! Nhấp chuột phải để mở cấu hình",
+  "message.scannable_unofficial.scanner.no_modules": "Chưa cài đặt mô-đun quét nào!",
+  "message.scannable_unofficial.scanner.no_energy": "Không đủ năng lượng!",
+  "message.scannable_unofficial.scanner.no_free_slots": "Không có ô trống!"
+}

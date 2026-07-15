@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
  * ({@link com.starmao.scannable.network.ItemScanResultData})
  * or from client-side chunk scanning.
  */
-public record ItemScanResult(BlockPos pos, ItemStack item, int totalCount) implements ScanResult {
+public record ItemScanResult(BlockPos pos, ItemStack item, int totalCount, int blockColor) implements ScanResult {
     @Override
     public Vec3 getPosition() {
         return Vec3.atCenterOf(pos);

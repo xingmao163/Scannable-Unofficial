@@ -1,0 +1,49 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "container.scannable_unofficial.scanner": "스캐너",
+  "container.scannable_unofficial.block_module": "블록 모듈",
+  "container.scannable_unofficial.entity_module": "엔티티 모듈",
+
+  "tooltip.scannable_unofficial.scanner.energy": "에너지: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "에너지 소비: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "총계: %s FE/스캔",
+  "tooltip.scannable_unofficial.scanner.active_modules": "활성 모듈",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "비활성",
+
+  "item.scannable_unofficial.range_module.desc": "스캔 반경을 50% 증가시킵니다",
+  "item.scannable_unofficial.fluid_module.desc": "물과 용암 같은 유체 블록을 감지합니다",
+  "item.scannable_unofficial.friendly_entity_module.desc": "동물과 주민 같은 우호 엔티티를 감지합니다",
+  "item.scannable_unofficial.hostile_entity_module.desc": "몬스터 같은 적대 엔티티를 감지합니다",
+  "item.scannable_unofficial.entity_module.desc": "엔티티를 우클릭하여 감지할 특정 엔티티 유형을 설정하세요",
+  "item.scannable_unofficial.block_module.desc": "블록을 우클릭하여 감지할 특정 블록을 설정하세요",
+  "item.scannable_unofficial.blank_module.desc": "기능이 없는 자리표시 모듈",
+  "item.scannable_unofficial.item_module.desc": "설정된 아이템을 보관함에서 스캔합니다",
+
+  "tooltip.scannable_unofficial.scanner.block_module.list": "선택된 블록:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "선택된 엔티티:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "선택된 아이템:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§c아이템 모듈에 아이템이 설정되지 않았습니다! 우클릭하여 설정을 여세요",
+  "message.scannable_unofficial.scanner.no_modules": "스캔 모듈이 설치되지 않았습니다!",
+  "message.scannable_unofficial.scanner.no_energy": "에너지가 부족합니다!",
+  "message.scannable_unofficial.scanner.no_free_slots": "빈 슬롯이 없습니다!",
+
+  "gui.scannable_unofficial.scanner.active_modules": "활성 모듈",
+  "gui.scannable_unofficial.scanner.inactive_modules": "비활성",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "선택된 블록:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "선택된 엔티티:",
+  "gui.scannable_unofficial.scanner.item_module.list": "선택된 아이템:",
+
+  "item.scannable_unofficial.scanner": "스캐너",
+  "item.scannable_unofficial.range_module": "범위 모듈",
+  "item.scannable_unofficial.fluid_module": "유체 모듈",
+  "item.scannable_unofficial.friendly_entity_module": "우호 엔티티 모듈",
+  "item.scannable_unofficial.hostile_entity_module": "적대 엔티티 모듈",
+  "item.scannable_unofficial.entity_module": "엔티티 모듈",
+  "item.scannable_unofficial.block_module": "블록 모듈",
+  "item.scannable_unofficial.item_module": "아이템 모듈",
+  "item.scannable_unofficial.blank_module": "빈 모듈"
+}

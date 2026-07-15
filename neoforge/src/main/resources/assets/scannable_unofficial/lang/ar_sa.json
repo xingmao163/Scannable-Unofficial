@@ -1,0 +1,48 @@
+{
+  "itemGroup.scannable_unofficial": "سكانابل",
+
+  "item.scannable_unofficial.scanner": "الماسح الضوئي",
+  "item.scannable_unofficial.range_module": "وحدة المدى",
+  "item.scannable_unofficial.fluid_module": "وحدة السوائل",
+  "item.scannable_unofficial.friendly_entity_module": "وحدة الكائنات الصديقة",
+  "item.scannable_unofficial.hostile_entity_module": "وحدة الكائنات المعادية",
+  "item.scannable_unofficial.entity_module": "وحدة الكائنات",
+  "item.scannable_unofficial.block_module": "وحدة الكتل",
+  "item.scannable_unofficial.item_module": "وحدة العناصر",
+  "item.scannable_unofficial.blank_module": "وحدة فارغة",
+
+  "item.scannable_unofficial.range_module.desc": "تزيد نصف قطر المسح بنسبة 50%%",
+  "item.scannable_unofficial.fluid_module.desc": "تكتشف كتل السوائل مثل الماء والحمم",
+  "item.scannable_unofficial.friendly_entity_module.desc": "تكتشف الكائنات الصديقة مثل الحيوانات والقرويين",
+  "item.scannable_unofficial.hostile_entity_module.desc": "تكتشف الكائنات المعادية مثل الوحوش",
+  "item.scannable_unofficial.entity_module.desc": "انقر بزر الماوس الأيمن على كائن لتكوين أنواع الكائنات المحددة للكشف",
+  "item.scannable_unofficial.block_module.desc": "انقر بزر الماوس الأيمن على كتلة لتكوين الكتل المحددة للكشف",
+  "item.scannable_unofficial.blank_module.desc": "وحدة عنصر نائب بدون وظيفة",
+  "item.scannable_unofficial.item_module.desc": "يمسح الحاويات بحثاً عن العناصر المكونة",
+
+  "container.scannable_unofficial.scanner": "الماسح الضوئي",
+  "container.scannable_unofficial.block_module": "وحدة الكتل",
+  "container.scannable_unofficial.entity_module": "وحدة الكائنات",
+
+  "gui.scannable_unofficial.scanner.active_modules": "الوحدات النشطة",
+  "gui.scannable_unofficial.scanner.inactive_modules": "غير نشط",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "الكتل المحددة:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "الكائنات المحددة:",
+  "gui.scannable_unofficial.scanner.item_module.list": "العناصر المحددة:",
+
+  "tooltip.scannable_unofficial.scanner.energy": "الطاقة: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "تكلفة الطاقة: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "الإجمالي: %s FE لكل مسح",
+  "tooltip.scannable_unofficial.scanner.active_modules": "الوحدات النشطة",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "غير نشط",
+  "tooltip.scannable_unofficial.scanner.block_module.list": "الكتل المحددة:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "الكائنات المحددة:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "العناصر المحددة:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cوحدة العناصر لا تحتوي على عناصر مكونة! انقر بزر الماوس الأيمن لفتح التكوين",
+  "message.scannable_unofficial.scanner.no_modules": "لم يتم تثبيت وحدات المسح!",
+  "message.scannable_unofficial.scanner.no_energy": "طاقة غير كافية!",
+  "message.scannable_unofficial.scanner.no_free_slots": "لا توجد فتحات فارغة!"
+}

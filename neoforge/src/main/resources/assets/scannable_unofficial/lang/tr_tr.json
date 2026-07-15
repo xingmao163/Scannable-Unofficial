@@ -1,0 +1,48 @@
+{
+  "itemGroup.scannable_unofficial": "Scannable",
+
+  "item.scannable_unofficial.scanner": "Tarayıcı",
+  "item.scannable_unofficial.range_module": "Menzil Modülü",
+  "item.scannable_unofficial.fluid_module": "Akışkan Modülü",
+  "item.scannable_unofficial.friendly_entity_module": "Dost Canlı Modülü",
+  "item.scannable_unofficial.hostile_entity_module": "Düşman Canlı Modülü",
+  "item.scannable_unofficial.entity_module": "Canlı Modülü",
+  "item.scannable_unofficial.block_module": "Blok Modülü",
+  "item.scannable_unofficial.item_module": "Eşya Modülü",
+  "item.scannable_unofficial.blank_module": "Boş Modül",
+
+  "item.scannable_unofficial.range_module.desc": "Tarama yarıçapını %%50 artırır",
+  "item.scannable_unofficial.fluid_module.desc": "Su ve lav gibi akışkan bloklarını algılar",
+  "item.scannable_unofficial.friendly_entity_module.desc": "Hayvanlar ve köylüler gibi dost canlıları algılar",
+  "item.scannable_unofficial.hostile_entity_module.desc": "Canavarlar gibi düşman canlıları algılar",
+  "item.scannable_unofficial.entity_module.desc": "Algılanacak belirli canlı türlerini yapılandırmak için bir canlıya sağ tıklayın",
+  "item.scannable_unofficial.block_module.desc": "Algılanacak belirli blokları yapılandırmak için bir bloğa sağ tıklayın",
+  "item.scannable_unofficial.blank_module.desc": "İşlevi olmayan bir yer tutucu modül",
+  "item.scannable_unofficial.item_module.desc": "Yapılandırılmış eşyalar için kapları tarar",
+
+  "container.scannable_unofficial.scanner": "Tarayıcı",
+  "container.scannable_unofficial.block_module": "Blok Modülü",
+  "container.scannable_unofficial.entity_module": "Canlı Modülü",
+
+  "gui.scannable_unofficial.scanner.active_modules": "Aktif Modüller",
+  "gui.scannable_unofficial.scanner.inactive_modules": "Devre Dışı",
+  "gui.scannable_unofficial.scanner.progress": "%s%%",
+  "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.scanner.block_module.list": "Seçilen bloklar:",
+  "gui.scannable_unofficial.scanner.entity_module.list": "Seçilen canlılar:",
+  "gui.scannable_unofficial.scanner.item_module.list": "Seçilen eşyalar:",
+
+  "tooltip.scannable_unofficial.scanner.energy": "Enerji: %s / %s FE",
+  "tooltip.scannable_unofficial.scanner_module.energy": "Enerji maliyeti: %s FE",
+  "tooltip.scannable_unofficial.scanner.total_energy_cost": "Toplam: tarama başına %s FE",
+  "tooltip.scannable_unofficial.scanner.active_modules": "Aktif Modüller",
+  "tooltip.scannable_unofficial.scanner.inactive_modules": "Devre Dışı",
+  "tooltip.scannable_unofficial.scanner.block_module.list": "Seçilen bloklar:",
+  "tooltip.scannable_unofficial.scanner.entity_module.list": "Seçilen canlılar:",
+  "tooltip.scannable_unofficial.scanner.item_module.list": "Seçilen eşyalar:",
+
+  "message.scannable_unofficial.scanner.no_target_items": "§cEşya modülünde yapılandırılmış eşya yok! Yapılandırmayı açmak için sağ tıklayın",
+  "message.scannable_unofficial.scanner.no_modules": "Hiçbir tarama modülü takılı değil!",
+  "message.scannable_unofficial.scanner.no_energy": "Yeterli enerji yok!",
+  "message.scannable_unofficial.scanner.no_free_slots": "Boş yuva yok!"
+}

@@ -30,13 +30,30 @@ base {
 }
 
 def versionOverrideJava = file("../versions/${targetVersion}/neoforge/src/main/java")
+def sharedOverrideJava = file("../versions/shared/neoforge/src/main/java")
 def versionOverrideResources = file("../versions/${targetVersion}/neoforge/src/main/resources")
+def sharedOverrideResources = file("../versions/shared/neoforge/src/main/resources")
 
-if (versionOverrideJava.exists()) {
+// Version aliases: identical versions share the same override directory
+def versionAliases = ['1.21.3': '1.21.2']
+def resolvedVersion = versionAliases[targetVersion] ?: targetVersion
+def resolvedOverrideJava = file("../versions/${resolvedVersion}/neoforge/src/main/java")
+def resolvedOverrideResources = file("../versions/${resolvedVersion}/neoforge/src/main/resources")
+
+def hasVersionOverride = resolvedOverrideJava.exists()
+def hasSharedOverride = sharedOverrideJava.exists() && targetVersion != '1.21.1'
+def hasSharedResources = sharedOverrideResources.exists() && targetVersion != '1.21.1'
+
+if (hasVersionOverride || hasSharedOverride) {
     def mergedJava = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/java")
     tasks.register('mergeNeoforgeSources', Sync) {
         from 'src/main/java'
-        from versionOverrideJava
+        if (hasSharedOverride) {
+            from sharedOverrideJava
+        }
+        if (hasVersionOverride) {
+            from resolvedOverrideJava
+        }
         into mergedJava
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
@@ -46,13 +63,24 @@ if (versionOverrideJava.exists()) {
     sourceSets.main.java.srcDirs = [file('src/main/java')]
 }
 
-if (versionOverrideResources.exists()) {
+if (hasVersionOverride || hasSharedResources) {
     def mergedResources = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/resources")
     tasks.register('mergeNeoforgeResources', Sync) {
         from 'src/main/resources'
-        from versionOverrideResources
+        if (hasSharedResources) {
+            from sharedOverrideResources
+        }
+        if (hasVersionOverride) {
+            from resolvedOverrideResources
+        }
         into mergedResources
         exclude('**/*.bbmodel')
+        // 1.21.5+: shader JSON pipeline definitions removed; use RenderPipeline in code
+        if (targetVersion == '1.21.6' || targetVersion == '1.21.7' || targetVersion == '1.21.8' || targetVersion == '1.21.9' || targetVersion == '1.21.10' || targetVersion == '1.21.11') {
+            exclude('**/shaders/core/scan_effect.json')
+            exclude('**/shaders/core/scan_result.json')
+            exclude('**/shaders/core/scan_item_result.json')
+        }
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     sourceSets.main.resources.srcDirs = [mergedResources]
@@ -61,6 +89,11 @@ if (versionOverrideResources.exists()) {
     sourceSets.main.resources {
         srcDir('src/main/resources')
         exclude('**/*.bbmodel')
+        if (targetVersion == '1.21.6' || targetVersion == '1.21.7' || targetVersion == '1.21.8' || targetVersion == '1.21.9' || targetVersion == '1.21.10' || targetVersion == '1.21.11') {
+            exclude('**/shaders/core/scan_effect.json')
+            exclude('**/shaders/core/scan_result.json')
+            exclude('**/shaders/core/scan_item_result.json')
+        }
     }
 }
 
