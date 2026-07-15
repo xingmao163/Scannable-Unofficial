@@ -198,6 +198,10 @@ repositories {
         url = "https://maven.neoforged.net/releases"
     }
     maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
         name = "ParchmentMC"
         url = "https://maven.parchmentmc.org"
     }
@@ -220,8 +224,8 @@ dependencies {
     }
 
     if (emi_version) {
-        compileOnly "dev.emi:emi:${emi_version}"
-        localRuntime "dev.emi:emi:${emi_version}"
+        compileOnly "dev.emi:emi-neoforge:${emi_version}"
+        runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
     }
 }
 
