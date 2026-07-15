@@ -19,6 +19,7 @@ ext.neo_version           = vcfg.neo_version
 ext.parchment_minecraft_version = vcfg.parchment_minecraft
 ext.parchment_mappings_version  = vcfg.parchment_mappings
 ext.jei_version           = vcfg.jei_version
+ext.emi_version           = vcfg.emi_version ?: ''
 
 evaluationDependsOn(':common')
 
@@ -184,6 +185,10 @@ configurations {
 
 repositories {
     maven {
+        name = "NeoForged"
+        url = "https://maven.neoforged.net/releases"
+    }
+    maven {
         name = "ParchmentMC"
         url = "https://maven.parchmentmc.org"
     }
@@ -199,6 +204,11 @@ dependencies {
     if (jei_version) {
         compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
         localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    }
+
+    if (emi_version) {
+        compileOnly "dev.emi:emi:${emi_version}"
+        localRuntime "dev.emi:emi:${emi_version}"
     }
 }
 
