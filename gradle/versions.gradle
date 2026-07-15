@@ -41,6 +41,17 @@ ext {
             jei_version             : '20.0.0.4',
             status                  : 'stable',
         ],
+        [
+            name                    : '26.1.2',
+            minecraft_version       : '26.1.2',
+            minecraft_version_range : '[26.1.2]',
+            neo_version             : '26.1.2.71',
+            parchment_minecraft     : '26.1.2',
+            parchment_mappings      : '2025.07.20',
+            jei_version             : '29.6.2.31',
+            emi_version             : '',
+            status                  : 'stable',
+        ],
     ]
 
     stableVersions = supportedVersions.findAll { it.status == 'stable' }
