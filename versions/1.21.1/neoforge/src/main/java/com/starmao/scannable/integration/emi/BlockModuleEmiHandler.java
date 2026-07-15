@@ -57,36 +57,6 @@ public class BlockModuleEmiHandler implements EmiDragDropHandler<ConfigurableBlo
         return true;
     }
 
-    public void render(
-            final ConfigurableBlockScannerModuleContainerScreen screen,
-            final EmiIngredient dragged,
-            final Object draw,
-            final int mouseX,
-            final int mouseY,
-            final float delta) {
-
-        try {
-            // Use reflection to avoid compile-time DrawContext dependency
-            final Class<?> emiDrawContextClass = Class.forName("dev.emi.emi.runtime.EmiDrawContext");
-            final var wrapMethod = emiDrawContextClass.getMethod("wrap", Object.class);
-            final var context = wrapMethod.invoke(null, draw);
-            final var fillMethod = emiDrawContextClass.getMethod("fill", int.class, int.class, int.class, int.class, int.class);
-
-            final int guiLeft = screen.getGuiLeft();
-            final int guiTop = screen.getGuiTop();
-            final int originX = guiLeft + ConfigurableBlockScannerModuleContainerScreen.SLOTS_ORIGIN_X;
-            final int originY = guiTop + ConfigurableBlockScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
-            final int slotSize = ConfigurableBlockScannerModuleContainerScreen.SLOT_SIZE;
-
-            // Highlight all 5 slots
-            for (int i = 0; i < 5; i++) {
-                fillMethod.invoke(context, originX + i * slotSize, originY, slotSize, slotSize, 0x8822BB33);
-            }
-        } catch (final Exception e) {
-            // Silently fail - render is optional for drag-drop to work
-        }
-    }
-
     /**
      * Calculates which slot (0-4) the given screen coordinates fall into.
      * Returns -1 if the coordinates don't fall within any slot.
