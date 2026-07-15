@@ -5,7 +5,7 @@ plugins {
     id 'idea'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 apply from: '../gradle/versions.gradle'
 
@@ -132,7 +132,7 @@ neoForge {
                 }
             }
         }
-        if (targetVersion == '1.21.4') {
+        if (targetVersion == '1.21.4' || targetVersion == '26.1.2') {
             serverData {
                 serverData()
                 programArguments.addAll '--mod', project.mod_id, '--all',
@@ -160,17 +160,18 @@ neoForge {
         }
     }
 
-    if (targetVersion == '1.21.4') {
-        tasks.register('runData') {
-            dependsOn 'runClientData', 'runServerData'
-            description = 'Run both client and server data generators'
-        }
-    }
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)
             sourceSet(project(':common').sourceSets.main)
         }
+    }
+}
+
+if (targetVersion == '1.21.4' || targetVersion == '26.1.2') {
+    tasks.register('runData') {
+        dependsOn 'runClientData', 'runServerData'
+        description = 'Run both client and server data generators'
     }
 }
 
