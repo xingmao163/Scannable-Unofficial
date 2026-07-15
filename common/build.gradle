@@ -5,6 +5,18 @@ plugins {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+repositories {
+    maven {
+        name = "Aliyun Public"
+        url = "https://maven.aliyun.com/repository/public"
+    }
+    maven {
+        name = "Aliyun Central"
+        url = "https://maven.aliyun.com/repository/central"
+    }
+    mavenCentral()
+}
+
 apply from: '../gradle/versions.gradle'
 
 def targetVersion = findProperty('targetVersion') ?: '1.21.1'
