@@ -63,14 +63,6 @@
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
-### 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-**Original Mod**: Scannable by Florian "Sangar" Nücke (MIT License)
-**Port**: Scannable-Unofficial by starmao (MIT License)
-**Assets**: CC0 1.0 Universal (Public Domain)
-
 ### 🙏 Acknowledgments
 
 - Original Scannable mod by [Florian "Sangar" Nücke](https://github.com/MightyPirates)
@@ -116,14 +108,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 🤝 贡献
 
 欢迎贡献！请随时提交问题和拉取请求。
-
-### 📄 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
-
-**原始模组**：Florian "Sangar" Nücke 的 Scannable（MIT 许可证）
-**移植**：starmao 的 Scannable-Unofficial（MIT 许可证）
-**资源**：CC0 1.0 通用（公共领域）
 
 ### 🙏 致谢
 
