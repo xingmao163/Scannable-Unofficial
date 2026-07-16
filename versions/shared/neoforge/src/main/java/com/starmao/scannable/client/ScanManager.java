@@ -2,6 +2,7 @@ package com.starmao.scannable.client;
 
 import com.starmao.scannable.client.scanning.ItemScanResult;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import com.starmao.scannable.common.network.data.ScanResultEntry;
