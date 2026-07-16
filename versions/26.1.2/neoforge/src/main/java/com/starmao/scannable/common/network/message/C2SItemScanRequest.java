@@ -106,7 +106,9 @@ public record C2SItemScanRequest() implements CustomPacketPayload {
             final List<ItemScanResultData> results = ItemScannerService.scan(
                     player.level(), center, radius, targetItemIds);
 
-            Scannable.LOGGER.info("[ItemScanner] Server scan complete: {} result(s)", results.size());
+            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+                Scannable.LOGGER.info("[ItemScanner] Server scan complete: {} result(s)", results.size());
+            }
 
             // Send results back to the client
             PacketDistributor.sendToPlayer(player, new S2CItemScanResult(center, results));

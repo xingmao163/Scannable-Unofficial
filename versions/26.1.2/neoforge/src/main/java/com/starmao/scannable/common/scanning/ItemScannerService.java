@@ -121,8 +121,10 @@ public final class ItemScannerService {
             }
         }
 
-        Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
-                chunksChecked, containersFound, results.size());
+        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
+                    chunksChecked, containersFound, results.size());
+        }
 
         return results;
     }

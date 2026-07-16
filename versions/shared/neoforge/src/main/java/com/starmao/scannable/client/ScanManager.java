@@ -1,29 +1,20 @@
 package com.starmao.scannable.client;
 
 import com.starmao.scannable.client.scanning.ItemScanResult;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.data.ScanResultEntry;
-import com.starmao.scannable.common.config.ModConfig;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.config.ModConfig;
+import com.mojang.blaze3d.ProjectionType;
 import com.starmao.scannable.api.ScanResult;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.api.ScanResultProvider;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.api.ScanResultRenderContext;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.api.ScannerModule;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.Scannable;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -52,7 +43,7 @@ public final class ScanManager {
     private static final ByteBufferBuilder RENDER_BUFFER = new ByteBufferBuilder(256);
 
     private static float computeTargetRadius() {
-        return Minecraft.getInstance().options.renderDistance().get();
+        return Minecraft.getInstance().gameRenderer.getRenderDistance();
     }
 
     public static int computeScanGrowthDuration() {
@@ -312,27 +303,45 @@ public final class ScanManager {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
 
+            Scannable.LOGGER.info("[renderGui] {} providers in renderingResults, worldVMStack={}",
+                    renderingResults.size(), worldViewModelStack != null ? "set" : "null");
+
+            RenderSystem.backupProjectionMatrix();
+            RenderSystem.setProjectionMatrix(worldProjectionMatrix, ProjectionType.ORTHOGRAPHIC);
+            RenderSystem.getModelViewStack().pushMatrix();
+            RenderSystem.getModelViewStack().identity();
+
             render(ScanResultRenderContext.GUI, partialTick, worldViewModelStack, worldProjectionMatrix);
+
+            RenderSystem.getModelViewStack().popMatrix();
+            RenderSystem.restoreProjectionMatrix();
         }
     }
 
     private static void render(ScanResultRenderContext context, float partialTicks, PoseStack poseStack, Matrix4f projectionMatrix) {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vec3 pos = camera.position();
+        Vec3 pos = camera.getPosition();
 
         Frustum frustum = new Frustum(poseStack.last().pose(), projectionMatrix);
         frustum.prepare(pos.x(), pos.y(), pos.z());
+
+        RenderSystem.disableDepthTest();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
 
         poseStack.pushPose();
         poseStack.translate(-pos.x, -pos.y, -pos.z);
 
         MultiBufferSource.BufferSource renderTypeBuffer = MultiBufferSource.immediate(RENDER_BUFFER);
+        int totalRendered = 0;
+        int totalAfterFrustum = 0;
         try {
             for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
                 for (ScanResult result : entry.getValue()) {
+                    totalRendered++;
                     AABB bounds = result.getRenderBounds();
                     if (bounds == null || frustum.isVisible(bounds)) {
                         renderingList.add(result);
+                        totalAfterFrustum++;
                     }
                 }
 
@@ -345,8 +354,12 @@ public final class ScanManager {
             renderingList.clear();
         }
 
+        Scannable.LOGGER.info("[render] context={}, totalResults={}, afterFrustum={}, mvStackTop={}", context, totalRendered, totalAfterFrustum, RenderSystem.getModelViewMatrix());
+
         renderTypeBuffer.endBatch();
         poseStack.popPose();
+
+        RenderSystem.enableDepthTest();
     }
 
     // ---- Backwards compat methods for old renderers ---- //

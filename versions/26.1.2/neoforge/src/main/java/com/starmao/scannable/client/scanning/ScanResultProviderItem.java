@@ -92,9 +92,11 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             return;
         }
 
-        Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
-        for (Item target : targetItems) {
-            Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
+        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
+            for (Item target : targetItems) {
+                Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
+            }
         }
 
         // Calculate chunk sections that intersect the scan sphere
@@ -212,7 +214,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     @Override
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
-        Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
+        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
+        }
         for (ItemScanResult result : results) {
             BlockState blockState = level.getBlockState(result.pos());
             int color = blockState.getMapColor(level, result.pos()).col;

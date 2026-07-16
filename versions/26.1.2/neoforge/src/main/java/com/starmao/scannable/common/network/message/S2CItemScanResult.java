@@ -63,7 +63,9 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
     public static void handle(final S2CItemScanResult msg, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!ctx.player().level().isClientSide()) return;
-            Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
+            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+                Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
+            }
             com.starmao.scannable.client.ScanManager.setServerItemResults(msg.center, msg.results);
         });
     }

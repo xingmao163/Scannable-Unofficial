@@ -1,29 +1,18 @@
 package com.starmao.scannable.common.item;
 
 import com.starmao.scannable.client.ScanManager;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.client.audio.SoundManager;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.config.Constants;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.config.Strings;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.container.ScannerContainerMenu;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.inventory.ScannerContainer;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.energy.ItemEnergyStorage;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.scanning.ItemScannerService;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.common.config.ModConfig;
 import net.minecraft.ChatFormatting;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,85 +27,78 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public final class ScannerItem extends ModItem {
     public static boolean isScanner(ItemStack stack) {
         return stack.getItem() instanceof ScannerItem;
     }
 
-    public ScannerItem(Properties properties) {
-        super(properties.stacksTo(1));
+    public ScannerItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, display, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
 
-        // Energy bar info
         ItemEnergyStorage.of(stack).ifPresent(energy ->
-                tooltip.accept(Strings.energyStorage(energy.getEnergyStored(), energy.getMaxEnergyStored())));
+                tooltip.add(Strings.energyStorage(energy.getEnergyStored(), energy.getMaxEnergyStored())));
 
-        // — Installed modules overview —
         ScannerContainer container = ScannerContainer.of(stack);
 
-        // Active modules list
         Container activeModules = container.getActiveModules();
         boolean hasActive = false;
         for (int i = 0; i < activeModules.getContainerSize(); i++) {
             ItemStack module = activeModules.getItem(i);
             if (module.isEmpty()) continue;
             if (!hasActive) {
-                tooltip.accept(Component.empty());
-                tooltip.accept(Component.translatable("tooltip.scannable_unofficial.scanner.active_modules")
+                tooltip.add(Component.empty());
+                tooltip.add(Component.translatable("tooltip.scannable_unofficial.scanner.active_modules")
                         .withStyle(ChatFormatting.GRAY, ChatFormatting.UNDERLINE));
                 hasActive = true;
             }
             int cost = ModuleHelper.getEnergyCost(module);
             Component name = module.getHoverName().copy().withStyle(ChatFormatting.WHITE);
             if (cost > 0) {
-                tooltip.accept(Component.literal(" ")
+                tooltip.add(Component.literal(" ")
                         .append(name)
                         .append(Component.literal(" (").withStyle(ChatFormatting.DARK_GRAY))
                         .append(Component.literal(String.valueOf(cost)).withStyle(ChatFormatting.GREEN))
                         .append(Component.literal(" FE)").withStyle(ChatFormatting.DARK_GRAY)));
             } else {
-                tooltip.accept(Component.literal(" ").append(name));
+                tooltip.add(Component.literal(" ").append(name));
             }
         }
 
-        // Inactive (stored) modules list
         Container inactiveModules = container.getInactiveModules();
         boolean hasInactive = false;
         for (int i = 0; i < inactiveModules.getContainerSize(); i++) {
             ItemStack module = inactiveModules.getItem(i);
             if (module.isEmpty()) continue;
             if (!hasInactive) {
-                tooltip.accept(Component.empty());
-                tooltip.accept(Component.translatable("tooltip.scannable_unofficial.scanner.inactive_modules")
+                tooltip.add(Component.empty());
+                tooltip.add(Component.translatable("tooltip.scannable_unofficial.scanner.inactive_modules")
                         .withStyle(ChatFormatting.GRAY, ChatFormatting.UNDERLINE));
                 hasInactive = true;
             }
-            tooltip.accept(Component.literal(" ")
+            tooltip.add(Component.literal(" ")
                     .append(module.getHoverName().copy().withStyle(ChatFormatting.DARK_GRAY)));
         }
 
-        // Total cost per scan summary
         if (hasActive) {
             int totalCost = 0;
             for (int i = 0; i < activeModules.getContainerSize(); i++) {
                 totalCost += ModuleHelper.getEnergyCost(activeModules.getItem(i));
             }
             if (totalCost <= 0) totalCost = 75;
-            tooltip.accept(Component.empty());
-            tooltip.accept(Strings.totalEnergyCost(totalCost));
+            tooltip.add(Component.empty());
+            tooltip.add(Strings.totalEnergyCost(totalCost));
         }
     }
 
@@ -161,7 +143,7 @@ public final class ScannerItem extends ModItem {
             List<ItemStack> modules = new ArrayList<>();
             if (!collectModules(stack, modules)) {
                 if (!level.isClientSide()) {
-                    player.sendOverlayMessage(Strings.MESSAGE_NO_SCAN_MODULES);
+                    player.displayClientMessage(Strings.MESSAGE_NO_SCAN_MODULES, true);
                 }
                 player.getCooldowns().addCooldown(stack, 10);
                 return InteractionResult.FAIL;
@@ -169,7 +151,7 @@ public final class ScannerItem extends ModItem {
 
             if (!tryConsumeEnergy(player, stack, modules, true)) {
                 if (!level.isClientSide()) {
-                    player.sendOverlayMessage(Strings.MESSAGE_NOT_ENOUGH_ENERGY);
+                    player.displayClientMessage(Strings.MESSAGE_NOT_ENOUGH_ENERGY, true);
                 }
                 player.getCooldowns().addCooldown(stack, 10);
                 return InteractionResult.FAIL;
@@ -177,8 +159,6 @@ public final class ScannerItem extends ModItem {
 
             player.startUsingItem(hand);
             if (level.isClientSide()) {
-                // Client-side: only scan with non-item modules (range, entity, block, etc.)
-                // Item scanner results arrive from the server after the scan completes.
                 final List<ItemStack> nonItemModules = new ArrayList<>();
                 for (final ItemStack m : modules) {
                     if (!(m.getItem() instanceof ConfigurableItemScannerModuleItem)) {
@@ -214,8 +194,7 @@ public final class ScannerItem extends ModItem {
             ScanManager.cancelScan();
             SoundManager.stopChargingSound();
         }
-        super.releaseUsing(stack, level, entity, timeLeft);
-        return true;
+        return super.releaseUsing(stack, level, entity, timeLeft);
     }
 
     @Override
@@ -241,9 +220,6 @@ public final class ScannerItem extends ModItem {
         return stack;
     }
 
-    /**
-     * Client-side scan finalisation: plays sounds and updates the scan renderer.
-     */
     private static void finishScanClient(final LivingEntity entity, final ItemStack stack,
                                          final List<ItemStack> modules, final boolean hasEnergy) {
         SoundManager.stopChargingSound();
@@ -255,16 +231,11 @@ public final class ScannerItem extends ModItem {
         }
     }
 
-    /**
-     * Server-side scan finalisation: reads the item scanner module configuration,
-     * executes the scan via {@link ItemScannerService}, and sends results back
-     * to the requesting client.
-     */
     private static void finishScanServer(final ServerPlayer player, final ItemStack stack, final Level level) {
         final ScannerContainer scannerContainer = ScannerContainer.of(stack);
         final var activeModules = scannerContainer.getActiveModules();
 
-        List<Identifier> targetItemIds = List.of();
+        List<ResourceLocation> targetItemIds = List.of();
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             final ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
@@ -291,8 +262,6 @@ public final class ScannerItem extends ModItem {
         }
     }
 
-    // ---- Energy ---- //
-
     private static float getRelativeEnergy(ItemStack stack) {
         return ItemEnergyStorage.of(stack)
                 .map(storage -> storage.getEnergyStored() / (float) storage.getMaxEnergyStored())
@@ -314,8 +283,6 @@ public final class ScannerItem extends ModItem {
         long extracted = energyStorage.get().extractEnergy(totalCost, simulate);
         return extracted >= totalCost;
     }
-
-    // ---- Module collection ---- //
 
     private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
         ScannerContainer container = ScannerContainer.of(scanner);
