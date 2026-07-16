@@ -3,13 +3,14 @@ loaderVersion="${loader_version_range}"
 license="${mod_license}"
 
 [[mods]]
-displayName="${mod_name}"
-version="${mod_version}"
 modId="${mod_id}"
-updateJSONURL = "https://api.modrinth.com/updates/scannable-unofficial/forge_updates.json?neoforge=only"
-credits="Original Scannable by Florian 'Sangar' Nucke (MightyPirates)"
+version="${mod_version}"
+displayName="${mod_name}"
 authors="star_mao"
-description='''Unofficial Scannable'''
+credits="Original Scannable by Florian 'Sangar' Nucke (MightyPirates)"
+description='''
+Unofficial Scannable
+'''
 
 [[dependencies.${mod_id}]]
     modId="neoforge"
