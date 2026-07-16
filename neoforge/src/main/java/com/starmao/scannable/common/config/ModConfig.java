@@ -7,6 +7,12 @@ import java.util.List;
 public final class ModConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
+    // ---- Debug ----
+
+    public static final ModConfigSpec.BooleanValue DEBUG_LOG_ITEM_SCANNER = BUILDER
+            .comment("Enable debug logging for item scanner operations (scanning process and statistics).")
+            .define("debug.logItemScanner", false);
+
     // ---- Scanner ----
 
     public static final ModConfigSpec.BooleanValue SCANNER_USE_ENERGY = BUILDER

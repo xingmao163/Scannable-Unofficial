@@ -266,7 +266,9 @@ public final class ScannerItem extends ModItem {
             final List<ItemScanResultData> results = ItemScannerService.scan(
                     level, center, scanRadius, targetItemIds);
 
-            Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
+            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+                Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
+            }
 
             if (!results.isEmpty()) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(

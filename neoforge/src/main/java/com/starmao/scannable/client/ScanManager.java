@@ -1,7 +1,9 @@
 package com.starmao.scannable.client;
 
+import com.starmao.scannable.Scannable;
 import com.starmao.scannable.client.scanning.ItemScanResult;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import com.starmao.scannable.common.network.data.ScanResultEntry;
@@ -136,7 +138,9 @@ public final class ScanManager {
         final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
         pendingResults.put(provider, results);
 
-        com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
+        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
+        }
     }
 
     public static void updateScan(Entity entity, boolean finish) {
