@@ -7,16 +7,15 @@ modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
 authors="star_mao"
-credits="Original Scannable by Florian 'Sangar' Nucke (MightyPirates), licensed under MIT"
+credits="Original Scannable by Florian 'Sangar' Nucke (MightyPirates)"
 description='''
-Unofficial NeoForge port of Scannable — a handheld scanner mod with swappable modules.
-Original mod by Florian "Sangar" Nucke (MightyPirates). MIT licensed.
+Unofficial Scannable
 '''
 
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"
-    versionRange="[${neo_version},)"
+    versionRange="${neo_version_range}"
     ordering="NONE"
     side="BOTH"
 
