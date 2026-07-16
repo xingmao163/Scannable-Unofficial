@@ -3,6 +3,7 @@ package com.starmao.scannable.common.item;
 import com.starmao.scannable.client.ScanManager;
 import com.starmao.scannable.client.audio.SoundManager;
 import com.starmao.scannable.common.config.Constants;
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.container.ScannerContainerMenu;
 import com.starmao.scannable.common.inventory.ScannerContainer;
