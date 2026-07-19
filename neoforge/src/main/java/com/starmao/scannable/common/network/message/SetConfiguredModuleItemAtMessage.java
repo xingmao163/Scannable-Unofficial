@@ -8,6 +8,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+/**
+ * C2S payload: set a configured target at a specific index in a module's list.
+ * <p>Sent when the player clicks an empty slot (or uses JEI ghost-drag) in
+ * the config GUI. The server resolves the registry name and updates the item.
+ */
 public record SetConfiguredModuleItemAtMessage(int windowId, int index, ResourceLocation value) implements CustomPacketPayload {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "set_module_item");
     public static final Type<SetConfiguredModuleItemAtMessage> TYPE = new Type<>(ID);

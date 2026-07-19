@@ -3,7 +3,6 @@ package com.starmao.scannable.common.network.message;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.common.config.ModConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

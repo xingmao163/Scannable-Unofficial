@@ -3,7 +3,6 @@ package com.starmao.scannable.common.scanning;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.common.config.ModConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;

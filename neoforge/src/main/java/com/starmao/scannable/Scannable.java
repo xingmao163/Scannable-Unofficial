@@ -60,6 +60,11 @@ public final class Scannable {
         // --- Client-only setup ---
         if (FMLEnvironment.dist.isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
+            modContainer.registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mc, screen) ->
+                            new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, screen)
+            );
         }
 
         // --- Data generation ---

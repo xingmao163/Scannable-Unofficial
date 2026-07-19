@@ -1,3 +1,12 @@
+/**
+ * Base screen for configurable scanner module GUIs (block, entity, item).
+ * <p>Renders a list of configured target entries with slots, supports
+ * clicking a slot to configure via JEI ghost-drag or direct slot interaction.
+ * Subclasses supply the specific item type, rendering, and network handling.
+ *
+ * @param <TContainer> the container menu type
+ * @param <TItem>      the configured item type (e.g. {@link net.minecraft.world.level.block.Block})
+ */
 package com.starmao.scannable.client.gui;
 
 import com.starmao.scannable.common.container.AbstractModuleContainerMenu;

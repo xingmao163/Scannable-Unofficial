@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "scanner_module",
+  "ingredients": [
+    {
+      "item": "scannable_unofficial:blank_module"
+    },
+    {
+      "item": "minecraft:lightning_rod"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "scannable_unofficial:charger_module"
+  }
+}

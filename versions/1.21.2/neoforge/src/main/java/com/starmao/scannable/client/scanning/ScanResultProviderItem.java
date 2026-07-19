@@ -398,7 +398,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                     return Component.literal(sb.toString());
                 },
                 result -> true,
-                MAX_ICONS, ICON_CONE_DOT);
+                4, 0.999f);
     }
 
     // ====================================================================

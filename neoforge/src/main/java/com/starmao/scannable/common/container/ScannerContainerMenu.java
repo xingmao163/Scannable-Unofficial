@@ -10,6 +10,12 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+/**
+ * Container menu for the main scanner GUI.
+ * <p>Layout: 3 active module slots, 6 inactive module slots, plus the player's
+ * inventory and hotbar. The scanner item itself is protected from being moved
+ * into its own slots.
+ */
 public final class ScannerContainerMenu extends AbstractContainerMenu {
     public static ScannerContainerMenu create(int windowId, Inventory inventory, FriendlyByteBuf buffer) {
         InteractionHand hand = buffer.readEnum(InteractionHand.class);
@@ -43,7 +49,7 @@ public final class ScannerContainerMenu extends AbstractContainerMenu {
         // Player inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, row * 18 + 77));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
         for (int slot = 0; slot < 9; ++slot) {
@@ -66,58 +72,23 @@ public final class ScannerContainerMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot from = slots.get(index);
-        ItemStack stack = from.getItem().copy();
-        if (stack.isEmpty()) return ItemStack.EMPTY;
+        Slot slot = slots.get(index);
+        if (!slot.hasItem()) return ItemStack.EMPTY;
 
-        boolean intoPlayerInventory = from.container != player.getInventory();
-        ItemStack fromStack = from.getItem();
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
 
-        int step, begin;
-        if (intoPlayerInventory) {
-            step = -1;
-            begin = slots.size() - 1;
+        // If from scanner module area, move to inventory
+        if (index < 9) {
+            if (!moveItemStackTo(stack, 9, 45, true)) return ItemStack.EMPTY;
         } else {
-            step = 1;
-            begin = 0;
+            // If from inventory, try to move to scanner
+            if (!moveItemStackTo(stack, 0, 9, false)) return ItemStack.EMPTY;
         }
 
-        // Stack existing items
-        if (fromStack.getMaxStackSize() > 1) {
-            for (int i = begin; i >= 0 && i < slots.size(); i += step) {
-                Slot into = slots.get(i);
-                if (into.container == from.container) continue;
+        if (stack.isEmpty()) slot.set(ItemStack.EMPTY);
+        else slot.setChanged();
 
-                ItemStack intoStack = into.getItem();
-                if (intoStack.isEmpty()) continue;
-                if (!ItemStack.isSameItemSameComponents(fromStack, intoStack)) continue;
-
-                int maxSizeInSlot = Math.min(fromStack.getMaxStackSize(), into.getMaxStackSize(stack));
-                int spaceInSlot = maxSizeInSlot - intoStack.getCount();
-                if (spaceInSlot <= 0) continue;
-
-                int itemsMoved = Math.min(spaceInSlot, fromStack.getCount());
-                if (itemsMoved <= 0) continue;
-
-                intoStack.grow(from.remove(itemsMoved).getCount());
-                into.setChanged();
-                if (from.getItem().isEmpty()) break;
-            }
-        }
-
-        // Move to empty slots
-        for (int i = begin; i >= 0 && i < slots.size(); i += step) {
-            if (from.getItem().isEmpty()) break;
-            Slot into = slots.get(i);
-            if (into.container == from.container) continue;
-            if (into.hasItem()) continue;
-            if (!into.mayPlace(fromStack)) continue;
-
-            int maxSizeInSlot = Math.min(fromStack.getMaxStackSize(), into.getMaxStackSize(fromStack));
-            int itemsMoved = Math.min(maxSizeInSlot, fromStack.getCount());
-            into.set(from.remove(itemsMoved));
-        }
-
-        return from.getItem().getCount() < stack.getCount() ? from.getItem() : ItemStack.EMPTY;
+        return result;
     }
 }

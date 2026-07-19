@@ -5,7 +5,16 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 
 import java.util.Optional;
 
+/**
+ * Implementation of {@link ItemEnergyStorage} that delegates to the NeoForge
+ * {@link net.neoforged.neoforge.energy.IEnergyStorage} capability.
+ * <p>Adapts the capability's int-based API to long-based for consistency.
+ */
 public final class ItemEnergyStorageImpl {
+    /**
+     * Wraps the NeoForge energy capability of the given stack in an
+     * {@link ItemEnergyStorage} interface, if available.
+     */
     public static Optional<ItemEnergyStorage> of(ItemStack container) {
         return Optional.ofNullable(container.getCapability(Capabilities.EnergyStorage.ITEM))
                 .map(capability -> new ItemEnergyStorage() {

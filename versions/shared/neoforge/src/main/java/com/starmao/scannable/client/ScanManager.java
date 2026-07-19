@@ -89,7 +89,7 @@ public final class ScanManager {
     public static void beginScan(Player player, List<ItemStack> stacks) {
         cancelScan();
 
-        float scanRadius = 64;
+        float scanRadius = ModConfig.SCANNER_BASE_RADIUS.get();
 
         List<ScannerModule> modules = new ArrayList<>();
         for (ItemStack stack : stacks) {

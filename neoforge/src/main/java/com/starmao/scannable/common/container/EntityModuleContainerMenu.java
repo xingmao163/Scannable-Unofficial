@@ -9,6 +9,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
+/**
+ * Container menu for the configurable entity scanner module configuration screen.
+ * <p>Handles adding/removing entity types from the module's target list via
+ * {@link ConfigurableEntityScannerModuleItem}.
+ */
 public class EntityModuleContainerMenu extends AbstractModuleContainerMenu {
     public static EntityModuleContainerMenu create(int windowId, Inventory inventory, FriendlyByteBuf buffer) {
         InteractionHand hand = buffer.readEnum(InteractionHand.class);

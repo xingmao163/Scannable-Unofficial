@@ -1,6 +1,11 @@
 {
   "itemGroup.scannable_unofficial": "扫描器",
 
+  "container.scannable_unofficial.scanner": "扫描器",
+  "container.scannable_unofficial.block_module": "方块模块",
+  "container.scannable_unofficial.entity_module": "实体模块",
+  "container.scannable_unofficial.item_module": "物品模块",
+
   "item.scannable_unofficial.scanner": "扫描器",
   "item.scannable_unofficial.range_module": "模块：范围",
   "item.scannable_unofficial.fluid_module": "模块：流体",
@@ -10,6 +15,8 @@
   "item.scannable_unofficial.block_module": "模块：方块",
   "item.scannable_unofficial.item_module": "模块：物品",
   "item.scannable_unofficial.blank_module": "空白模块",
+  "item.scannable_unofficial.charger_module": "模块：充能",
+
 
   "tooltip.scannable_unofficial.scanner.energy": "能量：%s / %s FE",
   "tooltip.scannable_unofficial.scanner_module.energy": "能量消耗：%s FE",
@@ -25,6 +32,8 @@
   "item.scannable_unofficial.block_module.desc": "右击方块配置要检测的方块类型",
   "item.scannable_unofficial.blank_module.desc": "一个无功能的占位模块",
   "item.scannable_unofficial.item_module.desc": "扫描容器中是否有指定物品",
+  "item.scannable_unofficial.charger_module.desc": "每隔一段时间自动为扫描器补充能量",
+
 
   "tooltip.scannable_unofficial.scanner.block_module.list": "已选择的方块：",
   "tooltip.scannable_unofficial.scanner.entity_module.list": "已选择的实体：",
@@ -41,5 +50,47 @@
   "gui.scannable_unofficial.scanner.overlay.distance": "%s（%sm）",
   "gui.scannable_unofficial.scanner.block_module.list": "方块",
   "gui.scannable_unofficial.scanner.entity_module.list": "实体",
-  "gui.scannable_unofficial.scanner.item_module.list": "物品"
+  "gui.scannable_unofficial.scanner.item_module.list": "物品",
+
+  "scannable_unofficial.configuration.debug": "调试",
+  "scannable_unofficial.configuration.logItemScanner": "调试日志开关",
+
+  "scannable_unofficial.configuration.scanner": "扫描器",
+  "scannable_unofficial.configuration.useEnergy": "消耗能量",
+  "scannable_unofficial.configuration.allowExternalCharging": "允许外部充能",
+  "scannable_unofficial.configuration.energyCapacity": "能量容量",
+  "scannable_unofficial.configuration.baseScanRadius": "基础扫描半径",
+  "scannable_unofficial.configuration.resultStayDuration": "目标高亮时间",
+
+  "scannable_unofficial.configuration.energy": "能量消耗",
+  "scannable_unofficial.configuration.rangeEnergy": "范围模块",
+  "scannable_unofficial.configuration.fluidEnergy": "流体模块",
+  "scannable_unofficial.configuration.friendlyEnergy": "友好生物模块",
+  "scannable_unofficial.configuration.hostileEnergy": "敌对生物模块",
+  "scannable_unofficial.configuration.blockEnergy": "方块模块",
+  "scannable_unofficial.configuration.entityEnergy": "实体模块",
+  "scannable_unofficial.configuration.itemEnergy": "物品模块",
+
+  "scannable_unofficial.configuration.range": "范围修正",
+  "scannable_unofficial.configuration.rangeRange": "范围模块",
+  "scannable_unofficial.configuration.fluidRange": "流体模块",
+  "scannable_unofficial.configuration.blockRange": "方块模块",
+
+  "scannable_unofficial.configuration.charging": "充能",
+  "scannable_unofficial.configuration.chargingInterval": "充能间隔",
+  "scannable_unofficial.configuration.chargingAmount": "充能能量",
+
+  "scannable_unofficial.configuration.ignored.blocks": "忽略的方块",
+  "scannable_unofficial.configuration.ignored.blockTags": "忽略的方块标签",
+  "scannable_unofficial.configuration.ignored.fluidsTags": "忽略的流体标签",
+
+  "scannable_unofficial.configuration.colors": "颜色",
+  "scannable_unofficial.configuration.blocksColors": "方块颜色",
+  "scannable_unofficial.configuration.blockTagsColors": "方块标签颜色",
+  "scannable_unofficial.configuration.fluidsColors": "流体颜色",
+  "scannable_unofficial.configuration.fluidTagsColors": "流体标签颜色",
+
+  "scannable_unofficial.configuration.misc": "杂项",
+  "scannable_unofficial.configuration.hideBrokenBlocks": "破坏方块隐藏高亮",
+  "scannable_unofficial.configuration.itemScanColor": "物品模块高亮颜色"
 }

@@ -34,10 +34,10 @@ import java.util.Map;
 public final class ItemScannerService {
 
     /**
-     * Execute a scan for the given items within a radius around the center position.
+     * Execute a scan for the given items within a radius around the centre position.
      *
      * @param level    The level to scan in (server-side)
-     * @param center   The center position of the scan
+     * @param center   The centre position of the scan
      * @param radius   The scan radius in blocks
      * @param targetItemIds Registry names of items to search for
      * @return List of scan results (non-empty containers with matching items)
@@ -58,67 +58,59 @@ public final class ItemScannerService {
         }
         if (targetItems.isEmpty()) return results;
 
-        final double sqRadius = (double) radius * radius;
+        final BlockPos centrePos = BlockPos.containing(center);
+        final int radiusSq = radius * radius;
 
-        // Only scan loaded chunks within range
-        final int minCX = (int) Math.floor((center.x - radius) / 16);
-        final int maxCX = (int) Math.ceil((center.x + radius) / 16);
-        final int minCZ = (int) Math.floor((center.z - radius) / 16);
-        final int maxCZ = (int) Math.ceil((center.z + radius) / 16);
+        // Iterate in a cubic bounding box around the player
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    final BlockPos pos = centrePos.offset(dx, dy, dz);
+                    if (centrePos.distSqr(pos) > radiusSq) continue;
 
-        int chunksChecked = 0;
-        int containersFound = 0;
+                    final BlockEntity be = level.getBlockEntity(pos);
+                    if (be == null) continue;
 
-        for (int cx = minCX; cx <= maxCX; cx++) {
-            for (int cz = minCZ; cz <= maxCZ; cz++) {
-                if (!level.hasChunk(cx, cz)) continue;
-                chunksChecked++;
+                    final IItemHandler handler = level.getCapability(
+                            Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
+                    if (handler == null) continue;
 
-                // Iterate block entities in the chunk (much more efficient
-                // than scanning every block position)
-                final var chunk = level.getChunk(cx, cz);
-                for (final BlockEntity be : chunk.getBlockEntities().values()) {
-                    final BlockPos pos = be.getBlockPos();
-
-                    // Quick distance check
-                    final double dx = pos.getX() + 0.5 - center.x;
-                    final double dy = pos.getY() + 0.5 - center.y;
-                    final double dz = pos.getZ() + 0.5 - center.z;
-                    if (dx * dx + dy * dy + dz * dz > sqRadius) continue;
-
-                    // Check for item handler capability
-                    IItemHandler itemHandler = null;
-                    for (final Direction dir : Direction.values()) {
-                        itemHandler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, dir);
-                        if (itemHandler != null) break;
-                    }
-                    if (itemHandler == null) continue;
-                    containersFound++;
-
-                    // Scan inventory for target items — track each item type separately
-                    final Map<Item, Integer> itemCounts = new HashMap<>();
-                    for (int slot = 0; slot < itemHandler.getSlots(); slot++) {
-                        final ItemStack slotStack = itemHandler.getStackInSlot(slot);
-                        if (slotStack.isEmpty()) continue;
-                        if (targetItems.contains(slotStack.getItem())) {
-                            itemCounts.merge(slotStack.getItem(), slotStack.getCount(), Integer::sum);
-                        }
-                    }
-
-                    for (final Map.Entry<Item, Integer> entry : itemCounts.entrySet()) {
-                        final ResourceLocation matchedId = BuiltInRegistries.ITEM.getKey(entry.getKey());
-                        results.add(new ItemScanResultData(pos, matchedId, entry.getValue()));
-                    }
+                    scanHandler(handler, targetItems, pos, results);
                 }
             }
         }
 
         if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
-                    chunksChecked, containersFound, results.size());
+            Scannable.LOGGER.info("[ItemScannerService] Scanned radius {} around {} ({} chunk(s)), found {} result(s)",
+                    radius, centrePos, results.size());
         }
 
         return results;
+    }
+
+    private static void scanHandler(
+            final IItemHandler handler,
+            final List<Item> targetItems,
+            final BlockPos pos,
+            final List<ItemScanResultData> results) {
+
+        final Map<Item, Integer> matches = new HashMap<>();
+        for (int slot = 0; slot < handler.getSlots(); slot++) {
+            final ItemStack stack = handler.getStackInSlot(slot);
+            if (stack.isEmpty()) continue;
+            if (targetItems.contains(stack.getItem())) {
+                matches.merge(stack.getItem(), stack.getCount(), Integer::sum);
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            for (final Map.Entry<Item, Integer> entry : matches.entrySet()) {
+                results.add(new ItemScanResultData(
+                        pos,
+                        BuiltInRegistries.ITEM.getKey(entry.getKey()),
+                        entry.getValue()));
+            }
+        }
     }
 
     private ItemScannerService() {}

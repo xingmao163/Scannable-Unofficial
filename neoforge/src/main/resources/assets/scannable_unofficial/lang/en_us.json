@@ -6,6 +6,7 @@
   "container.scannable_unofficial.scanner": "Scanner",
   "container.scannable_unofficial.block_module": "Block Module",
   "container.scannable_unofficial.entity_module": "Entity Module",
+  "container.scannable_unofficial.item_module": "Item Module",
 
   "tooltip.scannable_unofficial.scanner.energy": "Energy: %s / %s FE",
   "tooltip.scannable_unofficial.scanner_module.energy": "Energy cost: %s FE",
@@ -21,6 +22,8 @@
   "item.scannable_unofficial.block_module.desc": "Right-click block to configure specific blocks to detect",
   "item.scannable_unofficial.blank_module.desc": "A placeholder module with no function",
   "item.scannable_unofficial.item_module.desc": "Scans containers for configured items",
+  "item.scannable_unofficial.charger_module.desc": "Periodically recharges the scanner",
+
 
   "tooltip.scannable_unofficial.scanner.block_module.list": "Selected blocks:",
   "tooltip.scannable_unofficial.scanner.entity_module.list": "Selected entities:",
@@ -47,5 +50,49 @@
   "item.scannable_unofficial.entity_module": "Entity Module",
   "item.scannable_unofficial.block_module": "Block Module",
   "item.scannable_unofficial.item_module": "Item Module",
-  "item.scannable_unofficial.blank_module": "Blank Module"
+  "item.scannable_unofficial.blank_module": "Blank Module",
+  "item.scannable_unofficial.charger_module": "Charging Module",
+
+
+  "scannable_unofficial.configuration.debug": "Debug",
+  "scannable_unofficial.configuration.logItemScanner": "Debug Log Switch",
+
+  "scannable_unofficial.configuration.scanner": "Scanner",
+  "scannable_unofficial.configuration.useEnergy": "Use Energy",
+  "scannable_unofficial.configuration.allowExternalCharging": "Allow External Charging",
+  "scannable_unofficial.configuration.energyCapacity": "Energy Capacity",
+  "scannable_unofficial.configuration.baseScanRadius": "Base Scan Radius",
+  "scannable_unofficial.configuration.resultStayDuration": "Target Highlighting Duration",
+
+  "scannable_unofficial.configuration.energy": "Energy Costs",
+  "scannable_unofficial.configuration.rangeEnergy": "Range Module",
+  "scannable_unofficial.configuration.fluidEnergy": "Fluid Module",
+  "scannable_unofficial.configuration.friendlyEnergy": "Friendly Entity Module",
+  "scannable_unofficial.configuration.hostileEnergy": "Hostile Entity Module",
+  "scannable_unofficial.configuration.blockEnergy": "Block Module",
+  "scannable_unofficial.configuration.entityEnergy": "Entity Module",
+  "scannable_unofficial.configuration.itemEnergy": "Item Module",
+
+  "scannable_unofficial.configuration.range": "Range Modifiers",
+  "scannable_unofficial.configuration.rangeRange": "Range Module",
+  "scannable_unofficial.configuration.fluidRange": "Fluid Module",
+  "scannable_unofficial.configuration.blockRange": "Block Module",
+
+  "scannable_unofficial.configuration.charging": "Charging",
+  "scannable_unofficial.configuration.chargingInterval": "Charging Interval",
+  "scannable_unofficial.configuration.chargingAmount": "Charging Amount",
+
+  "scannable_unofficial.configuration.ignored.blocks": "Ignored Blocks",
+  "scannable_unofficial.configuration.ignored.blockTags": "Ignored Block Tags",
+  "scannable_unofficial.configuration.ignored.fluidsTags": "Ignored Fluid Tags",
+
+  "scannable_unofficial.configuration.colors": "Colors",
+  "scannable_unofficial.configuration.blocksColors": "Block Colors",
+  "scannable_unofficial.configuration.blockTagsColors": "Block Tag Colors",
+  "scannable_unofficial.configuration.fluidsColors": "Fluid Colors",
+  "scannable_unofficial.configuration.fluidTagsColors": "Fluid Tag Colors",
+
+  "scannable_unofficial.configuration.misc": "Misc",
+  "scannable_unofficial.configuration.misc.hideBrokenBlocks": "Hide Broken Blocks",
+  "scannable_unofficial.configuration.misc.itemScanColor": "Item Module Color"
 }

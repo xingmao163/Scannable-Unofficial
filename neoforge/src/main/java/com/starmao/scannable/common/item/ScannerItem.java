@@ -35,7 +35,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The handheld scanner — core item of the Scannable Unofficial mod.
+ *
+ * <p>Right-click charges a scan if modules are installed; shift-right-click
+ * opens the module inventory GUI. During the charge-up, energy is drained
+ * each tick. On release, the scan fires: client-side for block/entity modules,
+ * server-side for the item scanner module (which queries container inventories).
+ *
+ * <p>Key behaviours:
+ * <ul>
+ *   <li>Stacks to 1, has an energy bar indicator</li>
+ *   <li>Tooltip shows installed modules and per-scan energy cost</li>
+ *   <li>Item scanner results are sent from server to client via {@link S2CItemScanResult}</li>
+ *   <li>Cooldown between scans prevents spam</li>
+ * </ul>
+ */
 public final class ScannerItem extends ModItem {
+    /** Checks whether the given stack is a scanner. */
     public static boolean isScanner(ItemStack stack) {
         return stack.getItem() instanceof ScannerItem;
     }
@@ -132,6 +149,7 @@ public final class ScannerItem extends ModItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
+            // Open module inventory GUI
             if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.openMenu(new MenuProvider() {
                     @Override
@@ -146,6 +164,7 @@ public final class ScannerItem extends ModItem {
                 }, buf -> buf.writeEnum(hand));
             }
         } else {
+            // Start scanning
             List<ItemStack> modules = new ArrayList<>();
             if (!collectModules(stack, modules)) {
                 if (!level.isClientSide()) {
@@ -286,6 +305,15 @@ public final class ScannerItem extends ModItem {
                 .orElse(0f);
     }
 
+    /**
+     * Attempts to consume energy for the given modules from the scanner.
+     *
+     * @param player   the player (creative players skip energy cost)
+     * @param scanner  the scanner item stack
+     * @param modules  the installed modules
+     * @param simulate if true, only simulates the drain without actually consuming
+     * @return {@code true} if enough energy was available (or was consumed)
+     */
     private static boolean tryConsumeEnergy(Player player, ItemStack scanner, List<ItemStack> modules, boolean simulate) {
         if (player.isCreative()) return true;
 
@@ -304,6 +332,13 @@ public final class ScannerItem extends ModItem {
 
     // ---- Module collection ---- //
 
+    /**
+     * Collects all active modules installed in the scanner.
+     *
+     * @param scanner the scanner item stack
+     * @param modules output list populated with active module stacks
+     * @return {@code true} if at least one module provides a result provider
+     */
     private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
         ScannerContainer container = ScannerContainer.of(scanner);
         Container activeModules = container.getActiveModules();

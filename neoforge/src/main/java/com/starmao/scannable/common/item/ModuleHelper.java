@@ -7,32 +7,21 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Optional;
 
 /**
- * Utility for looking up a {@link ScannerModule} from any {@link ItemStack}.
- *
- * <p>Delegates to the {@link ScannerModuleCapability capability system} rather
- * than performing direct {@code instanceof} checks, making it compatible with
- * any item that exposes a ScannerModule through the capability (whether our
- * own module items or third-party additions).
- *
- * <p>This is the <strong>single access point</strong> for energy cost and
- * result provider queries; calling code should never reach into capability
- * internals directly.
+ * Convenience helper for accessing {@link ScannerModule} instances from item stacks.
+ * <p>Routes lookups through {@link ScannerModuleCapability#get(ItemStack)} so callers
+ * never deal with the capability system directly.
  */
 public final class ModuleHelper {
+
+    /**
+     * Returns the {@link ScannerModule} for the given item stack, if the item
+     * exposes the scanner module capability.
+     *
+     * @param stack the item stack to query
+     * @return the module, or empty if the item is not a scanner module
+     */
     public static Optional<ScannerModule> getModule(final ItemStack stack) {
-        // Fast path for our own items, falls back to capability for addons.
-        if (stack.getItem() instanceof ScannerModuleItem moduleItem) {
-            return Optional.of(moduleItem.getModule());
-        }
         return ScannerModuleCapability.get(stack);
-    }
-
-    public static int getEnergyCost(final ItemStack stack) {
-        return getModule(stack).map(m -> m.getEnergyCost(stack)).orElse(0);
-    }
-
-    public static boolean hasResultProvider(final ItemStack stack) {
-        return getModule(stack).map(ScannerModule::hasResultProvider).orElse(false);
     }
 
     private ModuleHelper() {}

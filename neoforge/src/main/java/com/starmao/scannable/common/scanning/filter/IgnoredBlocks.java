@@ -19,6 +19,12 @@ public final class IgnoredBlocks {
     private static Set<Block> ignoredBlocks;
     private static Set<TagKey<Block>> ignoredBlockTags;
 
+    /**
+     * Checks if a given block state matches any ignored block or block tag.
+     *
+     * @param state the block state to check
+     * @return {@code true} if the block should be ignored by scanners
+     */
     public static boolean contains(final BlockState state) {
         validate();
         if (ignoredBlocks.contains(state.getBlock())) return true;
@@ -28,6 +34,10 @@ public final class IgnoredBlocks {
         return false;
     }
 
+    /**
+     * Clears the cached ignored-block sets so they are rebuilt from config
+     * on the next access. Called on config reload.
+     */
     public static void clearCache() {
         ignoredBlocks = null;
         ignoredBlockTags = null;

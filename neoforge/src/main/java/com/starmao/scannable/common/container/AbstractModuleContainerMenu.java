@@ -9,6 +9,12 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+/**
+ * Base container menu for configurable scanner module configuration screens.
+ * <p>Provides a standard player inventory layout and tracks the hand-held
+ * module item. Subclasses implement {@link #removeItemAt} and
+ * {@link #setItemAt} to modify the module's target list.
+ */
 public abstract class AbstractModuleContainerMenu extends AbstractContainerMenu {
     private final Player player;
     private final InteractionHand hand;
@@ -33,7 +39,9 @@ public abstract class AbstractModuleContainerMenu extends AbstractContainerMenu 
     public Player getPlayer() { return player; }
     public InteractionHand getHand() { return hand; }
 
+    /** Removes the configured target at the given index from the module item. */
     public abstract void removeItemAt(int index);
+    /** Sets a configured target at the given index on the module item. */
     public abstract void setItemAt(int index, ResourceLocation value);
 
     @Override

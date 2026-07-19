@@ -38,7 +38,7 @@ public final class ClientConfig {
             .comment("Colors for scanned blocks by registry name.",
                     "Each entry: \"namespace:path=0xRRGGBB\"",
                     "Example: \"minecraft:stone=0x808080\"")
-            .defineListAllowEmpty(List.of("blocks"),
+            .defineListAllowEmpty(List.of("blocksColors"),
                     List::of,
                     entry -> entry instanceof String);
 
@@ -46,21 +46,21 @@ public final class ClientConfig {
             .comment("Colors for scanned blocks by block tag.",
                     "Each entry: \"namespace:path=0xRRGGBB\"",
                     "Example: \"c:ores/diamond=0x2EB1E0\"")
-            .defineListAllowEmpty(List.of("blockTags"),
+            .defineListAllowEmpty(List.of("blockTagsColors"),
                     ClientConfig::defaultBlockTagColors,
                     entry -> entry instanceof String);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid registry name.",
                     "Each entry: \"namespace:path=0xRRGGBB\"")
-            .defineListAllowEmpty(List.of("fluids"),
+            .defineListAllowEmpty(List.of("fluidsColors"),
                     List::of,
                     entry -> entry instanceof String);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_TAG_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid tag.",
                     "Each entry: \"namespace:path=0xRRGGBB\"")
-            .defineListAllowEmpty(List.of("fluidTags"),
+            .defineListAllowEmpty(List.of("fluidTagsColors"),
                     () -> List.of(
                             FluidTags.WATER.location() + "=0x" + Integer.toHexString(MapColor.WATER.col),
                             FluidTags.LAVA.location() + "=0x" + Integer.toHexString(MapColor.TERRACOTTA_ORANGE.col)

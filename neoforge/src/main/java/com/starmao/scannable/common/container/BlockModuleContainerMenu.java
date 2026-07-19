@@ -8,6 +8,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+/**
+ * Container menu for the configurable block scanner module configuration screen.
+ * <p>Handles adding/removing blocks from the module's target list via
+ * {@link ConfigurableBlockScannerModuleItem}.
+ */
 public class BlockModuleContainerMenu extends AbstractModuleContainerMenu {
     public static BlockModuleContainerMenu create(int id, Inventory playerInventory, FriendlyByteBuf data) {
         InteractionHand hand = data.readEnum(InteractionHand.class);

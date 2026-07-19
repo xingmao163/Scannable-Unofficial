@@ -12,6 +12,13 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The module storage container inside a scanner item.
+ * <p>Holds up to 9 module stacks (3 active + 6 inactive) and persists them
+ * to the scanner item's {@link ModDataComponents#SCANNER_MODULES} data
+ * component whenever the container changes.
+ * <p>Validates that only scanner module items are placed into the slots.
+ */
 public final class ScannerContainer extends SimpleContainer {
     private static final int ACTIVE_MODULE_COUNT = 3;
     private static final int INACTIVE_MODULE_COUNT = 6;
@@ -33,6 +40,7 @@ public final class ScannerContainer extends SimpleContainer {
         }
     }
 
+    /** Creates a ScannerContainer from the given stack if it is a ScannerItem, otherwise creates an empty one. */
     public static ScannerContainer of(ItemStack container) {
         if (container.getItem() instanceof ScannerItem) {
             return new ScannerContainer(container);
@@ -40,10 +48,12 @@ public final class ScannerContainer extends SimpleContainer {
         return new ScannerContainer(new ItemStack(container.getItem()));
     }
 
+    /** @return a view of the first 3 slots (active modules) */
     public ContainerSlice getActiveModules() {
         return new ContainerSlice(this, 0, ACTIVE_MODULE_COUNT);
     }
 
+    /** @return a view of slots 3-8 (inactive / stored modules) */
     public ContainerSlice getInactiveModules() {
         return new ContainerSlice(this, ACTIVE_MODULE_COUNT, INACTIVE_MODULE_COUNT);
     }

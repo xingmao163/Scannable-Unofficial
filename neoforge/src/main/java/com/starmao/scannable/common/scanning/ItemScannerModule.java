@@ -1,19 +1,18 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.api.ScanResultProvider;
-import com.starmao.scannable.api.ScannerModule;
-import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.api.ScannerModule;
+import com.starmao.scannable.api.ScanResultProvider;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 
 /**
- * Scanner module that searches for configured items inside containers within range.
- *
- * <p>Scans all container blocks and checks their inventory contents against a
- * user-configured list of target items. Matching containers are highlighted
- * with the found item's name and quantity displayed.
+ * Scanner module that detects specific items inside nearby containers.
+ * <p>Unlike block/entity scanning, item scanning runs on the server side
+ * where container inventories are fully accessible. Results are sent
+ * to the client via {@link com.starmao.scannable.common.network.message.S2CItemScanResult}.
+ * <p>Singleton enum — stateless.
  */
 public enum ItemScannerModule implements ScannerModule {
     INSTANCE;
@@ -26,6 +25,6 @@ public enum ItemScannerModule implements ScannerModule {
     @Nullable
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("items");
+        return null; // Item scanning is server-driven, not provider-based
     }
 }

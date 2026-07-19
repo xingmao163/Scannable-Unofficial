@@ -12,15 +12,48 @@ import javax.annotation.Nullable;
  * hasResultProvider are called on the server.
  */
 public interface ScannerModule {
+
+    /**
+     * Returns the FE (Forge Energy) cost per scan tick for this module.
+     * <p>Called on both client and server to compute total energy drain.
+     * A return value of {@code 0} means the module is free to operate.
+     *
+     * @param module the specific item stack instance of this module
+     * @return energy cost per tick, in FE
+     */
     int getEnergyCost(ItemStack module);
 
+    /**
+     * Whether this module contributes a {@link ScanResultProvider} to the scan.
+     * <p>Most modules return {@code true}. Override to {@code false} for
+     * passive modules (e.g. range extenders) that adjust scan parameters
+     * without producing their own results.
+     *
+     * @return {@code true} if this module provides scan results
+     */
     default boolean hasResultProvider() {
         return true;
     }
 
+    /**
+     * Returns the scan result provider for this module.
+     * <p>May return {@code null} if this module has no provider
+     * (in which case {@link #hasResultProvider()} should also return {@code false}).
+     * The returned provider is used client-side to collect and render scan results.
+     *
+     * @return the provider, or {@code null} if this module produces no results
+     */
     @Nullable
     ScanResultProvider getResultProvider();
 
+    /**
+     * Adjusts the global scan radius multiplicatively.
+     * <p>Called for every installed module; the largest adjustment wins.
+     * Default implementation returns the input range unchanged.
+     *
+     * @param range the base scan radius determined by the scanner
+     * @return the adjusted radius (e.g. {@code range * 1.5f} for +50 %)
+     */
     default float adjustGlobalRange(float range) {
         return range;
     }

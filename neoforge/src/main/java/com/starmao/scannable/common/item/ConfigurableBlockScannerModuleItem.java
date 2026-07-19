@@ -17,6 +17,14 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
+/**
+ * Item for the configurable block scanner module.
+ * <p>Right-clicking a block in the world adds it to the module's target list.
+ * Opens a configuration GUI when shift-right-clicked in the air.
+ *
+ * @see ConfigurableBlockScannerModule
+ * @see BlockModuleContainerMenu
+ */
 public final class ConfigurableBlockScannerModuleItem extends ConfigurableModuleItem<Block> {
     public ConfigurableBlockScannerModuleItem() {
         super(ConfigurableBlockScannerModule.INSTANCE,

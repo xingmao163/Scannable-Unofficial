@@ -5,23 +5,124 @@ plugins {
     id 'idea'
 }
 
+apply from: '../gradle/versions.gradle'
+
+def targetVersion = findProperty('targetVersion') ?: '1.21.1'
+def vcfg = supportedVersions.find { it.name == targetVersion }
+if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
+
+def javaVersion = targetVersion.startsWith('26') ? 25 : 21
+java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
+
+def versionParts = targetVersion.tokenize('.')
+def majorVer = versionParts[0].toInteger()
+def minorVer = versionParts.size() > 1 ? versionParts[1].toInteger() : 0
+def patchVer = versionParts.size() > 2 ? versionParts[2].toInteger() : 0
+
+def shouldExcludeShaders = majorVer > 1 || (majorVer == 1 && minorVer >= 21 && minorVer <= 25 && patchVer >= 6) || (majorVer == 1 && minorVer > 25)
+def isOldDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer <= 3
+def isNewDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer >= 4 || majorVer > 1
+
+ext.minecraft_version     = vcfg.minecraft_version
+ext.minecraft_version_range = vcfg.minecraft_version_range
+ext.neo_version           = vcfg.neo_version
+ext.neo_version_range     = vcfg.neo_version_range ?: "[${vcfg.neo_version},)"
+ext.parchment_minecraft_version = vcfg.parchment_minecraft
+ext.parchment_mappings_version  = vcfg.parchment_mappings
+ext.jei_version           = vcfg.jei_version
+ext.emi_version           = vcfg.emi_version ?: ''
+
 evaluationDependsOn(':common')
 
-version = mod_version
+version = vcfg.mod_version ?: mod_version
 group = mod_group_id
 
 base {
     archivesName = "Scannable_Unofficial-Neo${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+def versionOverrideJava = file("../versions/${targetVersion}/neoforge/src/main/java")
+def sharedOverrideJava = file("../versions/shared/neoforge/src/main/java")
+def versionOverrideResources = file("../versions/${targetVersion}/neoforge/src/main/resources")
+def sharedOverrideResources = file("../versions/shared/neoforge/src/main/resources")
+
+def versionAliases = ['1.21.3': '1.21.2']
+def resolvedVersion = versionAliases[targetVersion] ?: targetVersion
+def resolvedOverrideJava = file("../versions/${resolvedVersion}/neoforge/src/main/java")
+def resolvedOverrideResources = file("../versions/${resolvedVersion}/neoforge/src/main/resources")
+
+def hasVersionOverride = resolvedOverrideJava.exists()
+def hasSharedOverride = sharedOverrideJava.exists() && targetVersion != '1.21.1'
+def hasSharedResources = sharedOverrideResources.exists() && targetVersion != '1.21.1'
+
+if (hasVersionOverride || hasSharedOverride) {
+    def mergedJava = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/java")
+    tasks.register('mergeNeoforgeSources', Sync) {
+        from 'src/main/java'
+        if (hasSharedOverride) {
+            from sharedOverrideJava
+        }
+        if (hasVersionOverride) {
+            from resolvedOverrideJava
+        }
+        into mergedJava
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    sourceSets.main.java.srcDirs = [mergedJava]
+    tasks.named('compileJava').configure { dependsOn 'mergeNeoforgeSources' }
+} else {
+    sourceSets.main.java.srcDirs = [file('src/main/java')]
+}
+
+if (hasVersionOverride || hasSharedResources) {
+    def mergedResources = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/resources")
+    tasks.register('mergeNeoforgeResources', Sync) {
+        from 'src/main/resources'
+        if (hasSharedResources) {
+            from sharedOverrideResources
+        }
+        if (hasVersionOverride) {
+            from resolvedOverrideResources
+        }
+        into mergedResources
+        exclude('**/*.bbmodel')
+
+        if (shouldExcludeShaders) {
+            exclude('**/shaders/core/scan_effect.json')
+            exclude('**/shaders/core/scan_result.json')
+            exclude('**/shaders/core/scan_item_result.json')
+        }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    sourceSets.main.resources.srcDirs = [mergedResources]
+    tasks.named('processResources').configure { dependsOn 'mergeNeoforgeResources' }
+} else {
+    sourceSets.main.resources {
+        srcDir('src/main/resources')
+        exclude('**/*.bbmodel')
+        if (shouldExcludeShaders) {
+            exclude('**/shaders/core/scan_effect.json')
+            exclude('**/shaders/core/scan_result.json')
+            exclude('**/shaders/core/scan_item_result.json')
+        }
+    }
+}
+
+def dataGenArgs = ['--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()]
+if (versionOverrideResources.exists()) {
+    dataGenArgs.addAll('--existing', versionOverrideResources.absolutePath)
+}
 
 neoForge {
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
+    if (project.parchment_mappings_version) {
+        parchment {
+            mappingsVersion = project.parchment_mappings_version
+            minecraftVersion = project.parchment_minecraft_version
+        }
     }
 
     runs {
@@ -29,23 +130,31 @@ neoForge {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         server {
             server()
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        if (isOldDataGenFormat) {
+            data {
+                data()
+                programArguments.addAll dataGenArgs
+            }
         }
-
+        if (isNewDataGenFormat) {
+            serverData {
+                serverData()
+                programArguments.addAll dataGenArgs
+            }
+            clientData {
+                clientData()
+                programArguments.addAll dataGenArgs
+            }
+        }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
@@ -60,9 +169,15 @@ neoForge {
     }
 }
 
+if (isNewDataGenFormat) {
+    tasks.register('runData') {
+        dependsOn 'runClientData', 'runServerData'
+        description = 'Run both client and server data generators'
+    }
+}
+
 sourceSets.main.resources {
     srcDir('src/generated/resources')
-    exclude('**/*.bbmodel')
     exclude('src/generated/**/.cache')
 }
 
@@ -71,17 +186,35 @@ configurations {
 }
 
 repositories {
-    maven {
-        name = "BlameJared"
-        url = "https://maven.blamejared.com"
+    sharedRepositories.each { repo ->
+        maven {
+            name = repo.name
+            url = repo.url
+        }
     }
 }
 
 dependencies {
     implementation project(':common')
 
-    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    if (jei_version) {
+        compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+        localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    }
+
+    if (emi_version) {
+        compileOnly "dev.emi:emi-neoforge:${emi_version}"
+        runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
+    }
+}
+
+tasks.named("processResources", ProcessResources) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('jar', Jar) {
+    from project(':common').sourceSets.main.output
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -89,11 +222,12 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
             neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
-            mod_version            : mod_version,
+            mod_version            : vcfg.mod_version ?: mod_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties

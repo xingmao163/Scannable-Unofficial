@@ -1,164 +1,191 @@
 package com.starmao.scannable.api.template;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.starmao.scannable.api.ScanResult;
+import com.starmao.scannable.api.ScanResultProvider;
+import com.starmao.scannable.api.ScanResultRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.starmao.scannable.api.ScanResultProvider;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
 
-import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.*;
 
-public abstract class AbstractScanResultProvider implements ScanResultProvider {
-    protected Player player;
-    protected Vec3 center;
-    protected int radius;
+/**
+ * Abstract base for scan result providers that detect block entities.
+ * <p>Handles the common lifecycle: initialise with scan params, accumulate results
+ * during {@link #computeScanResults} by iterating over a cubic bounding box,
+ * collect results via a consumer, render bounding-box highlights with colour,
+ * and reset on scan end.
+ * <p>Subclasses define {@link #getBlockEntityClass()} and {@link #getColor}
+ * to customise which block entities to detect and what colour to highlight them.
+ * Implements {@link ResourceManagerReloadListener} for shader reload handling.
+ *
+ * @param <T> the block entity type this provider scans for
+ */
+public abstract class AbstractScanResultProvider<T extends BlockEntity> implements ScanResultProvider, ResourceManagerReloadListener {
 
-    protected static final int MAX_ICONS = 4;
-    protected static final float ICON_CONE_DOT = 0.999f;
+    private Vec3 scanCenter;
+    private float scanRadius;
+    private Player scanPlayer;
+    private List<T> foundData;
+
+    private final Map<BlockEntity, ScanResultImpl> currentResults = new HashMap<>();
+
+    protected AbstractScanResultProvider() {
+    }
+
+    /** @return the class of the block entity type this provider detects */
+    protected abstract Class<T> getBlockEntityClass();
+
+    /**
+     * Returns the highlight ARGB colour for a given scan result.
+     *
+     * @param data the detected block entity
+     * @return the colour as ARGB int (e.g. {@code 0xRRGGBB})
+     */
+    protected abstract int getColor(T data);
 
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
-        this.player = player;
-        this.center = center;
-        this.radius = (int) radius;
+        this.scanCenter = center;
+        this.scanRadius = radius;
+        this.scanPlayer = player;
+        this.foundData = new ArrayList<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void computeScanResults() {
+        if (scanCenter == null || scanPlayer == null || scanRadius <= 0) return;
+
+        BlockGetter level = scanPlayer.level();
+        int radius = (int) Math.ceil(scanRadius);
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    var pos = net.minecraft.core.BlockPos.containing(scanCenter).offset(dx, dy, dz);
+
+                    if (scanCenter.distanceToSqr(Vec3.atCenterOf(pos)) > scanRadius * scanRadius) continue;
+
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (be == null) continue;
+
+                    // Check if this BE has already been found
+                    if (currentResults.containsKey(be)) continue;
+
+                    if (getBlockEntityClass().isInstance(be)) {
+                        foundData.add((T) be);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void collectScanResults(BlockGetter level, java.util.function.Consumer<ScanResult> callback) {
+        if (foundData == null || foundData.isEmpty()) return;
+
+        for (T data : foundData) {
+            currentResults.computeIfAbsent((BlockEntity) data, be -> {
+                AABB box = new AABB(be.getBlockPos());
+                return new ScanResultImpl(Vec3.atCenterOf(be.getBlockPos()), box, getColor(data));
+            });
+        }
+
+        currentResults.values().forEach(callback);
+    }
+
+    @Override
+    public void render(ScanResultRenderContext context, MultiBufferSource bufferSource, PoseStack poseStack,
+                       Camera renderInfo, float partialTicks, List<ScanResult> results) {
+        for (ScanResult result : results) {
+            if (result instanceof ScanResultImpl impl) {
+                renderBox(poseStack, bufferSource, impl);
+            }
+        }
+    }
+
+    private void renderBox(PoseStack poseStack, MultiBufferSource bufferSource, ScanResultImpl result) {
+        if (result.renderBounds == null) return;
+
+        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.lines());
+        int color = result.color;
+
+        float r = ((color >> 16) & 0xFF) / 255.0f;
+        float g = ((color >> 8) & 0xFF) / 255.0f;
+        float b = (color & 0xFF) / 255.0f;
+
+        double minX = result.renderBounds.minX;
+        double minY = result.renderBounds.minY;
+        double minZ = result.renderBounds.minZ;
+        double maxX = result.renderBounds.maxX;
+        double maxY = result.renderBounds.maxY;
+        double maxZ = result.renderBounds.maxZ;
+
+        // Bottom face
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+
+        // Top face
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+
+        // Vertical edges
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) minZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) maxX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) minY, (float) maxZ).setColor(r, g, b, 1.0f);
+        vertexConsumer.addVertex(poseStack.last(), (float) minX, (float) maxY, (float) maxZ).setColor(r, g, b, 1.0f);
     }
 
     @Override
     public void reset() {
-        player = null;
-        center = null;
-        radius = 0;
+        foundData = null;
+        currentResults.clear();
     }
 
-    protected static <T> void renderIconLabels(MultiBufferSource bufferSource, PoseStack poseStack,
-                                                float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
-                                                boolean showDistance, List<T> results,
-                                                Function<T, Vec3> position, Function<T, ResourceLocation> icon,
-                                                Function<T, Component> name, Predicate<T> visible,
-                                                int maxIcons, float minIconDot) {
-        int shown = 0;
-        boolean nameShown = false;
-        for (int i = results.size() - 1; i >= 0 && shown < maxIcons; i--) {
-            T result = results.get(i);
-            Vec3 resultPos = position.apply(result);
-            Vec3 toResult = resultPos.subtract(viewerEyes);
-            float lookDirDot = (float) lookVec.dot(toResult.normalize());
-            if (lookDirDot <= minIconDot) break;
-            if (!visible.test(result)) continue;
-
-            Component label = null;
-            if (!nameShown) {
-                nameShown = true;
-                Component candidate = name.apply(result);
-                if (candidate != null && !candidate.getString().isEmpty()) {
-                    label = candidate;
-                }
-            }
-
-            float distance = showDistance ? (float) toResult.length() : 0f;
-            renderIconLabel(bufferSource, poseStack, yaw, pitch, lookVec, viewerEyes,
-                    distance, resultPos, icon.apply(result), label);
-            shown++;
-        }
+    @Override
+    public void onResourceManagerReload(ResourceManager resourceManager) {
+        reset();
     }
 
-    protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
-                                           float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
-                                           float displayDistance, Vec3 resultPos,
-                                           ResourceLocation icon, @Nullable Component label) {
-        Vec3 toResult = resultPos.subtract(viewerEyes);
-        float distance = (float) toResult.length();
-        float lookDirDot = (float) lookVec.dot(toResult.normalize());
-        float sqLookDirDot = lookDirDot * lookDirDot;
-        float sq2LookDirDot = sqLookDirDot * sqLookDirDot;
-        float focusScale = Mth.clamp(sq2LookDirDot * sq2LookDirDot + 0.005f, 0.5f, 1f);
-        float scale = distance * focusScale * 0.005f;
+    // ---- Internal result ---- //
 
-        poseStack.pushPose();
-        poseStack.translate(resultPos.x, resultPos.y, resultPos.z);
-        poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-yaw)));
-        poseStack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(pitch)));
-        poseStack.scale(-scale, -scale, scale);
-
-        if (lookDirDot > 0.999f && label != null) {
-            Component text = displayDistance > 0
-                    ? Component.translatable("gui.scannable_unofficial.scanner.overlay.distance", label, Mth.ceil(displayDistance))
-                    : label;
-
-            Font font = Minecraft.getInstance().font;
-            int width = font.width(text) + 16;
-
-            poseStack.pushPose();
-            poseStack.translate(width / 2f, 0, 0);
-            drawQuad(bufferSource.getBuffer(getRenderLayer()), poseStack, width, font.lineHeight + 5, 0, 0, 0, 0.6f);
-            poseStack.popPose();
-
-            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, true, poseStack.last().pose(), bufferSource,
-                    Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
-            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, false, poseStack.last().pose(), bufferSource,
-                    Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
+    private record ScanResultImpl(Vec3 position, AABB renderBounds, int color) implements ScanResult {
+        @Override
+        public Vec3 getPosition() {
+            return position;
         }
 
-        drawQuad(bufferSource.getBuffer(getRenderLayer(icon)), poseStack, 16, 16);
-        poseStack.popPose();
-    }
-
-    // ---- Drawing primitives ---- //
-
-    protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
-        drawQuad(buffer, poseStack, width, height, 1, 1, 1, 1);
-    }
-
-    protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height,
-                                    float r, float g, float b, float a) {
-        var matrix = poseStack.last().pose();
-        buffer.addVertex(matrix, -width * 0.5f, height * 0.5f, 0).setColor(r, g, b, a).setUv(0, 1f);
-        buffer.addVertex(matrix, width * 0.5f, height * 0.5f, 0).setColor(r, g, b, a).setUv(1f, 1f);
-        buffer.addVertex(matrix, width * 0.5f, -height * 0.5f, 0).setColor(r, g, b, a).setUv(1f, 0);
-        buffer.addVertex(matrix, -width * 0.5f, -height * 0.5f, 0).setColor(r, g, b, a).setUv(0, 0);
-    }
-
-    // ---- Render layers ---- //
-
-    protected static RenderType getRenderLayer() {
-        return RenderType.create("scan_result",
-                DefaultVertexFormat.POSITION_COLOR,
-                VertexFormat.Mode.QUADS, 65536, false, false,
-                RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                        .createCompositeState(false));
-    }
-
-    protected static RenderType getRenderLayer(ResourceLocation textureLocation) {
-        return RenderType.create("scan_result",
-                DefaultVertexFormat.POSITION_TEX,
-                VertexFormat.Mode.QUADS, 65536, false, false,
-                RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(textureLocation, false, false))
-                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                        .createCompositeState(false));
+        @Override
+        public AABB getRenderBounds() {
+            return renderBounds;
+        }
     }
 }

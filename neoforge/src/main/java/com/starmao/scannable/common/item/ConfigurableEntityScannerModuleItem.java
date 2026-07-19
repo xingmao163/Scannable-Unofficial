@@ -16,6 +16,14 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
+/**
+ * Item for the configurable entity scanner module.
+ * <p>Right-clicking an entity adds its type to the module's target list.
+ * Opens a configuration GUI when shift-right-clicked in the air.
+ *
+ * @see ConfigurableEntityScannerModule
+ * @see EntityModuleContainerMenu
+ */
 public final class ConfigurableEntityScannerModuleItem extends ConfigurableModuleItem<EntityType<?>> {
     public ConfigurableEntityScannerModuleItem() {
         super(ConfigurableEntityScannerModule.INSTANCE,

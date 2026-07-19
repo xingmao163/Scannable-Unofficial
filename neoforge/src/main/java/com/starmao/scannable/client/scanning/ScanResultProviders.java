@@ -7,7 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Registry for scan result providers.
+ * Client-side registry and holder for scan result provider instances.
+ * <p>Populated during client setup — creates singleton providers for blocks,
+ * entities, and items, registers them locally and in the cross-platform
+ * {@link ScanResultProviderRegistry} so common modules can access them
+ * without client-only class imports.
  */
 public final class ScanResultProviders {
     private static final Map<String, ScanResultProvider> PROVIDERS = new HashMap<>();

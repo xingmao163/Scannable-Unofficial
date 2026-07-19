@@ -9,6 +9,12 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+/**
+ * Network payload registration and convenience senders.
+ * <p>Registers all custom packet payloads (C2S and S2C) during mod
+ * initialisation using NeoForge's {@link PayloadRegistrar}.
+ * Also provides static helper methods for sending configure-module messages.
+ */
 public final class Network {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(Network::registerPayloads);
@@ -38,10 +44,12 @@ public final class Network {
         );
     }
 
+    /** Sends a set-configured-item message to the server. */
     public static void sendToServer(SetConfiguredModuleItemAtMessage msg) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(msg);
     }
 
+    /** Sends a remove-configured-item message to the server. */
     public static void sendToServer(RemoveConfiguredModuleItemAtMessage msg) {
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(msg);
     }

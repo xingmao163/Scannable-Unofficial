@@ -8,6 +8,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+/**
+ * C2S payload: remove a configured target from a configurable module's list.
+ * <p>Sent when the player clicks a filled slot in the config GUI to clear it.
+ * The server validates that the player's open container is an
+ * {@link AbstractModuleContainerMenu} before modifying the item.
+ */
 public record RemoveConfiguredModuleItemAtMessage(int windowId, int index) implements CustomPacketPayload {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "remove_module_item");
     public static final Type<RemoveConfiguredModuleItemAtMessage> TYPE = new Type<>(ID);

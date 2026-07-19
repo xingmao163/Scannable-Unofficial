@@ -6,9 +6,11 @@ import net.minecraft.world.level.material.Fluid;
 
 import java.util.function.Predicate;
 
+/**
+ * A scan filter that matches block states containing a fluid from a given fluid tag.
+ * <p>Used by the fluid scanner module to detect fluids like water and lava
+ * by their tags (e.g. {@code #minecraft:water}).
+ *
+ * @param tag the fluid tag to match against
+ */
 public record FluidTagScanFilter(TagKey<Fluid> tag) implements Predicate<BlockState> {
-    @Override
-    public boolean test(BlockState state) {
-        return !state.getFluidState().isEmpty() && state.getFluidState().is(tag);
-    }
-}

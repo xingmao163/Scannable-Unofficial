@@ -1,37 +1,43 @@
 package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.client.gui.ConfigurableBlockScannerModuleContainerScreen;
-import com.starmao.scannable.client.gui.ConfigurableEntityScannerModuleContainerScreen;
-import com.starmao.scannable.client.gui.ConfigurableItemScannerModuleContainerScreen;
+import com.starmao.scannable.common.item.Items;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
+import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * JEI integration plugin for Scannable-Unofficial.
- *
- * <p>Registers a ghost ingredient handler for the configurable module screens,
- * allowing players to drag items from JEI to configure block scanner modules.
+ * JEI (Just Enough Items) integration plugin for Scannable Unofficial.
+ * <p>Registers ghost-drag handlers for configurable module screens so that
+ * players can drag items/entities/blocks from JEI directly into the
+ * configuration slots.
  */
 @JeiPlugin
-public class ScannableJeiPlugin implements IModPlugin {
+public final class ScannableJeiPlugin implements IModPlugin {
+    private static final ResourceLocation UID = Scannable.id("jei_plugin");
+
     @Override
     public ResourceLocation getPluginUid() {
-        return Scannable.id("jei_plugin");
+        return UID;
+    }
+
+    @Override
+    public void registerRecipes(final IRecipeRegistration registration) {
+        // No custom recipes to register — module configuration uses ghost drag only.
     }
 
     @Override
     public void registerGuiHandlers(final IGuiHandlerRegistration registration) {
         registration.addGhostIngredientHandler(
-                ConfigurableBlockScannerModuleContainerScreen.class,
+                com.starmao.scannable.client.gui.ConfigurableBlockScannerModuleContainerScreen.class,
                 new BlockModuleGhostHandler());
         registration.addGhostIngredientHandler(
-                ConfigurableEntityScannerModuleContainerScreen.class,
+                com.starmao.scannable.client.gui.ConfigurableEntityScannerModuleContainerScreen.class,
                 new EntityModuleGhostHandler());
         registration.addGhostIngredientHandler(
-                ConfigurableItemScannerModuleContainerScreen.class,
+                com.starmao.scannable.client.gui.ConfigurableItemScannerModuleContainerScreen.class,
                 new ItemModuleGhostHandler());
     }
 }
