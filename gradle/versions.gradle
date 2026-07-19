@@ -60,8 +60,6 @@ ext {
     ]
 
     sharedRepositories = [
-        [name: 'Aliyun Public', url: 'https://maven.aliyun.com/repository/public'],
-        [name: 'Aliyun Central', url: 'https://maven.aliyun.com/repository/central'],
         [name: 'Maven Central', url: 'https://repo.maven.apache.org/maven2'],
         [name: 'NeoForged', url: 'https://maven.neoforged.net/releases'],
         [name: 'TerraformersMC', url: 'https://maven.terraformersmc.com/'],
