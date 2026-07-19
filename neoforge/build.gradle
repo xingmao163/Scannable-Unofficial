@@ -169,17 +169,6 @@ neoForge {
     }
 }
 
-if (isNewDataGenFormat) {
-    tasks.register('runData') {
-        dependsOn 'runClientData', 'runServerData'
-        description = 'Run both client and server data generators'
-    }
-}
-
-sourceSets.main.resources {
-    srcDir('src/generated/resources')
-    exclude('src/generated/**/.cache')
-}
 
 configurations {
     runtimeClasspath.extendsFrom localRuntime

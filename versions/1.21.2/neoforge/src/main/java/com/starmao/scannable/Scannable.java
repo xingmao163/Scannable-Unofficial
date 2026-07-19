@@ -11,12 +11,10 @@ import com.starmao.scannable.common.item.ModDataComponents;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.scanning.FluidBlockScannerModule;
 import com.starmao.scannable.common.tags.ItemTags;
-import com.starmao.scannable.datagen.DataGeneration;
 import com.starmao.scannable.registry.ModCreativeTabs;
 import com.starmao.scannable.common.container.ModMenus;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig.Type;
@@ -61,10 +59,15 @@ public final class Scannable {
         // --- Client-only setup ---
         if (FMLEnvironment.dist.isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
+
+            // Make the Config button clickable in the Mods screen.
+            modContainer.registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mc, screen) ->
+                            new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, screen)
+            );
         }
 
-        // --- Data generation ---
-        modEventBus.addListener(DataGeneration::onGatherData);
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {

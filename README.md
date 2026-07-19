@@ -42,7 +42,7 @@
   - **Item Module**: Scans specific items in containers (configurable by right-clicking)
 - **🎨 Visual Feedback**: Progress indicator, overlay rendering, and sound effects
 - **⚙️ Extensive Configuration**: Customize energy costs, scan ranges, and ignored blocks
-- **🔌 JEI Integration**: Supports using JEI for module configuration
+- **🔌 JEI/EMI Integration**: Supports using JEI/EMI for module configuration
 - **🌍 Language Support**: Supports multiple language translations
 
 ### 🤝 Contributing
@@ -78,7 +78,7 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
   - **物品模块**：扫描容器中的特定物品（右键配置）
 - **🎨 视觉反馈**：进度指示器、叠加渲染和音效
 - **⚙️ 广泛配置**：自定义能量消耗、扫描范围和忽略方块
-- **🔌 JEI 集成**：支持使用JEI进行模块配置
+- **🔌 JEI/EMI 集成**：支持使用JEI/EMI 进行模块配置
 - **🌍 语言支持**：支持多种语言翻译
 
 ### 🤝 贡献

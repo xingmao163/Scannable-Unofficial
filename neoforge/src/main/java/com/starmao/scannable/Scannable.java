@@ -11,7 +11,6 @@ import com.starmao.scannable.common.item.ModDataComponents;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.scanning.FluidBlockScannerModule;
 import com.starmao.scannable.common.tags.ItemTags;
-import com.starmao.scannable.datagen.DataGeneration;
 import com.starmao.scannable.registry.ModCreativeTabs;
 import com.starmao.scannable.common.container.ModMenus;
 import net.minecraft.resources.ResourceLocation;
@@ -69,8 +68,6 @@ public final class Scannable {
             );
         }
 
-        // --- Data generation ---
-        DataGeneration.initialize(modEventBus);
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {

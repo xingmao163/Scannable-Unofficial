@@ -11,12 +11,10 @@ import com.starmao.scannable.common.item.ModDataComponents;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.scanning.FluidBlockScannerModule;
 import com.starmao.scannable.common.tags.ItemTags;
-import com.starmao.scannable.datagen.DataGeneration;
 import com.starmao.scannable.registry.ModCreativeTabs;
 import com.starmao.scannable.common.container.ModMenus;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig.Type;
@@ -58,7 +56,6 @@ public final class Scannable {
             );
         }
 
-        modEventBus.addListener(GatherDataEvent.Server.class, DataGeneration::onGatherDataServer);
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {

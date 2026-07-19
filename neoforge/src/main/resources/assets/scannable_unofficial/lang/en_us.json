@@ -55,44 +55,35 @@
 
 
   "scannable_unofficial.configuration.debug": "Debug",
-  "scannable_unofficial.configuration.logItemScanner": "Debug Log Switch",
-
+  "scannable_unofficial.configuration.debug.logItemScanner": "Log Item Scanner",
   "scannable_unofficial.configuration.scanner": "Scanner",
-  "scannable_unofficial.configuration.useEnergy": "Use Energy",
-  "scannable_unofficial.configuration.allowExternalCharging": "Allow External Charging",
-  "scannable_unofficial.configuration.energyCapacity": "Energy Capacity",
-  "scannable_unofficial.configuration.baseScanRadius": "Base Scan Radius",
-  "scannable_unofficial.configuration.resultStayDuration": "Target Highlighting Duration",
-
+  "scannable_unofficial.configuration.scanner.useEnergy": "Use Energy",
+  "scannable_unofficial.configuration.scanner.energyCapacity": "Energy Capacity",
+  "scannable_unofficial.configuration.scanner.baseScanRadius": "Base Scan Radius",
+  "scannable_unofficial.configuration.scanner.resultStayDuration": "Result Stay Duration",
   "scannable_unofficial.configuration.energy": "Energy Costs",
-  "scannable_unofficial.configuration.rangeEnergy": "Range Module",
-  "scannable_unofficial.configuration.fluidEnergy": "Fluid Module",
-  "scannable_unofficial.configuration.friendlyEnergy": "Friendly Entity Module",
-  "scannable_unofficial.configuration.hostileEnergy": "Hostile Entity Module",
-  "scannable_unofficial.configuration.blockEnergy": "Block Module",
-  "scannable_unofficial.configuration.entityEnergy": "Entity Module",
-  "scannable_unofficial.configuration.itemEnergy": "Item Module",
-
+  "scannable_unofficial.configuration.energy.range": "Range Module",
+  "scannable_unofficial.configuration.energy.fluid": "Fluid Module",
+  "scannable_unofficial.configuration.energy.friendly": "Friendly Entity Module",
+  "scannable_unofficial.configuration.energy.hostile": "Hostile Entity Module",
+  "scannable_unofficial.configuration.energy.block": "Block Module",
+  "scannable_unofficial.configuration.energy.entity": "Entity Module",
+  "scannable_unofficial.configuration.energy.item": "Item Module",
   "scannable_unofficial.configuration.range": "Range Modifiers",
-  "scannable_unofficial.configuration.rangeRange": "Range Module",
-  "scannable_unofficial.configuration.fluidRange": "Fluid Module",
-  "scannable_unofficial.configuration.blockRange": "Block Module",
-
-  "scannable_unofficial.configuration.charging": "Charging",
-  "scannable_unofficial.configuration.chargingInterval": "Charging Interval",
-  "scannable_unofficial.configuration.chargingAmount": "Charging Amount",
-
-  "scannable_unofficial.configuration.ignored.blocks": "Ignored Blocks",
+  "scannable_unofficial.configuration.range.range": "Range Module Modifier",
+  "scannable_unofficial.configuration.range.fluid": "Fluid Module Modifier",
+  "scannable_unofficial.configuration.range.block": "Block Module Modifier",
+  "scannable_unofficial.configuration.fluids": "Fluids",
+  "scannable_unofficial.configuration.fluids.ignoredTags": "Ignored Fluid Tags",
+  "scannable_unofficial.configuration.ignored": "Ignored Blocks",
+  "scannable_unofficial.configuration.ignored.blocks": "Ignored Block Registry Names",
   "scannable_unofficial.configuration.ignored.blockTags": "Ignored Block Tags",
-  "scannable_unofficial.configuration.ignored.fluidsTags": "Ignored Fluid Tags",
-
   "scannable_unofficial.configuration.colors": "Colors",
-  "scannable_unofficial.configuration.blocksColors": "Block Colors",
-  "scannable_unofficial.configuration.blockTagsColors": "Block Tag Colors",
-  "scannable_unofficial.configuration.fluidsColors": "Fluid Colors",
-  "scannable_unofficial.configuration.fluidTagsColors": "Fluid Tag Colors",
-
+  "scannable_unofficial.configuration.colors.blocksColors": "Block Colors",
+  "scannable_unofficial.configuration.colors.blockTagsColors": "Block Tag Colors",
+  "scannable_unofficial.configuration.colors.fluidsColors": "Fluid Colors",
+  "scannable_unofficial.configuration.colors.fluidTagsColors": "Fluid Tag Colors",
   "scannable_unofficial.configuration.misc": "Misc",
   "scannable_unofficial.configuration.misc.hideBrokenBlocks": "Hide Broken Blocks",
-  "scannable_unofficial.configuration.misc.itemScanColor": "Item Module Color"
+  "scannable_unofficial.configuration.misc.itemScanColor": "Item Scan Color"
 }
