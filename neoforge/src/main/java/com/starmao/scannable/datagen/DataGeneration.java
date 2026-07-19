@@ -1,6 +1,5 @@
 package com.starmao.scannable.datagen;
 
-import com.starmao.scannable.Scannable;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 

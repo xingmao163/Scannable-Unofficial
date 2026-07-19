@@ -1,7 +1,7 @@
 This project is a derivative work of Scannable by Florian "Sangar" Nücke,
-originally for Minecraft 1.18.2-1.20.4, ported to Minecraft 1.21.1 NeoForge by starmao (AI-assisted).
+originally for Minecraft 1.18.2-1.20.4, ported to Minecraft 1.21.x NeoForge by starmao (AI-assisted).
 
-Modifications and new code for the 1.21.1 port are Copyright (c) 2026 starmao,
+Modifications and new code for the 1.21.x port are Copyright (c) 2026 starmao,
 and are also licensed under the MIT License (see below).
 
 The original code is Copyright (c) 2017-2023 Florian "Sangar" Nücke, and is
@@ -33,4 +33,4 @@ THE SOFTWARE.
 All assets (textures, models, sounds, localization strings) in this mod are in the public domain, under CC0 1.0 Universal, unless noted otherwise.
 
 Original assets by Florian "Sangar" Nücke – CC0.
-Modifications and new assets for the 1.21.1 port by starmao – also CC0.
+Modifications and new assets for the 1.21.x port by starmao – also CC0.

@@ -1,6 +1,5 @@
 package com.starmao.scannable.datagen;
 
-import com.starmao.scannable.common.tags.ItemTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;

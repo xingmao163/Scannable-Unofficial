@@ -1,7 +1,6 @@
 package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.item.Items;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
