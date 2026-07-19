@@ -203,8 +203,8 @@ dependencies {
     }
 
     if (emi_version) {
-        compileOnly "dev.emi:emi-neoforge:${emi_version}"
-        runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
+        compileOnly "maven.modrinth:emi:${emi_version}"
+        runtimeOnly "maven.modrinth:emi:${emi_version}"
     }
 }
 
