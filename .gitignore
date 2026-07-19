@@ -11,6 +11,8 @@ build/
 *.ipr
 .vscode/
 .claude/
+**/bin/
+.gitignore
 
 ### Minecraft runs ###
 run/
