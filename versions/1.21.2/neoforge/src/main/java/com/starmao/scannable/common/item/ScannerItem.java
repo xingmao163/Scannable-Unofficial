@@ -111,7 +111,7 @@ public final class ScannerItem extends ModItem {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return true;
+        return ModConfig.SCANNER_USE_ENERGY.get();
     }
 
     @Override
@@ -276,6 +276,7 @@ public final class ScannerItem extends ModItem {
     }
 
     private static boolean tryConsumeEnergy(Player player, ItemStack scanner, List<ItemStack> modules, boolean simulate) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return true;
         if (player.isCreative()) return true;
 
         Optional<ItemEnergyStorage> energyStorage = ItemEnergyStorage.of(scanner);

@@ -27,6 +27,7 @@ public final class ScannerEnergyStorage extends EnergyStorage {
 
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
         int energyReceived = super.receiveEnergy(maxReceive, simulate);
         if (!simulate && energyReceived != 0) {
             container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
@@ -36,10 +37,12 @@ public final class ScannerEnergyStorage extends EnergyStorage {
 
     @Override
     public int extractEnergy(int maxExtract, boolean simulate) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
         int energyExtracted = super.extractEnergy(maxExtract, simulate);
         if (!simulate && energyExtracted != 0) {
             container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
         }
         return energyExtracted;
     }
+
 }

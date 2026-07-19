@@ -47,8 +47,10 @@ public class BlockModuleGhostHandler implements IGhostIngredientHandler<Configur
         }
 
         // Calculate screen coordinates for the 5 configuration slots
-        // getGuiLeft/getGuiTop -> getX/getY in 1.21.2+
+        // leftPos/topPos are protected; suppress removal warning on getGuiLeft/getGuiTop
+        @SuppressWarnings("removal")
         final int guiLeft = gui.getGuiLeft();
+        @SuppressWarnings("removal")
         final int guiTop = gui.getGuiTop();
         final int originX = guiLeft + ConfigurableBlockScannerModuleContainerScreen.SLOTS_ORIGIN_X;
         final int originY = guiTop + ConfigurableBlockScannerModuleContainerScreen.SLOTS_ORIGIN_Y;

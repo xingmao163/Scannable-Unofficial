@@ -6,6 +6,7 @@ import com.starmao.scannable.common.config.Constants;
 import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.container.ScannerContainerMenu;
 import com.starmao.scannable.common.inventory.ScannerContainer;
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.energy.ItemEnergyStorage;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
 import com.starmao.scannable.common.scanning.ItemScannerService;
@@ -109,7 +110,7 @@ public final class ScannerItem extends ModItem {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return true;
+        return ModConfig.SCANNER_USE_ENERGY.get();
     }
 
     @Override
@@ -284,6 +285,7 @@ public final class ScannerItem extends ModItem {
     }
 
     private static boolean tryConsumeEnergy(Player player, ItemStack scanner, List<ItemStack> modules, boolean simulate) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return true;
         if (player.isCreative()) return true;
 
         Optional<ItemEnergyStorage> energyStorage = ItemEnergyStorage.of(scanner);

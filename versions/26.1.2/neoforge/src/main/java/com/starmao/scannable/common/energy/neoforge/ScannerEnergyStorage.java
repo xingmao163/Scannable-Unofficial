@@ -5,6 +5,7 @@ import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 /**
  * Energy storage implementation for the scanner item using the 26.1.2 transfer API.
@@ -23,4 +24,17 @@ public final class ScannerEnergyStorage extends ItemAccessEnergyHandler {
     public static ScannerEnergyStorage of(ItemStack container) {
         return new ScannerEnergyStorage(container);
     }
+
+    @Override
+    public int insert(int maxInsert, TransactionContext transaction) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        return super.insert(maxInsert, transaction);
+    }
+
+    @Override
+    public int extract(int maxExtract, TransactionContext transaction) {
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        return super.extract(maxExtract, transaction);
+    }
+
 }

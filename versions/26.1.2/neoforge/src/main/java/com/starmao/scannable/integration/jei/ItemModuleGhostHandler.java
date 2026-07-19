@@ -39,8 +39,10 @@ public class ItemModuleGhostHandler implements IGhostIngredientHandler<Configura
         final ItemStack itemStack = itemStackOpt.get();
 
         // Calculate screen coordinates for the 5 configuration slots
-        // getGuiLeft/getGuiTop -> getX/getY in 1.21.2+
+        // leftPos/topPos are protected; suppress removal warning on getGuiLeft/getGuiTop
+        @SuppressWarnings("removal")
         final int guiLeft = gui.getGuiLeft();
+        @SuppressWarnings("removal")
         final int guiTop = gui.getGuiTop();
         final int originX = guiLeft + ConfigurableItemScannerModuleContainerScreen.SLOTS_ORIGIN_X;
         final int originY = guiTop + ConfigurableItemScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
