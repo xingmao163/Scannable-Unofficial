@@ -19,7 +19,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        target: [1.21.1, 1.21.2, 1.21.3, 1.21.4, 26.1.2]
+        include:
+          - target: 26.1.2
+            java: 25
+      default: &defaults
+        java: 21
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +37,7 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: ${{ matrix.java || 21 }}
           distribution: 'temurin'
           cache: 'gradle'
 
@@ -42,12 +51,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build Mod
-        run: ./gradlew clean :neoforge:build --no-daemon --stacktrace -x test
+      - name: Build Mod (${{ matrix.target }})
+        run: ./gradlew clean :neoforge:build --no-daemon --stacktrace -x test -PtargetVersion=${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Scannable-Unofficial-build-${{ github.sha }}
+          name: Scannable-Unofficial-${{ matrix.target }}-${{ github.sha }}
           path: neoforge/build/libs/*.jar
           retention-days: 14
           compression-level: 9
