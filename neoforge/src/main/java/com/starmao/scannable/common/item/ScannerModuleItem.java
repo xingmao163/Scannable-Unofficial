@@ -1,8 +1,12 @@
 package com.starmao.scannable.common.item;
 
 import com.starmao.scannable.api.ScannerModule;
+import com.starmao.scannable.common.config.Strings;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -25,5 +29,14 @@ public class ScannerModuleItem extends ModItem {
 
     public int getEnergyCost(final ItemStack stack) {
         return module.getEnergyCost(stack);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        int cost = module.getEnergyCost(stack);
+        if (cost > 0) {
+            tooltip.add(Strings.energyUsage(cost));
+        }
     }
 }

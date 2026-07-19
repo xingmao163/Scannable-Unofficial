@@ -10,6 +10,7 @@ import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.energy.ItemEnergyStorage;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
 import com.starmao.scannable.common.scanning.ItemScannerService;
+import com.starmao.scannable.common.scanning.ChargingScannerModule;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.ChatFormatting;
@@ -22,6 +23,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -102,7 +104,6 @@ public final class ScannerItem extends ModItem {
             for (int i = 0; i < activeModules.getContainerSize(); i++) {
                 totalCost += ModuleHelper.getEnergyCost(activeModules.getItem(i));
             }
-            if (totalCost <= 0) totalCost = 75;
             tooltip.add(Component.empty());
             tooltip.add(Strings.totalEnergyCost(totalCost));
         }
@@ -295,7 +296,6 @@ public final class ScannerItem extends ModItem {
         for (ItemStack module : modules) {
             totalCost += ModuleHelper.getEnergyCost(module);
         }
-        if (totalCost <= 0) totalCost = 75;
 
         long extracted = energyStorage.get().extractEnergy(totalCost, simulate);
         return extracted >= totalCost;
@@ -315,4 +315,42 @@ public final class ScannerItem extends ModItem {
         }
         return hasScannerModules;
     }
+
+    // ---- Charger module (periodic energy generation) ---- //
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+        if (level.isClientSide()) return;
+        if (!(entity instanceof Player)) return;
+        if (!ModConfig.SCANNER_USE_ENERGY.get()) return;
+
+        var container = ScannerContainer.of(stack);
+        var activeModules = container.getActiveModules();
+        int chargerCount = 0;
+        for (int i = 0; i < activeModules.getContainerSize(); i++) {
+            var module = activeModules.getItem(i);
+            if (module.isEmpty()) continue;
+            if (ModuleHelper.getModule(module)
+                    .filter(m -> m instanceof ChargingScannerModule)
+                    .isPresent()) {
+                chargerCount++;
+            }
+        }
+        if (chargerCount == 0) return;
+
+        long lastTick = stack.getOrDefault(ModDataComponents.LAST_CHARGE_TICK.get(), 0L);
+        long currentTick = level.getGameTime();
+        int interval = ModConfig.CHARGER_MODULE_INTERVAL.get();
+        if (currentTick - lastTick < interval) return;
+
+        // Direct DataComponent write bypasses the chargeOnlyByModule guard in ScannerEnergyStorage.
+        int amount = ModConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
+        int capacity = ModConfig.SCANNER_ENERGY_CAPACITY.get();
+        int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
+        int newEnergy = Math.min(capacity, current + amount);
+        stack.set(ModDataComponents.SCANNER_ENERGY.get(), newEnergy);
+        stack.set(ModDataComponents.LAST_CHARGE_TICK.get(), currentTick);
+    }
 }
+

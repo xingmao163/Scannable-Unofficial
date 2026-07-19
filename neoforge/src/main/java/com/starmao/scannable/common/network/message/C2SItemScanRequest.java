@@ -83,7 +83,6 @@ public record C2SItemScanRequest() implements CustomPacketPayload {
                     if (module.isEmpty()) continue;
                     totalCost += ModuleHelper.getEnergyCost(module);
                 }
-                if (totalCost <= 0) totalCost = 75;
 
                 final var energy = com.starmao.scannable.common.energy.ItemEnergyStorage.of(scanner);
                 if (energy.isEmpty() || energy.get().extractEnergy(totalCost, true) < totalCost) {

@@ -99,7 +99,6 @@ public final class ScannerItem extends ModItem {
             for (int i = 0; i < activeModules.getContainerSize(); i++) {
                 totalCost += ModuleHelper.getEnergyCost(activeModules.getItem(i));
             }
-            if (totalCost <= 0) totalCost = 75;
             tooltip.add(Component.empty());
             tooltip.add(Strings.totalEnergyCost(totalCost));
         }
@@ -282,7 +281,6 @@ public final class ScannerItem extends ModItem {
         for (ItemStack module : modules) {
             totalCost += ModuleHelper.getEnergyCost(module);
         }
-        if (totalCost <= 0) totalCost = 75;
 
         long extracted = energyStorage.get().extractEnergy(totalCost, simulate);
         return extracted >= totalCost;
@@ -327,10 +325,10 @@ public final class ScannerItem extends ModItem {
 
         long lastTick = stack.getOrDefault(ModDataComponents.LAST_CHARGE_TICK.get(), 0L);
         long currentTick = level.getGameTime();
-        int interval = ModConfig.CHARGING_INTERVAL.get();
+        int interval = ModConfig.CHARGER_MODULE_INTERVAL.get();
         // Recharge directly — bypass external charging gate so the module
         // works even when allowExternalCharging is false.
-        int amount = ModConfig.CHARGING_AMOUNT.get() * chargerCount;
+        int amount = ModConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
         int capacity = ModConfig.SCANNER_ENERGY_CAPACITY.get();
         int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
         int newEnergy = Math.min(capacity, current + amount);

@@ -28,6 +28,11 @@ public final class ModConfig {
             .comment("Whether the scanner consumes energy when performing a scan.")
             .define("scanner.useEnergy", true);
 
+    /** When true, the scanner can only be charged by the charger module, not by external FE sources. */
+    public static final ModConfigSpec.BooleanValue SCANNER_CHARGE_ONLY_BY_MODULE = BUILDER
+            .comment("When true, the scanner can only be charged by the charger module, not by external FE sources like chargers from other mods.")
+            .define("scanner.chargeOnlyByModule", false);
+
     /** Maximum FE energy capacity of the scanner item. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_CAPACITY = BUILDER
             .comment("Amount of energy that can be stored in a scanner.")
@@ -80,6 +85,18 @@ public final class ModConfig {
             .comment("Energy cost of the item scanner module per scan.")
             .defineInRange("energy.itemEnergy", 100, 0, 10000);
 
+
+    // ---- Charger Module ----
+
+    /** Ticks between each charge pulse from the charger module. */
+    public static final ModConfigSpec.IntValue CHARGER_MODULE_INTERVAL = BUILDER
+            .comment("Ticks between each charge pulse from the charger module.")
+            .defineInRange("charger.intervalTicks", 100, 1, 72000);
+
+    /** FE added per charge pulse, per installed charger module. */
+    public static final ModConfigSpec.IntValue CHARGER_MODULE_ENERGY_PER_PULSE = BUILDER
+            .comment("FE added per charge pulse, per installed charger module.")
+            .defineInRange("charger.energyPerPulse", 10, 1, 10000);
     // ---- Range Modifiers ----
 
     /** Relative scan radius increase per installed range module. */

@@ -5,13 +5,17 @@ import com.starmao.scannable.api.EntityScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.scanning.filter.EntityListScanFilter;
+import com.starmao.scannable.common.scanning.filter.EntityTypeScanFilter;
 import com.starmao.scannable.common.item.ConfigurableEntityScannerModuleItem;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Scanner module that detects specific entity types configured by the player.
@@ -53,6 +57,12 @@ public enum ConfigurableEntityScannerModule implements EntityScannerModule {
         if (module.getItem() instanceof ConfigurableEntityScannerModuleItem item) {
             ids = item.getIds(module);
         }
-        return new EntityListScanFilter(ids);
+        final List<Predicate<Entity>> filters = ids.stream()
+                .map(id -> BuiltInRegistries.ENTITY_TYPE.getOptional(id))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(EntityTypeScanFilter::new)
+                .collect(Collectors.toList());
+        return new EntityListScanFilter(filters);
     }
 }

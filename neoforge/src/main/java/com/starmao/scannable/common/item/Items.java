@@ -42,6 +42,9 @@ public final class Items {
     /** Configurable module — detects specific items in containers. */
     public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.register("item_module",
             () -> new ConfigurableItemScannerModuleItem());
+    /** Generates energy for the scanner over time when installed. */
+    public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.register("charger_module",
+            () -> new ScannerModuleItem(ChargingScannerModule.INSTANCE));
 
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);

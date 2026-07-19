@@ -34,6 +34,7 @@ public final class ModCreativeTabs {
                         output.accept(Items.FRIENDLY_ENTITY_MODULE.get());
                         output.accept(Items.HOSTILE_ENTITY_MODULE.get());
                         output.accept(Items.ITEM_MODULE.get());
+                        output.accept(Items.CHARGER_MODULE.get());
                     })
                     .build());
 

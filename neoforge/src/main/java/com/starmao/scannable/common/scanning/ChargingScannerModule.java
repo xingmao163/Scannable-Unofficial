@@ -1,6 +1,5 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +18,7 @@ public enum ChargingScannerModule implements ScannerModule {
 
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_BASE_RADIUS.get(); // proxy cost for charging
+        return 0; // charging itself doesn't cost energy
     }
 
     @Override

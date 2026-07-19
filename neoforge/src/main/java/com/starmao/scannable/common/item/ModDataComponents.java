@@ -73,6 +73,13 @@ public final class ModDataComponents {
                     .networkSynchronized(ByteBufCodecs.BOOL)
                     .build());
 
+    /** Last game tick when the charger module added energy. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LAST_CHARGE_TICK =
+            REGISTER.register("last_charge_tick", () -> DataComponentType.<Long>builder()
+                    .persistent(Codec.LONG)
+                    .networkSynchronized(ByteBufCodecs.VAR_LONG)
+                    .build());
+
     public static void register(IEventBus modEventBus) {
         REGISTER.register(modEventBus);
     }

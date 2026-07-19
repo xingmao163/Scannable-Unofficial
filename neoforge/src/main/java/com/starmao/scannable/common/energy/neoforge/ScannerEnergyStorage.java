@@ -28,6 +28,9 @@ public final class ScannerEnergyStorage extends EnergyStorage {
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
         if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        // When chargeOnlyByModule is enabled, block external charging.
+        // The charger module bypasses this by writing directly to the DataComponent.
+        if (ModConfig.SCANNER_CHARGE_ONLY_BY_MODULE.get()) return 0;
         int energyReceived = super.receiveEnergy(maxReceive, simulate);
         if (!simulate && energyReceived != 0) {
             container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
