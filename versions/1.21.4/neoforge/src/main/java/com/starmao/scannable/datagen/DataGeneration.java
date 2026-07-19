@@ -9,8 +9,6 @@ public final class DataGeneration {
         event.addProvider(new ModRecipeProvider.Runner(output, lookupProvider));
     }
 
-
-
     private DataGeneration() {
     }
 }

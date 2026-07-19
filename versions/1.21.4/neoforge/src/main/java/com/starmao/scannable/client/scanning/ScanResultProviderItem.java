@@ -13,6 +13,7 @@ import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -62,9 +63,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         }
     }
 
-    private long renderStartTime;
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
+    private long renderStartTime;
 
     // Multi-tick chunk scanning state
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
@@ -203,7 +204,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                         }
 
                         for (var entry : itemCounts.entrySet()) {
-                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue(), 0xBB44FF));
+                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue()));
                             Scannable.LOGGER.info("[ItemScanner] Found {} x{} at {}",
                                     entry.getKey().getDefaultInstance().getHoverName().getString(), entry.getValue(), pos);
                         }
@@ -224,8 +225,14 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     @Override
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
         Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
+        for (ItemScanResult result : results) {
+            BlockState blockState = level.getBlockState(result.pos());
+            int color = blockState.getMapColor(level, result.pos()).col;
+            if (color == 0) color = 0x4466CC;  // DEFAULT_COLOR from BlockScanResult
+
+            callback.accept(result);
+        }
         renderStartTime = System.currentTimeMillis();
-        results.forEach(callback);
     }
 
     @Override
@@ -247,6 +254,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         pendingChunkSections.clear();
         currentChunkSection = 0;
         chunkSectionsPerTick = 0;
+        renderStartTime = 0;
     }
 
     // ====================================================================
@@ -261,7 +269,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         RenderType renderType = getHighlightRenderLayer();
         renderType.setupRenderState();
 
-        net.minecraft.client.renderer.CompiledShaderProgram shader = RenderSystem.getShader();
+        CompiledShaderProgram shader = RenderSystem.getShader();
         if (shader != null) {
             shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
         }
@@ -272,7 +280,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         Level level = Minecraft.getInstance().level;
         for (ScanResult result : results) {
             ItemScanResult itemResult = (ItemScanResult) result;
-            int color = itemResult.blockColor();
+            int color = 0x4466CC; // default color
             // 重新获取最新的方块颜色（以防方块改变）
             if (level != null) {
                 BlockState blockState = level.getBlockState(itemResult.pos());
@@ -325,9 +333,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 1.0f);
         // -Z (0.9f)
         buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx, cy + 1, cz).setUv(0f, 1f).setColor(r, g, b, 0.9f);
         buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(0f, 1f).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx + 1, cy, cz).setUv(1f, 0f).setColor(r, g, b, 0.9f);
         // +Z (0.9f)
         buffer.addVertex(cx, cy, cz + 1).setUv(0f, 0f).setColor(r, g, b, 0.9f);
         buffer.addVertex(cx + 1, cy, cz + 1).setUv(1f, 0f).setColor(r, g, b, 0.9f);

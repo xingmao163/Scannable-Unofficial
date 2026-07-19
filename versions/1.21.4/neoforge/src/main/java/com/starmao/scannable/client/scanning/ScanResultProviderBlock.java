@@ -248,9 +248,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         RenderType renderType = getBlockScanResultRenderLayer();
         renderType.setupRenderState();
         CompiledShaderProgram shader = RenderSystem.getShader();
-        if (shader != null) {
-            shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
-        }
         for (ScanResult result : results) {
             BlockScanResult blockResult = (BlockScanResult) result;
             VertexBuffer vbo = blockResult.vbo;

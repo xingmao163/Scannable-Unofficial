@@ -16,6 +16,7 @@ import com.starmao.scannable.registry.ModCreativeTabs;
 import com.starmao.scannable.common.container.ModMenus;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig.Type;
@@ -23,7 +24,6 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
