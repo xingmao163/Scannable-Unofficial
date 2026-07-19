@@ -1,5 +1,6 @@
 package com.starmao.scannable.client;
 
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.client.scanning.ItemScanResult;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.item.ModuleHelper;
@@ -76,6 +77,11 @@ public final class ScanManager {
     private static PoseStack worldViewModelStack;
     private static Matrix4f worldProjectionMatrix;
 
+    /** Access for hand depth rendering in ScanResultProviderBlock. */
+    public static PoseStack getWorldViewModelStack() {
+        return worldViewModelStack;
+    }
+
     // ---- Backwards compatibility with old ScanManager API ---- //
 
     private static boolean isCharging = false;
@@ -88,7 +94,7 @@ public final class ScanManager {
     public static void beginScan(Player player, List<ItemStack> stacks) {
         cancelScan();
 
-        float scanRadius = 64;
+        float scanRadius = ModConfig.SCANNER_BASE_RADIUS.get();
 
         List<ScannerModule> modules = new ArrayList<>();
         for (ItemStack stack : stacks) {

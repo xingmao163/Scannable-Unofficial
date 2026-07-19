@@ -77,6 +77,10 @@ public final class ScanManager {
     private static PoseStack worldViewModelStack;
     private static Matrix4f worldProjectionMatrix;
 
+    public static PoseStack getWorldViewModelStack() {
+        return worldViewModelStack;
+    }
+
     // ---- Backwards compatibility with old ScanManager API ---- //
 
     private static boolean isCharging = false;

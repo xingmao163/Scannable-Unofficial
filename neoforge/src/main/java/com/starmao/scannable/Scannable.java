@@ -60,6 +60,13 @@ public final class Scannable {
         // --- Client-only setup ---
         if (FMLEnvironment.dist.isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
+
+            // Make the Config button clickable in the Mods screen.
+            modContainer.registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mc, screen) ->
+                            new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, screen)
+            );
         }
 
         // --- Data generation ---

@@ -67,5 +67,41 @@ public final class ModChineseLanguageProvider extends LanguageProvider {
         add("message.scannable_unofficial.scanner.no_modules", "未安装扫描模块！");
         add("message.scannable_unofficial.scanner.no_energy", "能量不足！");
         add("message.scannable_unofficial.scanner.no_free_slots", "没有空槽位！");
+
+        // Configuration screen — ModConfig (scannable_unofficial-server.toml)
+        add("scannable_unofficial.configuration.debug", "调试");
+        add("scannable_unofficial.configuration.debug.logItemScanner", "物品扫描器日志");
+        add("scannable_unofficial.configuration.scanner", "扫描仪");
+        add("scannable_unofficial.configuration.scanner.useEnergy", "消耗能量");
+        add("scannable_unofficial.configuration.scanner.energyCapacity", "能量容量");
+        add("scannable_unofficial.configuration.scanner.baseScanRadius", "基础扫描半径");
+        add("scannable_unofficial.configuration.scanner.resultStayDuration", "结果持续时长");
+        add("scannable_unofficial.configuration.energy", "能量消耗");
+        add("scannable_unofficial.configuration.energy.range", "范围模块");
+        add("scannable_unofficial.configuration.energy.fluid", "流体模块");
+        add("scannable_unofficial.configuration.energy.friendly", "友好生物模块");
+        add("scannable_unofficial.configuration.energy.hostile", "敌对生物模块");
+        add("scannable_unofficial.configuration.energy.block", "方块模块");
+        add("scannable_unofficial.configuration.energy.entity", "实体模块");
+        add("scannable_unofficial.configuration.energy.item", "物品模块");
+        add("scannable_unofficial.configuration.range", "范围修正");
+        add("scannable_unofficial.configuration.range.range", "范围模块修正");
+        add("scannable_unofficial.configuration.range.fluid", "流体模块修正");
+        add("scannable_unofficial.configuration.range.block", "方块模块修正");
+        add("scannable_unofficial.configuration.fluids", "流体");
+        add("scannable_unofficial.configuration.fluids.ignoredTags", "忽略的流体标签");
+        add("scannable_unofficial.configuration.ignored", "忽略方块");
+        add("scannable_unofficial.configuration.ignored.blocks", "忽略的方块注册名");
+        add("scannable_unofficial.configuration.ignored.blockTags", "忽略的方块标签");
+
+        // Configuration screen — ClientConfig (scannable_unofficial-client.toml)
+        add("scannable_unofficial.configuration.colors", "颜色");
+        add("scannable_unofficial.configuration.colors.blocksColors", "方块颜色");
+        add("scannable_unofficial.configuration.colors.blockTagsColors", "方块标签颜色");
+        add("scannable_unofficial.configuration.colors.fluidsColors", "流体颜色");
+        add("scannable_unofficial.configuration.colors.fluidTagsColors", "流体标签颜色");
+        add("scannable_unofficial.configuration.misc", "杂项");
+        add("scannable_unofficial.configuration.misc.hideBrokenBlocks", "隐藏已破坏方块");
+        add("scannable_unofficial.configuration.misc.itemScanColor", "物品扫描颜色");
     }
 }

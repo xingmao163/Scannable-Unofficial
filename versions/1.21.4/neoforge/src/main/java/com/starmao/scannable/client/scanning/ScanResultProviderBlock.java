@@ -1,5 +1,6 @@
 package com.starmao.scannable.client.scanning;
 
+import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -47,6 +48,8 @@ import java.util.function.Predicate;
 public final class ScanResultProviderBlock extends AbstractScanResultProvider {
     private static final int MAX_RESULTS_PER_BLOCK = 8192;
     private static final int DEFAULT_COLOR = 0x4466CC;
+    private static final org.slf4j.Logger LOGGER = Scannable.LOGGER;
+
     private final List<ScanFilterLayer> scanFilterLayers = new ArrayList<>();
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
     private int currentChunkSection, chunkSectionsPerTick;
@@ -233,6 +236,38 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
     }
 
     private void renderBlocks(PoseStack poseStack, Camera renderInfo, float partialTicks, List<ScanResult> results) {
+        // Re-render hands into depth buffer to avoid rendering overlay on top of player hands.
+        if (Minecraft.getInstance().options.getCameraType().isFirstPerson()
+            && !Minecraft.getInstance().options.hideGui
+            && Minecraft.getInstance().gameMode.getPlayerMode() != net.minecraft.world.level.GameType.SPECTATOR
+            && Minecraft.getInstance().player != null
+            && !(Minecraft.getInstance().getCameraEntity() instanceof net.minecraft.world.entity.LivingEntity living && living.isSleeping())) {
+            RenderSystem.colorMask(false, false, false, false);
+            try {
+                PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
+                if (viewPose != null) {
+                    org.joml.Matrix4f viewMat = new org.joml.Matrix4f(viewPose.last().pose());
+                    var mvStack = RenderSystem.getModelViewStack();
+                    mvStack.pushMatrix().mul(viewMat);
+                    PoseStack handPose = new PoseStack();
+                    handPose.pushPose();
+                    handPose.mulPose(viewMat.invert(new org.joml.Matrix4f()));
+                    var bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
+                    Minecraft.getInstance().gameRenderer.itemInHandRenderer.renderHandsWithItems(
+                        partialTicks, handPose, bufferSource,
+                        (net.minecraft.client.player.LocalPlayer) Minecraft.getInstance().player,
+                        Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, partialTicks)
+                    );
+                    bufferSource.endBatch();
+                    handPose.popPose();
+                    mvStack.popMatrix();
+                }
+            } catch (final Throwable e) {
+                LOGGER.error("Failed to render hand into depth buffer", e);
+            }
+            RenderSystem.colorMask(true, true, true, true);
+        }
+
         // Live hide-broken-blocks update: prune cells that no longer match and rebuild affected VBOs
         Level level = Minecraft.getInstance().level;
         Player viewer = Minecraft.getInstance().player;

@@ -12,11 +12,10 @@
 
 **[English](#english)** | **[中文](#中文)**
 
-*A handheld scanner mod with swappable modules for Minecraft 1.21.1 NeoForge*
+*A handheld scanner mod with swappable modules for Minecraft 1.21.x NeoForge*
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.228-orange)](https://neoforged.net/)
+[![](http://cf.way2muchnoise.eu/full_scannable-unofficial_downloads.svg)](https://minecraft.curseforge.com/projects/scannable-unofficial)
+[![](https://img.shields.io/modrinth/dt/scannable-unofficial?style=flat&logo=modrinth&color=green)](https://modrinth.com/mod/scannable-unofficial)
 
 </div>
 

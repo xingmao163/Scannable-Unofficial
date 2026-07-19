@@ -67,5 +67,41 @@ public final class ModLanguageProvider extends LanguageProvider {
         add("message.scannable_unofficial.scanner.no_modules", "No scan modules installed!");
         add("message.scannable_unofficial.scanner.no_energy", "Not enough energy!");
         add("message.scannable_unofficial.scanner.no_free_slots", "No free slots!");
+
+        // Configuration screen — ModConfig (scannable_unofficial-server.toml)
+        add("scannable_unofficial.configuration.debug", "Debug");
+        add("scannable_unofficial.configuration.debug.logItemScanner", "Log Item Scanner");
+        add("scannable_unofficial.configuration.scanner", "Scanner");
+        add("scannable_unofficial.configuration.scanner.useEnergy", "Use Energy");
+        add("scannable_unofficial.configuration.scanner.energyCapacity", "Energy Capacity");
+        add("scannable_unofficial.configuration.scanner.baseScanRadius", "Base Scan Radius");
+        add("scannable_unofficial.configuration.scanner.resultStayDuration", "Result Stay Duration");
+        add("scannable_unofficial.configuration.energy", "Energy Cost");
+        add("scannable_unofficial.configuration.energy.range", "Range Module");
+        add("scannable_unofficial.configuration.energy.fluid", "Fluid Module");
+        add("scannable_unofficial.configuration.energy.friendly", "Friendly Entity Module");
+        add("scannable_unofficial.configuration.energy.hostile", "Hostile Entity Module");
+        add("scannable_unofficial.configuration.energy.block", "Block Module");
+        add("scannable_unofficial.configuration.energy.entity", "Entity Module");
+        add("scannable_unofficial.configuration.energy.item", "Item Module");
+        add("scannable_unofficial.configuration.range", "Range Modifiers");
+        add("scannable_unofficial.configuration.range.range", "Range Module Modifier");
+        add("scannable_unofficial.configuration.range.fluid", "Fluid Module Modifier");
+        add("scannable_unofficial.configuration.range.block", "Block Module Modifier");
+        add("scannable_unofficial.configuration.fluids", "Fluids");
+        add("scannable_unofficial.configuration.fluids.ignoredTags", "Ignored Fluid Tags");
+        add("scannable_unofficial.configuration.ignored", "Ignored Blocks");
+        add("scannable_unofficial.configuration.ignored.blocks", "Ignored Block Registry Names");
+        add("scannable_unofficial.configuration.ignored.blockTags", "Ignored Block Tags");
+
+        // Configuration screen — ClientConfig (scannable_unofficial-client.toml)
+        add("scannable_unofficial.configuration.colors", "Colors");
+        add("scannable_unofficial.configuration.colors.blocksColors", "Block Colors");
+        add("scannable_unofficial.configuration.colors.blockTagsColors", "Block Tag Colors");
+        add("scannable_unofficial.configuration.colors.fluidsColors", "Fluid Colors");
+        add("scannable_unofficial.configuration.colors.fluidTagsColors", "Fluid Tag Colors");
+        add("scannable_unofficial.configuration.misc", "Misc");
+        add("scannable_unofficial.configuration.misc.hideBrokenBlocks", "Hide Broken Blocks");
+        add("scannable_unofficial.configuration.misc.itemScanColor", "Item Scan Color");
     }
 }
