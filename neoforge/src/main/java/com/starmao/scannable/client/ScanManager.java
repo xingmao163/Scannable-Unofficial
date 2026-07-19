@@ -146,6 +146,7 @@ public final class ScanManager {
         com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
     }
 
+    @SuppressWarnings("null")
     public static void updateScan(Entity entity, boolean finish) {
         int remaining = SCAN_COMPUTE_DURATION - scanningTicks;
 
@@ -196,6 +197,7 @@ public final class ScanManager {
         return isCharging;
     }
 
+    @SuppressWarnings("null")
     public static void tick() {
         if (lastScanCenter == null || currentStart < 0) return;
 

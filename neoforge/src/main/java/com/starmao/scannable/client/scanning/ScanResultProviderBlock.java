@@ -227,6 +227,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                         .createCompositeState(false));
     }
 
+    @SuppressWarnings("null")
     private void renderBlocks(PoseStack poseStack, Camera renderInfo, float partialTicks, List<ScanResult> results) {
         ShaderInstance shader = Shaders.getScanResultShader();
         if (shader == null) return;
@@ -322,6 +323,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         return root != null;
     }
 
+    @SuppressWarnings("null")
     @Nullable
     private BlockScanResult tryAddToCluster(Map<BlockPos, BlockScanResult> clusters, BlockPos pos,
                                              BlockPos clusterPos, @Nullable BlockScanResult root) {
@@ -436,6 +438,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
             return level.getBlockState(cell).is(block);
         }
 
+        @SuppressWarnings("null")
         private void buildVbo() {
             if (visibleBlocks == null || visibleBlocks.isEmpty()) return;
             BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);

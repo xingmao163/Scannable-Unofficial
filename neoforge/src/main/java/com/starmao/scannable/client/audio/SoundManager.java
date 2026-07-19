@@ -16,11 +16,13 @@ public final class SoundManager {
     @Nullable
     private static SimpleSoundInstance currentChargingSound;
 
+    @SuppressWarnings("null")
     public static void playChargingSound() {
         currentChargingSound = SimpleSoundInstance.forUI(SCANNER_CHARGE, 1);
         Minecraft.getInstance().getSoundManager().play(currentChargingSound);
     }
 
+    @SuppressWarnings("null")
     public static void stopChargingSound() {
         if (currentChargingSound != null) {
             Minecraft.getInstance().getSoundManager().stop(currentChargingSound);

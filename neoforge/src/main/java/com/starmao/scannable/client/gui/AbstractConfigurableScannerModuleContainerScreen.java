@@ -118,6 +118,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    @SuppressWarnings("null")
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         if (slot != null) {

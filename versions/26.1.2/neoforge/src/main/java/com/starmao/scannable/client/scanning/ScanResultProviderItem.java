@@ -213,8 +213,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             ItemScanResult enrichedResult = new ItemScanResult(
                     result.pos(),
                     result.item(),
-                    result.totalCount(),
-                    color
+                    result.totalCount()
             );
             callback.accept(enrichedResult);
         }
@@ -375,7 +374,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
         renderIconLabels(bufferSource, poseStack, yaw, pitch, lookVec, viewerEyes, showDistance, deduped,
                 ScanResult::getPosition,
-                result -> ModTextures.ICON_INFO,
+                result -> com.starmao.scannable.Scannable.id("textures/gui/overlay/info.png"),
                 result -> {
                     // Show ALL configured items found in this container
                     final java.util.List<ItemScanResult> allItems = byPos.get(

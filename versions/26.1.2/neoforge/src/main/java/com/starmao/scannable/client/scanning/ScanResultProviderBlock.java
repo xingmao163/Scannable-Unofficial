@@ -34,6 +34,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -286,7 +287,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
 
         renderIconLabels(bufferSource, poseStack, yaw, pitch, lookVec, viewerEyes, showDistance, results,
                 ScanResult::getPosition,
-                result -> ModTextures.ICON_INFO,
+                result -> com.starmao.scannable.Scannable.id("textures/gui/overlay/info.png"),
                 result -> ((BlockScanResult) result).block.getName(),
                 result -> ((BlockScanResult) result).hasVisible(),
                 Integer.MAX_VALUE, 0.98f);

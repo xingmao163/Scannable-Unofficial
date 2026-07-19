@@ -15,22 +15,12 @@ import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
  * by {@code Capabilities.Energy.ITEM}.
  */
 public final class ScannerEnergyStorage extends ItemAccessEnergyHandler {
-    private final ItemStack container;
 
     public ScannerEnergyStorage(ItemStack container) {
         super(ItemAccess.forStack(container), ModDataComponents.SCANNER_ENERGY.get(), ModConfig.SCANNER_ENERGY_CAPACITY.get());
-        this.container = container;
     }
 
     public static ScannerEnergyStorage of(ItemStack container) {
         return new ScannerEnergyStorage(container);
-    }
-
-    @Override
-    public long receiveEnergy(long maxReceive, boolean simulate) {
-        if (!ModConfig.SCANNER_ALLOW_EXTERNAL_CHARGING.get()) {
-            return 0;
-        }
-        return super.receiveEnergy(maxReceive, simulate);
     }
 }

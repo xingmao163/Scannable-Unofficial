@@ -17,14 +17,14 @@ import com.starmao.scannable.client.renderer.ScannerRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.culling.Frustum;
+
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
+
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -66,18 +66,13 @@ public final class ScanManager {
     private static final Map<ScanResultProvider, List<ScanResult>> collectingResults = new HashMap<>();
     private static final Map<ScanResultProvider, List<ScanResult>> pendingResults = new HashMap<>();
     private static final Map<ScanResultProvider, List<ScanResult>> renderingResults = new HashMap<>();
-    private static final List<ScanResult> renderingList = new ArrayList<>();
+
 
     private static int scanningTicks = -1;
     private static long currentStart = -1;
     @Nullable private static Vec3 lastScanCenter;
 
-    private static PoseStack worldViewModelStack;
-    private static Matrix4f worldProjectionMatrix;
 
-    public static PoseStack getWorldViewModelStack() {
-        return worldViewModelStack;
-    }
 
     // ---- Backwards compatibility with old ScanManager API ---- //
 
@@ -136,7 +131,7 @@ public final class ScanManager {
         for (final ItemScanResultData data : rawResults) {
             final var itemKey = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(data.itemId());
             if (itemKey.isEmpty()) continue;
-            results.add(new ItemScanResult(data.pos(), itemKey.get().getDefaultInstance(), data.totalCount(), 0xBB44FF));
+            results.add(new ItemScanResult(data.pos(), itemKey.get().getDefaultInstance(), data.totalCount()));
         }
         if (results.isEmpty()) return;
 
@@ -284,63 +279,38 @@ public final class ScanManager {
         }
     }
 
-    public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Matrix4f rotMatrix = new Matrix4f()
-            .rotate(camera.rotation())
-            .invert();
-        worldViewModelStack = new PoseStack();
-        worldViewModelStack.last().pose().set(rotMatrix);
-        worldProjectionMatrix = projectionMatrix;
-    }
-
-    public static void renderLevel(float partialTick) {
+    public static void renderLevel(final PoseStack poseStack, final float partialTick) {
         synchronized (renderingResults) {
-            if (renderingResults.isEmpty()) return;
-            Scannable.LOGGER.info("[renderLevel] {} providers, worldVMStack={}", renderingResults.size(), worldViewModelStack != null ? "set" : "null");
-            render(ScanResultRenderContext.WORLD, partialTick, worldViewModelStack, worldProjectionMatrix);
-        }
-    }
-
-    public static void renderGui(float partialTick) {
-        synchronized (renderingResults) {
-            if (renderingResults.isEmpty()) return;
-
-            render(ScanResultRenderContext.GUI, partialTick, worldViewModelStack, worldProjectionMatrix);
-        }
-    }
-
-    private static void render(ScanResultRenderContext context, float partialTicks, PoseStack poseStack, Matrix4f projectionMatrix) {
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vec3 pos = camera.position();
-
-        Frustum frustum = new Frustum(poseStack.last().pose(), projectionMatrix);
-        frustum.prepare(pos.x(), pos.y(), pos.z());
-
-        poseStack.pushPose();
-        poseStack.translate(-pos.x, -pos.y, -pos.z);
-
-        MultiBufferSource.BufferSource renderTypeBuffer = MultiBufferSource.immediate(RENDER_BUFFER);
-        try {
-            for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                for (ScanResult result : entry.getValue()) {
-                    AABB bounds = result.getRenderBounds();
-                    if (bounds == null || frustum.isVisible(bounds)) {
-                        renderingList.add(result);
-                    }
-                }
-
-                if (!renderingList.isEmpty()) {
-                    entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, renderingList);
-                    renderingList.clear();
-                }
+            if (renderingResults.isEmpty()) {
+                return;
             }
-        } finally {
-            renderingList.clear();
-        }
 
-        renderTypeBuffer.endBatch();
-        poseStack.popPose();
+            final Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            final Vec3 cam = camera.position();
+
+            // The RenderLevelStageEvent pose is camera-relative; translate by the camera position so
+            // we can render results at world coordinates.
+            poseStack.pushPose();
+            poseStack.translate(-cam.x, -cam.y, -cam.z);
+
+            final MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(RENDER_BUFFER);
+            // World pass: result boxes / cluster contours.
+            for (final Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
+                entry.getKey().render(ScanResultRenderContext.WORLD, bufferSource, poseStack, camera, partialTick, entry.getValue());
+            }
+            // Label pass: billboarded name labels shown for whatever the player looks at. The pose is
+            // camera-relative (see translate above), which is what renderIconLabel expects.
+            for (final Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
+                entry.getKey().render(ScanResultRenderContext.GUI, bufferSource, poseStack, camera, partialTick, entry.getValue());
+            }
+            bufferSource.endBatch();
+
+            poseStack.popPose();
+        }
+    }
+
+    public static void renderGui(final float partialTick) {
+        // TODO(Phase 3b): re-enable the GUI result overlay once the render path is rebuilt.
     }
 
     // ---- Backwards compat methods for old renderers ---- //

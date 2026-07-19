@@ -47,6 +47,7 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
         graphics.blit(BACKGROUND, x, y, 0, 0, imageWidth, imageHeight);
     }
 
+    @SuppressWarnings("null")
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         if (slot != null) {
