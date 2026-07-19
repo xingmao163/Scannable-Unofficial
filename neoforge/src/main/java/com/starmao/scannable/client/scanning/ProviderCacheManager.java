@@ -1,9 +1,14 @@
 package com.starmao.scannable.client.scanning;
 
-/**
- * Utility that resets all scan result provider caches, typically triggered
- * on config reload so that colour mappings and filter caches are re-baked.
- * <p>Only a single {@link #clearCache()} method — all logic is delegated
- * to the individual provider reset methods.
- */
+/** Resets scan result provider caches on config reload. */
 public final class ProviderCacheManager {
+    public static void clearCache() {
+        // Reset scan result provider caches so results are re-baked with new color settings.
+        ScanResultProviders.BLOCKS.get().reset();
+        ScanResultProviders.ENTITIES.get().reset();
+        com.starmao.scannable.common.scanning.FluidBlockScannerModule.clearCache();
+    }
+
+    private ProviderCacheManager() {
+    }
+}

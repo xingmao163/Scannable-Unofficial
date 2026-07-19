@@ -7,10 +7,14 @@ import net.minecraft.world.entity.TamableAnimal;
 
 import java.util.function.Predicate;
 
-/**
- * Scan filter singleton that matches friendly / passive entities.
- * <p>An entity is considered friendly if it is an instance of
- * {@link Animal}, {@link TamableAnimal}, or {@link AbstractVillager}.
- * Used by the friendly entity scanner module.
- */
+/** Matches friendly entities (animals, villagers). */
 public enum FriendlyEntityScanFilter implements Predicate<Entity> {
+    INSTANCE;
+
+    @Override
+    public boolean test(Entity entity) {
+        return entity instanceof Animal
+                || entity instanceof TamableAnimal
+                || entity instanceof AbstractVillager;
+    }
+}

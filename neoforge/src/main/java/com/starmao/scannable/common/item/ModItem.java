@@ -2,13 +2,13 @@ package com.starmao.scannable.common.item;
 
 import net.minecraft.world.item.Item;
 
-/**
- * Simple base item with default scanner-mod settings.
- * <p>Used as the superclass for most scanner items and as a standalone
- * item class for the blank module.
- */
+/** Simple base item. */
 public class ModItem extends Item {
+    public ModItem(Properties properties) {
+        super(properties);
+    }
+
     public ModItem() {
-        super(new Properties());
+        this(new Properties());
     }
 }

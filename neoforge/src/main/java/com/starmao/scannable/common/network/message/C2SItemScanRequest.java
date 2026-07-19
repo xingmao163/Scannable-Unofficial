@@ -1,7 +1,6 @@
 package com.starmao.scannable.common.network.message;
 
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.inventory.ScannerContainer;
@@ -101,9 +100,7 @@ public record C2SItemScanRequest() implements CustomPacketPayload {
             final List<ItemScanResultData> results = ItemScannerService.scan(
                     player.level(), center, radius, targetItemIds);
 
-            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-                Scannable.LOGGER.info("[ItemScanner] Server scan complete: {} result(s)", results.size());
-            }
+            Scannable.LOGGER.info("[ItemScanner] Server scan complete: {} result(s)", results.size());
 
             // Send results back to the client
             PacketDistributor.sendToPlayer(player, new S2CItemScanResult(center, results));

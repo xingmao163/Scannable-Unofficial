@@ -9,11 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * A scan filter that matches entities whose type is in a pre-resolved list.
- * <p>Resolves {@link ResourceLocation} registry names to {@link EntityType}
- * at construction time, so the actual scan loop performs fast list containment checks.
- *
- * @see com.starmao.scannable.api.EntityScannerModule
- */
+/** Matches entities from a list of registry names. */
 public final class EntityListScanFilter implements Predicate<Entity> {
+    private final List<EntityType<?>> types = new ArrayList<>();
+
+    public EntityListScanFilter(List<ResourceLocation> locations) {
+        for (ResourceLocation loc : locations) {
+            BuiltInRegistries.ENTITY_TYPE.getOptional(loc).ifPresent(types::add);
+        }
+    }
+
+    @Override
+    public boolean test(Entity entity) {
+        return types.contains(entity.getType());
+    }
+}

@@ -1,9 +1,7 @@
 package com.starmao.scannable.client;
 
-import com.starmao.scannable.Scannable;
 import com.starmao.scannable.client.scanning.ItemScanResult;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import com.starmao.scannable.common.network.data.ScanResultEntry;
@@ -31,30 +29,7 @@ import org.joml.Matrix4f;
 import javax.annotation.Nullable;
 import java.util.*;
 
-/**
- * Central orchestrator for the client-side scan lifecycle.
- *
- * <p>Coordinates the full scan pipeline:
- * <ol>
- *   <li><b>Begin</b> — {@link #beginScan} collects active modules, initialises
- *       their {@link ScanResultProvider providers}, and sets the scan centre.</li>
- *   <li><b>Charge</b> — {@link #updateScan} is called each tick while the player
- *       holds right-click, driving {@link ScanResultProvider#computeScanResults}.</li>
- *   <li><b>Finalise</b> — On release, remaining ticks are completed, results are
- *       collected via {@link ScanResultProvider#collectScanResults} and sorted
- *       by distance from the scan origin.</li>
- *   <li><b>Display</b> — Results expand outward from the scan centre over
- *       {@link #computeScanGrowthDuration}, managed by {@link #tick()} and rendered
- *       via {@link #renderLevel} / {@link #renderGui}.</li>
- *   <li><b>Fade</b> — After {@code SCANNER_RESULT_STAY_DURATION} ms, results
- *       gradually shrink and are removed.</li>
- * </ol>
- *
- * <p>Server-side item scan results are injected via {@link #setServerItemResults}
- * and follow the same display pipeline.
- *
- * <p>All mutable state is static; this is a utility class and is never instantiated.
- */
+/** Central orchestrator for the client-side scan lifecycle. */
 public final class ScanManager {
     public static final int SCAN_COMPUTE_DURATION = 40;
     private static final int SCAN_INITIAL_RADIUS = 10;
@@ -71,16 +46,10 @@ public final class ScanManager {
         return Minecraft.getInstance().gameRenderer.getRenderDistance();
     }
 
-    /** @return the scan wave growth duration in ms, scaled by the player's render distance setting */
     public static int computeScanGrowthDuration() {
         return SCAN_GROWTH_DURATION * Minecraft.getInstance().options.renderDistance().get() / REFERENCE_RENDER_DISTANCE;
     }
 
-    /**
-     * Computes the current scan wave radius using a quadratic growth curve.
-     * The radius starts at {@code SCAN_INITIAL_RADIUS} and accelerates toward
-     * the player's render distance over the growth duration.
-     */
     public static float computeRadius(long start, float duration) {
         float r1 = computeTargetRadius();
         float t1 = duration;
@@ -116,13 +85,6 @@ public final class ScanManager {
 
     // ---- Public API ---- //
 
-    /**
-     * Begins a new scan cycle for the given module item stacks.
-     * <p>Initialises every active module's {@link ScanResultProvider}, computes the
-     * effective scan radius from all installed modules (via {@link ScannerModule#adjustGlobalRange}),
-     * and sets the scan centre to the player's current position.
-     * Does nothing if no module contributes a result provider.
-     */
     public static void beginScan(Player player, List<ItemStack> stacks) {
         cancelScan();
 
@@ -152,7 +114,7 @@ public final class ScanManager {
 
     /**
      * Inject server-side item scan results into the rendering pipeline.
-     * Called when the client receives a {@link com.starmao.scannable.common.network.message.S2CItemScanResult} packet.
+     * Called when the client receives a {@link S2CItemScanResult} packet.
      * <p>
      * The results are placed directly into {@code pendingResults} so the
      * existing tick/render loop handles the expansion animation and display.
@@ -165,7 +127,7 @@ public final class ScanManager {
         for (final ItemScanResultData data : rawResults) {
             final var itemKey = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(data.itemId());
             if (itemKey.isEmpty()) continue;
-            results.add(new ItemScanResult(data.pos(), itemKey.get().getDefaultInstance(), data.totalCount(), 0xBB44FF));
+            results.add(new ItemScanResult(data.pos(), itemKey.get().getDefaultInstance(), data.totalCount()));
         }
         if (results.isEmpty()) return;
 
@@ -175,23 +137,9 @@ public final class ScanManager {
         final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
         pendingResults.put(provider, results);
 
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
-        }
+        com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
     }
 
-    /**
-     * Advances the scanning charge phase by one tick.
-     * <p>If {@code finish} is {@code false}, runs one tick of
-     * {@link ScanResultProvider#computeScanResults} on each active provider.
-     * If {@code true}, runs all remaining ticks immediately, collects the results
-     * (sorted by distance from the scan centre), resets the providers, and
-     * triggers the scan wave visual effect.
-     *
-     * @param entity the player performing the scan
-     * @param finish {@code true} to complete the scan early, {@code false} for a normal tick
-     */
-    @SuppressWarnings("null")
     public static void updateScan(Entity entity, boolean finish) {
         int remaining = SCAN_COMPUTE_DURATION - scanningTicks;
 
@@ -231,7 +179,6 @@ public final class ScanManager {
         cancelScan();
     }
 
-    /** Cancels an in-progress scan, discarding collected providers and results. */
     public static void cancelScan() {
         collectingProviders.clear();
         collectingResults.clear();
@@ -239,18 +186,10 @@ public final class ScanManager {
         isCharging = false;
     }
 
-    /** @return {@code true} while a scan is being charged (right-click held) */
     public static boolean isCharging() {
         return isCharging;
     }
 
-    /**
-     * Per-tick update for the results display phase.
-     * <p>Expands results from pending to rendering as the scan wave radius grows.
-     * After the stay duration elapses, results are progressively removed (fade-out).
-     * Called from the client tick event loop.
-     */
-    @SuppressWarnings("null")
     public static void tick() {
         if (lastScanCenter == null || currentStart < 0) return;
 
@@ -306,17 +245,12 @@ public final class ScanManager {
         }
     }
 
-    /**
-     * Stores the current view and projection matrices for use during world-space rendering.
-     * Called from the level render event handler.
-     */
     public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
         worldViewModelStack = new PoseStack();
         worldViewModelStack.last().pose().set(viewMatrix);
         worldProjectionMatrix = projectionMatrix;
     }
 
-    /** Renders scan results in world-space (3D markers over detected objects). */
     public static void renderLevel(float partialTick) {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
@@ -324,7 +258,6 @@ public final class ScanManager {
         }
     }
 
-    /** Renders scan results in screen-space (GUI overlay elements). */
     public static void renderGui(float partialTick) {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
@@ -383,11 +316,6 @@ public final class ScanManager {
 
     // ---- Backwards compat methods for old renderers ---- //
 
-    /**
-     * @deprecated kept for compatibility with older scan result pipelines;
-     *             new results use the provider-based path.
-     */
-    @Deprecated
     public static void setScanResults(Vec3 center, List<ScanResultEntry> results) {
         // Legacy: converts old scan results to new format - handled by server scan as before
         lastScanCenter = center;
@@ -450,8 +378,6 @@ public final class ScanManager {
 
     // ---- Backwards compat inner class ---- //
 
-    /** @deprecated kept for compatibility with the old scan result rendering path. */
-    @Deprecated
     public static class RenderableResult {
         private final ScanResultEntry entry;
         private final net.minecraft.world.phys.AABB renderBounds;

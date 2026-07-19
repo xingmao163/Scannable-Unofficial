@@ -271,7 +271,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 result -> ModTextures.ICON_INFO,
                 result -> ((BlockScanResult) result).block.getName(),
                 result -> ((BlockScanResult) result).hasVisible(),
-                Integer.MAX_VALUE, 0.98f);
+                MAX_ICONS, ICON_CONE_DOT);
     }
 
     // ---- Clustering ---- //

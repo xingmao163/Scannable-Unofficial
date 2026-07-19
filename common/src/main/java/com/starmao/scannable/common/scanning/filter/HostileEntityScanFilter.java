@@ -6,9 +6,12 @@ import net.minecraft.world.entity.monster.Monster;
 
 import java.util.function.Predicate;
 
-/**
- * Scan filter singleton that matches hostile / enemy entities.
- * <p>An entity is considered hostile if it is an instance of
- * {@link Monster} or {@link Enemy}. Used by the hostile entity scanner module.
- */
+/** Matches hostile entities (monsters). */
 public enum HostileEntityScanFilter implements Predicate<Entity> {
+    INSTANCE;
+
+    @Override
+    public boolean test(Entity entity) {
+        return entity instanceof Monster || entity instanceof Enemy;
+    }
+}

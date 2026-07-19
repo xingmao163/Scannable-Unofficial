@@ -8,16 +8,12 @@ import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
-import com.starmao.scannable.client.shader.Shaders;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
@@ -50,7 +46,7 @@ import java.util.function.Consumer;
  * with the found item's name and total quantity displayed.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
-    private static final float HIGHLIGHT_ALPHA = 0.8f;
+    private static final float HIGHLIGHT_ALPHA = 0.35f;
 
     private static int getHighlightColor() {
         try {
@@ -66,7 +62,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
-    private long renderStartTime;
 
     // Multi-tick chunk scanning state
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
@@ -99,11 +94,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             return;
         }
 
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
-            for (Item target : targetItems) {
-                Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
-            }
+        Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
+        for (Item target : targetItems) {
+            Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
         }
 
         // Calculate chunk sections that intersect the scan sphere
@@ -190,9 +183,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                             if (itemHandler != null) break;
                         }
                         if (itemHandler == null) continue;
-                        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-                            Scannable.LOGGER.info("[ItemScanner] Found container at {} with {} slots", pos, itemHandler.getSlots());
-                        }
+                        Scannable.LOGGER.info("[ItemScanner] Found container at {} with {} slots", pos, itemHandler.getSlots());
 
                         // Scan inventory for target items — track each item type separately
                         java.util.Map<Item, Integer> itemCounts = new java.util.HashMap<>();
@@ -205,11 +196,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                         }
 
                         for (var entry : itemCounts.entrySet()) {
-                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue(), 0xBB44FF));
-                            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-                                Scannable.LOGGER.info("[ItemScanner] Found {} x{} at {}",
-                                        entry.getKey().getDefaultInstance().getHoverName().getString(), entry.getValue(), pos);
-                            }
+                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue()));
+                            Scannable.LOGGER.info("[ItemScanner] Found {} x{} at {}",
+                                    entry.getKey().getDefaultInstance().getHoverName().getString(), entry.getValue(), pos);
                         }
                     }
                 }
@@ -227,23 +216,8 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     @Override
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
-        }
-        for (ItemScanResult result : results) {
-            BlockState blockState = level.getBlockState(result.pos());
-            int color = blockState.getMapColor(level, result.pos()).col;
-            if (color == 0) color = 0x4466CC;  // DEFAULT_COLOR from BlockScanResult
-
-            ItemScanResult enrichedResult = new ItemScanResult(
-                    result.pos(),
-                    result.item(),
-                    result.totalCount(),
-                    color
-            );
-            callback.accept(enrichedResult);
-        }
-        renderStartTime = System.currentTimeMillis();
+        Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
+        results.forEach(callback);
     }
 
     @Override
@@ -265,7 +239,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         pendingChunkSections.clear();
         currentChunkSection = 0;
         chunkSectionsPerTick = 0;
-        renderStartTime = 0;
     }
 
     // ====================================================================
@@ -273,31 +246,15 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     // ====================================================================
 
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
-        ShaderInstance shader = Shaders.getScanResultShader();
-        if (shader == null) return;
-
-        if (renderStartTime == 0) {
-            renderStartTime = System.currentTimeMillis();
-        }
-        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
-
         RenderType renderType = getHighlightRenderLayer();
         renderType.setupRenderState();
 
         BufferBuilder buffer = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        Level level = Minecraft.getInstance().level;
         for (ScanResult result : results) {
             ItemScanResult itemResult = (ItemScanResult) result;
-            int color = itemResult.blockColor();
-            // 重新获取最新的方块颜色（以防方块改变）
-            if (level != null) {
-                BlockState blockState = level.getBlockState(itemResult.pos());
-                int mapColor = blockState.getMapColor(level, itemResult.pos()).col;
-                if (mapColor != 0) color = mapColor;
-            }
-            renderBoxFaces(buffer, itemResult.pos(), color);
+            renderBoxFaces(buffer, itemResult.pos());
         }
 
         var data = buffer.buildOrThrow();
@@ -315,42 +272,44 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         renderType.clearRenderState();
     }
 
-    private static void renderBoxFaces(VertexConsumer buffer, BlockPos pos, int color) {
+    private static void renderBoxFaces(VertexConsumer buffer, BlockPos pos) {
+        final int color = getHighlightColor();
         float cx = pos.getX(), cy = pos.getY(), cz = pos.getZ();
         float r = ((color >> 16) & 0xFF) / 255f;
         float g = ((color >> 8) & 0xFF) / 255f;
         float b = (color & 0xFF) / 255f;
+        float a = HIGHLIGHT_ALPHA;
 
-        // -X (0.8f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 0.8f);
-        // +X (0.8f)
-        buffer.addVertex(cx + 1, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.8f);
-        // -Y (0.7f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1f, 0f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.7f);
-        // +Y (1.0f)
-        buffer.addVertex(cx, cy + 1, cz).setUv(0f, 0f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0f, 1f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 1.0f);
-        // -Z (0.9f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(0f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1f, 0f).setColor(r, g, b, 0.9f);
-        // +Z (0.9f)
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.9f);
+        // -X
+        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a);
+        // +X
+        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a);
+        // -Y
+        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a * 0.8f);
+        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a * 0.8f);
+        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a * 0.8f);
+        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a * 0.8f);
+        // +Y
+        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a * 1.2f);
+        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a * 1.2f);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a * 1.2f);
+        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a * 1.2f);
+        // -Z
+        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a * 0.9f);
+        // +Z
+        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a * 0.9f);
+        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a * 0.9f);
     }
 
     // ====================================================================
@@ -402,7 +361,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                     return Component.literal(sb.toString());
                 },
                 result -> true,
-                4, 0.999f);
+                MAX_ICONS, ICON_CONE_DOT);
     }
 
     // ====================================================================
@@ -411,14 +370,13 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private static RenderType getHighlightRenderLayer() {
         return RenderType.create("item_scan_highlight",
-                DefaultVertexFormat.POSITION_TEX_COLOR,
+                DefaultVertexFormat.POSITION_COLOR,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getScanResultShader))
-                        .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
-                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                        .setCullState(RenderStateShard.NO_CULL)
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
                         .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .createCompositeState(false));
     }
 

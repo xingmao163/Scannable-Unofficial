@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
  * ({@link com.starmao.scannable.network.ItemScanResultData})
  * or from client-side chunk scanning.
  */
+/** Client-side scan result for the item scanner module. */
 public record ItemScanResult(BlockPos pos, ItemStack item, int totalCount) implements ScanResult {
     @Override
     public Vec3 getPosition() {

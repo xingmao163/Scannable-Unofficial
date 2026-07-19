@@ -18,11 +18,51 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-/**
- * Client-side initialisation for all scanner rendering, audio, and GUI components.
- * <p>Registered during {@link net.neoforged.fml.event.lifecycle.FMLClientSetupEvent}.
- * Sets up screen bindings, level-rendering hooks, overlay GUI layers, and shader
- * initialisation. Also wires the per-tick {@link ScanManager#tick()} and
- * {@link ScannerRenderer#render} calls into the NeoForge event bus.
- */
+/** Client-side initialisation for scanner rendering, audio, and GUI. */
 public final class ScannerClientSetup {
+    public static void initialize(IEventBus modEventBus) {
+        modEventBus.addListener(ScannerClientSetup::onClientSetup);
+        modEventBus.addListener(ScannerClientSetup::registerScreens);
+        modEventBus.addListener(ScannerClientSetup::registerGuiLayers);
+    }
+
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            Shaders.initialize();
+            // Initialize provider-based scanning system
+            com.starmao.scannable.client.scanning.ScanResultProviders.initialize();
+
+            NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post evt) -> {
+                ScanManager.tick();
+            });
+
+            NeoForge.EVENT_BUS.addListener((RenderLevelStageEvent evt) -> {
+                if (evt.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+                    ScannerRenderer.render(evt.getModelViewMatrix(), evt.getProjectionMatrix());
+                    ScanManager.setMatrices(evt.getModelViewMatrix(), evt.getProjectionMatrix());
+                    ScanManager.renderLevel(evt.getPartialTick().getGameTimeDeltaPartialTick(false));
+                }
+            });
+        });
+    }
+
+    private static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.SCANNER.get(), ScannerContainerScreen::new);
+        event.register(Containers.BLOCK_MODULE_CONTAINER.get(), ConfigurableBlockScannerModuleContainerScreen::new);
+        event.register(Containers.ENTITY_MODULE_CONTAINER.get(), ConfigurableEntityScannerModuleContainerScreen::new);
+        event.register(Containers.ITEM_MODULE_CONTAINER.get(), ConfigurableItemScannerModuleContainerScreen::new);
+    }
+
+    private static void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAboveAll(
+                Scannable.id("scanner_results"),
+                (guiGraphics, deltaTracker) -> {
+                    float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
+                    ScanManager.renderGui(partialTick);
+                    OverlayRenderer.render(guiGraphics, partialTick);
+                });
+    }
+
+    private ScannerClientSetup() {
+    }
+}
