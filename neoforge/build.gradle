@@ -193,6 +193,12 @@ repositories {
         }
     }
 }
+if (!jei_version) {
+    sourceSets.main.java {
+        exclude 'com/starmao/scannable/integration/jei/**'
+    }
+}
+
 
 dependencies {
     implementation project(':common')

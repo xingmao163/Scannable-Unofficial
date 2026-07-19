@@ -204,7 +204,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                         }
 
                         for (var entry : itemCounts.entrySet()) {
-                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue(), 0xBB44FF));
+                            results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue()));
                             Scannable.LOGGER.info("[ItemScanner] Found {} x{} at {}",
                                     entry.getKey().getDefaultInstance().getHoverName().getString(), entry.getValue(), pos);
                         }
@@ -230,13 +230,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             int color = blockState.getMapColor(level, result.pos()).col;
             if (color == 0) color = 0x4466CC;  // DEFAULT_COLOR from BlockScanResult
 
-            ItemScanResult enrichedResult = new ItemScanResult(
-                    result.pos(),
-                    result.item(),
-                    result.totalCount(),
-                    color
-            );
-            callback.accept(enrichedResult);
+            callback.accept(result);
         }
         renderStartTime = System.currentTimeMillis();
     }
@@ -286,7 +280,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         Level level = Minecraft.getInstance().level;
         for (ScanResult result : results) {
             ItemScanResult itemResult = (ItemScanResult) result;
-            int color = itemResult.blockColor();
+            int color = 0x4466CC; // default color
             // 重新获取最新的方块颜色（以防方块改变）
             if (level != null) {
                 BlockState blockState = level.getBlockState(itemResult.pos());

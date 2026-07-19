@@ -19,7 +19,7 @@ public final class DataGeneration {
         final var lookupProvider = event.getLookupProvider();
 
         // -- Server-side providers --
-        generator.addProvider(event.includeServer(), new ModRecipeProvider(output, lookupProvider));
+        generator.addProvider(event.includeServer(), new ModRecipeProvider.Runner(output, lookupProvider));
     }
 
     private DataGeneration() {
