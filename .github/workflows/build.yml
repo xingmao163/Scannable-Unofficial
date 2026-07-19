@@ -24,10 +24,16 @@ jobs:
       matrix:
         target: [1.21.1, 1.21.2, 1.21.3, 1.21.4, 26.1.2]
         include:
+          - target: 1.21.1
+            java: 21
+          - target: 1.21.2
+            java: 21
+          - target: 1.21.3
+            java: 21
+          - target: 1.21.4
+            java: 21
           - target: 26.1.2
             java: 25
-      default: &defaults
-        java: 21
       fail-fast: false
 
     steps:
@@ -37,7 +43,7 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java || 21 }}
+          java-version: ${{ matrix.java }}
           distribution: 'temurin'
           cache: 'gradle'
 
