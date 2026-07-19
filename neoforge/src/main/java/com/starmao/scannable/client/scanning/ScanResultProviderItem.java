@@ -8,12 +8,13 @@ import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
+import com.starmao.scannable.client.shader.Shaders;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
@@ -46,19 +47,8 @@ import java.util.function.Consumer;
  * with the found item's name and total quantity displayed.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
-    private static final float HIGHLIGHT_ALPHA = 0.35f;
+    private long renderStartTime;
 
-    private static int getHighlightColor() {
-        try {
-            final String colorStr = ClientConfig.ITEM_SCAN_COLOR.get();
-            if (colorStr.startsWith("0x") || colorStr.startsWith("0X")) {
-                return Integer.parseUnsignedInt(colorStr.substring(2), 16);
-            }
-            return Integer.parseUnsignedInt(colorStr, 16);
-        } catch (final Exception e) {
-            return 0xBB44FF; // fallback purple
-        }
-    }
 
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
@@ -218,6 +208,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
         Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
         results.forEach(callback);
+        renderStartTime = System.currentTimeMillis();
     }
 
     @Override
@@ -246,15 +237,30 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     // ====================================================================
 
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
+        ShaderInstance shader = Shaders.getScanResultShader();
+        if (shader == null) return;
+
+        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level == null) return;
+
         RenderType renderType = getHighlightRenderLayer();
         renderType.setupRenderState();
 
         BufferBuilder buffer = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
         for (ScanResult result : results) {
             ItemScanResult itemResult = (ItemScanResult) result;
-            renderBoxFaces(buffer, itemResult.pos());
+            BlockPos pos = itemResult.pos();
+            // Use the block's map color, same logic as ScanResultProviderBlock.
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+            int color = state.getMapColor(level, pos).col;
+            // Check ClientConfig color overrides (block colours / tags)
+            Integer override = ClientConfig.getBlockColor(state.getBlock());
+            if (override != null) color = override;
+            renderBoxFaces(buffer, pos, color);
         }
 
         var data = buffer.buildOrThrow();
@@ -262,7 +268,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         // Set model-view matrix to include camera offset for world-coordinate vertices
         var savedModelView = new Matrix4f(RenderSystem.getModelViewMatrix());
         RenderSystem.getModelViewMatrix().set(poseStack.last().pose());
-
         try {
             BufferUploader.drawWithShader(data);
         } finally {
@@ -272,44 +277,46 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         renderType.clearRenderState();
     }
 
-    private static void renderBoxFaces(VertexConsumer buffer, BlockPos pos) {
-        final int color = getHighlightColor();
+    private static void renderBoxFaces(VertexConsumer buffer, BlockPos pos, int color) {
         float cx = pos.getX(), cy = pos.getY(), cz = pos.getZ();
         float r = ((color >> 16) & 0xFF) / 255f;
         float g = ((color >> 8) & 0xFF) / 255f;
         float b = (color & 0xFF) / 255f;
-        float a = HIGHLIGHT_ALPHA;
+        float a = 1.0f; // Alpha is ignored by additive blending (LIGHTNING_TRANSPARENCY)
 
-        // -X
-        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a);
-        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a);
-        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a);
-        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a);
-        // +X
-        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a);
-        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a);
-        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a);
-        // -Y
-        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a * 0.8f);
-        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a * 0.8f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a * 0.8f);
-        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a * 0.8f);
-        // +Y
-        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a * 1.2f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a * 1.2f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a * 1.2f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a * 1.2f);
-        // -Z
-        buffer.addVertex(cx, cy, cz).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx, cy + 1, cz).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx + 1, cy, cz).setColor(r, g, b, a * 0.9f);
-        // +Z
-        buffer.addVertex(cx, cy, cz + 1).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setColor(r, g, b, a * 0.9f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setColor(r, g, b, a * 0.9f);
+        // For a single-block box, UV spans 0..1 per face.
+        // The scan_result shader uses UV for edge-fade effect across the cluster bounding box.
+        // Same convention as ScanResultProviderBlock.BlockScanResult.render().
+        // -X face
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz).setUv(1, 0).setColor(r, g, b, a);
+        // +X face
+        buffer.addVertex(cx + 1, cy, cz).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(0, 1).setColor(r, g, b, a);
+        // -Y face
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, a);
+        // +Y face
+        buffer.addVertex(cx, cy + 1, cz).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, a);
+        // -Z face
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz).setUv(0, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, a);
+        // +Z face
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 0).setColor(r, g, b, a);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, a);
     }
 
     // ====================================================================
@@ -370,13 +377,14 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private static RenderType getHighlightRenderLayer() {
         return RenderType.create("item_scan_highlight",
-                DefaultVertexFormat.POSITION_COLOR,
+                DefaultVertexFormat.POSITION_TEX_COLOR,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getScanResultShader))
+                        .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
                         .createCompositeState(false));
     }
 

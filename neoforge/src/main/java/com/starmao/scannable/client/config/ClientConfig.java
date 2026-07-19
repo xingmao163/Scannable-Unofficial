@@ -76,11 +76,6 @@ public final class ClientConfig {
                     "without needing to rescan. Purely visual.")
             .define("hideBrokenBlocks", true);
 
-    public static final ModConfigSpec.ConfigValue<String> ITEM_SCAN_COLOR = BUILDER
-            .comment("Color for the item scanner module container highlights.",
-                    "Format: \"0xRRGGBB\"",
-                    "Example: \"0xBB44FF\" (purple)")
-            .define("itemScanColor", "0xBB44FF");
 
     static { BUILDER.pop(); }
 

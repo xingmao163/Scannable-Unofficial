@@ -49,19 +49,7 @@ import java.util.function.Consumer;
  * with the found item's name and total quantity displayed.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
-    private static final float HIGHLIGHT_ALPHA = 0.8f;
 
-    private static int getHighlightColor() {
-        try {
-            final String colorStr = ClientConfig.ITEM_SCAN_COLOR.get();
-            if (colorStr.startsWith("0x") || colorStr.startsWith("0X")) {
-                return Integer.parseUnsignedInt(colorStr.substring(2), 16);
-            }
-            return Integer.parseUnsignedInt(colorStr, 16);
-        } catch (final Exception e) {
-            return 0xBB44FF; // fallback purple
-        }
-    }
 
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
@@ -281,11 +269,13 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         for (ScanResult result : results) {
             ItemScanResult itemResult = (ItemScanResult) result;
             int color = 0x4466CC; // default color
-            // 重新获取最新的方块颜色（以防方块改变）
+            // 重新获取最新的方块颜色，并检查 ClientConfig 颜色覆盖
             if (level != null) {
                 BlockState blockState = level.getBlockState(itemResult.pos());
                 int mapColor = blockState.getMapColor(level, itemResult.pos()).col;
                 if (mapColor != 0) color = mapColor;
+                Integer override = ClientConfig.getBlockColor(blockState.getBlock());
+                if (override != null) color = override;
             }
             renderBoxFaces(buffer, itemResult.pos(), color);
         }

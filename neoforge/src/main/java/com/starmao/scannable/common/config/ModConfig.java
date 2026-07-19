@@ -48,61 +48,61 @@ public final class ModConfig {
     /** Energy cost per scan for the range module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_RANGE = BUILDER
             .comment("Energy cost of the range module per scan.")
-            .defineInRange("energy.range", 100, 0, 10000);
+            .defineInRange("energy.rangeEnergy", 100, 0, 10000);
 
     /** Energy cost per scan for the fluid module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_FLUID = BUILDER
             .comment("Energy cost of the fluid module per scan.")
-            .defineInRange("energy.fluid", 50, 0, 10000);
+            .defineInRange("energy.fluidEnergy", 50, 0, 10000);
 
     /** Energy cost per scan for the friendly entity module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_FRIENDLY = BUILDER
             .comment("Energy cost of the friendly entity module per scan.")
-            .defineInRange("energy.friendly", 25, 0, 10000);
+            .defineInRange("energy.friendlyEnergy", 25, 0, 10000);
 
     /** Energy cost per scan for the hostile entity module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_HOSTILE = BUILDER
             .comment("Energy cost of the hostile entity module per scan.")
-            .defineInRange("energy.hostile", 50, 0, 10000);
+            .defineInRange("energy.hostileEnergy", 50, 0, 10000);
 
     /** Energy cost per scan for the configurable block module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_BLOCK = BUILDER
             .comment("Energy cost of the configurable block module per scan.")
-            .defineInRange("energy.block", 100, 0, 10000);
+            .defineInRange("energy.blockEnergy", 100, 0, 10000);
 
     /** Energy cost per scan for the configurable entity module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_ENTITY = BUILDER
             .comment("Energy cost of the configurable entity module per scan.")
-            .defineInRange("energy.entity", 75, 0, 10000);
+            .defineInRange("energy.entityEnergy", 75, 0, 10000);
 
     /** Energy cost per scan for the item scanner module. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_ITEM = BUILDER
             .comment("Energy cost of the item scanner module per scan.")
-            .defineInRange("energy.item", 100, 0, 10000);
+            .defineInRange("energy.itemEnergy", 100, 0, 10000);
 
     // ---- Range Modifiers ----
 
     /** Relative scan radius increase per installed range module. */
     public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_RANGE = BUILDER
             .comment("Relative scan radius added by each range module.")
-            .defineInRange("range.range", 0.5, 0.0, 1.0);
+            .defineInRange("range.rangeRange", 0.5, 0.0, 1.0);
 
     /** Relative effective scan range multiplier for the fluid module. */
     public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_FLUID = BUILDER
             .comment("Relative effective range of the fluid module.")
-            .defineInRange("range.fluid", 0.5, 0.0, 1.0);
+            .defineInRange("range.fluidRange", 0.5, 0.0, 1.0);
 
     /** Relative effective scan range multiplier for the block module. */
     public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_BLOCK = BUILDER
             .comment("Relative effective range of the configurable block module.")
-            .defineInRange("range.block", 0.5, 0.0, 1.0);
+            .defineInRange("range.blockRange", 0.5, 0.0, 1.0);
 
     // ---- Fluids ----
 
     /** Fluid tags that the fluid scanner module should skip. */
     public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_FLUID_TAGS = BUILDER
             .comment("Fluid tags of fluids that should be ignored by the fluid scanner module.")
-            .defineListAllowEmpty(List.of("fluids.ignoredTags"),
+            .defineListAllowEmpty(List.of("ignored.fluidsTags"),
                     List::of,
                     entry -> entry instanceof String);
 
