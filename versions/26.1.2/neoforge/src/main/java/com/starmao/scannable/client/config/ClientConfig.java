@@ -213,12 +213,34 @@ public final class ClientConfig {
         }
         return Map.copyOf(result);
     }
-
-    /**
-     * Validates a color config entry at config load time.
-     */
     private static boolean isValidColorEntry(final Object obj) {
         if (!(obj instanceof String entry)) return false;
         return parseColorEntry(entry).valid();
+    }
+
+    /**
+     * Default block tag colors matching common ore block textures.
+     */
+    private static List<String> defaultBlockTagColors() {
+        Object2IntMap<Identifier> map = new Object2IntOpenHashMap<>();
+        map.put(Tags.Blocks.ORES_COAL.location(), MapColor.COLOR_GRAY.col);
+        map.put(Tags.Blocks.ORES_IRON.location(), MapColor.COLOR_BROWN.col);
+        map.put(Tags.Blocks.ORES_GOLD.location(), MapColor.GOLD.col);
+        map.put(Tags.Blocks.ORES_LAPIS.location(), MapColor.LAPIS.col);
+        map.put(Tags.Blocks.ORES_DIAMOND.location(), MapColor.DIAMOND.col);
+        map.put(Tags.Blocks.ORES_REDSTONE.location(), MapColor.COLOR_RED.col);
+        map.put(Tags.Blocks.ORES_EMERALD.location(), MapColor.EMERALD.col);
+        map.put(Tags.Blocks.ORES_QUARTZ.location(), MapColor.QUARTZ.col);
+        map.put(Identifier.parse("c:ores/tin"), MapColor.COLOR_CYAN.col);
+        map.put(Identifier.parse("c:ores/copper"), MapColor.TERRACOTTA_ORANGE.col);
+        map.put(Identifier.parse("c:ores/lead"), MapColor.TERRACOTTA_BLUE.col);
+        map.put(Identifier.parse("c:ores/silver"), MapColor.COLOR_LIGHT_GRAY.col);
+        map.put(Identifier.parse("c:ores/nickel"), MapColor.COLOR_LIGHT_BLUE.col);
+        map.put(Identifier.parse("c:ores/platinum"), MapColor.TERRACOTTA_WHITE.col);
+        map.put(Identifier.parse("c:ores/mithril"), MapColor.COLOR_PURPLE.col);
+
+        return map.object2IntEntrySet().stream()
+                .map(e -> e.getKey().toString() + "=0x" + Integer.toHexString(e.getIntValue()))
+                .toList();
     }
 }

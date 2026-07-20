@@ -30,6 +30,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -43,6 +44,7 @@ import java.util.function.Consumer;
  * with the found item's name and total quantity displayed.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
+
 
 
     private List<Item> targetItems = List.of();
