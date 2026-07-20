@@ -129,13 +129,29 @@ public final class ScanManager {
         }
         if (results.isEmpty()) return;
 
+        // Clear previous item scan results so broken/moved containers don't persist.
+        final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
+        pendingResults.remove(provider);
+        synchronized (renderingResults) {
+            final List<ScanResult> old = renderingResults.remove(provider);
+            if (old != null) {
+                provider.reset();
+                old.forEach(ScanResult::close);
+            }
+        }
+
         lastScanCenter = center;
         currentStart = System.currentTimeMillis();
 
-        final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
-        pendingResults.put(provider, results);
+        // Initialize renderStartTime so the shader time uniform has a valid
+        // starting point (collectScanResults is never called for item results).
+        if (provider instanceof com.starmao.scannable.client.scanning.ScanResultProviderItem itemProvider) {
+            itemProvider.markResultsUpdated();
+        }
 
-        com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
+        pendingResults.put(provider, results);
+        if (com.starmao.scannable.common.config.ModConfig.DEBUG_LOG_ITEM_SCANNER.get())
+            com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
     }
 
     @SuppressWarnings("null")
@@ -289,16 +305,25 @@ public final class ScanManager {
         MultiBufferSource.BufferSource renderTypeBuffer = MultiBufferSource.immediate(RENDER_BUFFER);
         try {
             for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                for (ScanResult result : entry.getValue()) {
-                    AABB bounds = result.getRenderBounds();
-                    if (bounds == null || frustum.isVisible(bounds)) {
-                        renderingList.add(result);
+                if (context == ScanResultRenderContext.WORLD) {
+                    // World highlights: pass ALL results so VBO caches are built
+                    // for every position, not just the frustum-visible subset.
+                    // GPU-level frustum culling handles invisible quads efficiently.
+                    if (!entry.getValue().isEmpty()) {
+                        entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, entry.getValue());
                     }
-                }
-
-                if (!renderingList.isEmpty()) {
-                    entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, renderingList);
-                    renderingList.clear();
+                } else {
+                    // GUI text labels: frustum-cull so labels don't render off-screen.
+                    for (ScanResult result : entry.getValue()) {
+                        AABB bounds = result.getRenderBounds();
+                        if (bounds == null || frustum.isVisible(bounds)) {
+                            renderingList.add(result);
+                        }
+                    }
+                    if (!renderingList.isEmpty()) {
+                        entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, renderingList);
+                        renderingList.clear();
+                    }
                 }
             }
         } finally {

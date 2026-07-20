@@ -13,6 +13,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.Tags;
 
 import java.util.HashMap;
+import javax.annotation.Nullable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +71,17 @@ public final class ClientConfig {
 
     static { BUILDER.pop(); }
 
+    static { BUILDER.push("debug"); }
+
+    public static final ModConfigSpec.BooleanValue DEBUG_RENDER = BUILDER
+            .comment("Enable verbose logging of scan highlight rendering",
+                    "(VBO rebuilds, hand-depth pass, frustum state).",
+                    "Use this to diagnose highlight visibility issues.",
+                    "Requires restart or '/reload' to take effect.")
+            .define("renderScanner", false);
+
+    static { BUILDER.pop(); }
+
     static { BUILDER.push("misc"); }
 
     public static final ModConfigSpec.BooleanValue HIDE_BROKEN_BLOCKS = BUILDER
@@ -80,7 +93,6 @@ public final class ClientConfig {
     static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
-
     // ========================================================================
     // Parsed color maps (lazily cached, cleared on config reload)
     // ========================================================================
@@ -150,56 +162,85 @@ public final class ClientConfig {
     // ========================================================================
 
     /**
-     * Validates a color config entry in {@code "namespace:path=0xRRGGBB"} format.
-     * <p>Called at config load time by {@link ModConfigSpec} so malformed entries
-     * are caught immediately, not lazily during scan rendering.
-     *
-     * @param obj the raw config value entry
-     * @return {@code true} if the entry has valid format
+     * Result of parsing a single {@code "namespace:path=0xRRGGBB"} color entry.
      */
-    private static boolean isValidColorEntry(final Object obj) {
-        if (!(obj instanceof String entry)) return false;
-        int eq = entry.indexOf('=');
-        if (eq < 1) return false;
-        String key = entry.substring(0, eq);
-        String value = entry.substring(eq + 1);
-        // Validate key parses as a ResourceLocation
-        if (ResourceLocation.tryParse(key) == null) return false;
-        // Validate value is a valid hex color
-        try {
-            String hex = value.startsWith("0x") || value.startsWith("0X")
-                    ? value.substring(2) : value;
-            // Must be 6-digit RGB (RRGGBB) or 8-digit ARGB (AARRGGBB)
-            if (hex.length() != 6 && hex.length() != 8) return false;
-            Integer.parseUnsignedInt(hex, 16);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
+    private record ParseResult(boolean valid, @Nullable ResourceLocation key, @Nullable Integer color, @Nullable String error) {
+        static final ParseResult INVALID = new ParseResult(false, null, null, null);
+        static ParseResult ok(ResourceLocation key, int color) {
+            return new ParseResult(true, key, color, null);
+        }
+        static ParseResult fail(String error) {
+            return new ParseResult(false, null, null, error);
         }
     }
 
     /**
+     * Parse a single color config entry {@code "namespace:path=0xRRGGBB"} (or
+     * {@code "namespace:path=0xAARRGGBB"} with alpha).
+     *
+     * @param entry the raw string from config
+     * @return a {@link ParseResult} with the parsed key + color, or an error description
+     */
+    private static ParseResult parseColorEntry(final String entry) {
+        if (entry == null || entry.isBlank()) {
+            return ParseResult.fail("entry is null or blank");
+        }
+        int eq = entry.indexOf('=');
+        if (eq < 1) {
+            return ParseResult.fail("missing '=' separator (expected format: \"namespace:path=0xRRGGBB\")");
+        }
+
+        String key = entry.substring(0, eq);
+        String value = entry.substring(eq + 1);
+
+        // Validate key
+        ResourceLocation id = ResourceLocation.tryParse(key);
+        if (id == null) {
+            return ParseResult.fail("invalid key '" + key + "' — must be a valid ResourceLocation (e.g. \"minecraft:stone\")");
+        }
+
+        // Validate + parse color value
+        String hex = (value.startsWith("0x") || value.startsWith("0X")) ? value.substring(2) : value;
+        if (hex.isEmpty()) {
+            return ParseResult.fail("missing color value after '=' (expected e.g. \"0x808080\")");
+        }
+        if (hex.length() != 6 && hex.length() != 8) {
+            return ParseResult.fail("color value '" + value + "' must be 6-digit RRGGBB or 8-digit AARRGGBB hex");
+        }
+        try {
+            int color = Integer.parseUnsignedInt(hex, 16);
+            return ParseResult.ok(id, color);
+        } catch (NumberFormatException e) {
+            return ParseResult.fail("color value '" + value + "' is not a valid hex number");
+        }
+    }
+
+    /**
+     * Validates a color config entry at config load time.
+     * <p>Called by {@link ModConfigSpec} for each list entry so malformed entries
+     * are caught immediately, not lazily during scan rendering.
+     */
+    private static boolean isValidColorEntry(final Object obj) {
+        if (!(obj instanceof String entry)) return false;
+        return parseColorEntry(entry).valid();
+    }
+
+    /**
      * Parse a list of {@code "key=0xRRGGBB"} entries into an immutable color map.
+     * <p>Invalid entries are logged with a warning and skipped.
      */
     private static Map<ResourceLocation, Integer> parseColorList(final List<? extends String> entries) {
         Map<ResourceLocation, Integer> result = new HashMap<>();
         for (String entry : entries) {
-            if (entry == null) continue;
-            int eq = entry.indexOf('=');
-            if (eq < 1) {
-                Scannable.LOGGER.warn("Skipping malformed color entry (no '=' found): {}", entry);
+            if (entry == null) {
+                Scannable.LOGGER.warn("[ClientConfig] Skipping null color entry");
                 continue;
             }
-            String key = entry.substring(0, eq);
-            String value = entry.substring(eq + 1);
-            try {
-                ResourceLocation id = ResourceLocation.parse(key);
-                int color = value.startsWith("0x") || value.startsWith("0X")
-                        ? Integer.parseUnsignedInt(value.substring(2), 16)
-                        : Integer.parseUnsignedInt(value, 16);
-                result.put(id, color);
-            } catch (Exception e) {
-                Scannable.LOGGER.warn("Invalid color config entry '{}': {}", entry, e.getMessage());
+            ParseResult r = parseColorEntry(entry);
+            if (r.valid()) {
+                result.put(r.key(), r.color());
+            } else {
+                Scannable.LOGGER.warn("[ClientConfig] Skipping invalid color entry '{}': {}", entry, r.error());
             }
         }
         return Map.copyOf(result);

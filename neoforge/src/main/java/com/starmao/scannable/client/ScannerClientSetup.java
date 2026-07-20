@@ -36,6 +36,11 @@ public final class ScannerClientSetup {
                 ScanManager.tick();
             });
 
+            // Scan wave + result boxes: render at AFTER_LEVEL so both appear on top
+            // of all world content. The scan wave is a full-screen shader quad that
+            // samples the depth buffer — it must render after the entire scene is
+            // complete to avoid being overwritten by subsequent rendering passes
+            // (entity outlines, particles, weather) that happen before AFTER_LEVEL.
             NeoForge.EVENT_BUS.addListener((RenderLevelStageEvent evt) -> {
                 if (evt.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
                     ScannerRenderer.render(evt.getModelViewMatrix(), evt.getProjectionMatrix());

@@ -9,6 +9,7 @@ import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.client.shader.Shaders;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
+import com.starmao.scannable.Scannable;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -56,8 +57,20 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     private int chunkSectionsPerTick;
 
     // VBO cache: one VertexBuffer per container position, rebuilt on new results
+
+    /**
+     * Called by {@link com.starmao.scannable.client.ScanManager#setServerItemResults}
+     * to initialise rendering state when server-side scan results arrive.
+     * <p>Normal scan flow calls {@link #collectScanResults} which sets
+     * {@code renderStartTime} — but item scan results bypass that path and
+     * arrive directly from a network packet.
+     */
+    public void markResultsUpdated() {
+        renderStartTime = System.currentTimeMillis();
+        serverResultTime = renderStartTime;
+    }
     private final Map<BlockPos, VertexBuffer> vboCache = new HashMap<>();
-    private long vboCacheGeneration = -1;
+    private int lastRenderedResultCount = -1;
 
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
@@ -212,56 +225,37 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             vbo.close();
         }
         vboCache.clear();
-        vboCacheGeneration = -1;
+        // Force next renderHighlights to rebuild — reset() from setServerItemResults
+        // clears the cache but the result count may be the same as the previous scan,
+        // causing results.size() != lastRenderedResultCount to return false.
+        lastRenderedResultCount = -1;
     }
 
-    private void rebuildVboCache(List<ScanResult> results, long generation) {
-        invalidateVboCache();
-        Set<BlockPos> seen = new HashSet<>();
-        Level level = Minecraft.getInstance().level;
-        if (level == null) return;
-        for (ScanResult result : results) {
-            ItemScanResult ir = (ItemScanResult) result;
-            if (!seen.add(ir.pos())) continue;
-            int color = resolveColor(level, ir.pos());
-            vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
-        }
-        vboCacheGeneration = generation;
-    }
-
-    private int resolveColor(Level level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        int color = state.getMapColor(level, pos).col;
-        Integer override = ClientConfig.getBlockColor(state.getBlock());
-        return override != null ? override : color;
-    }
-
-    private VertexBuffer buildVbo(BlockPos pos, int color) {
-        BufferBuilder buffer = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        renderSingleBlockFaces(buffer, pos, color);
-        VertexBuffer vbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        vbo.bind();
-        vbo.upload(buffer.buildOrThrow());
-        VertexBuffer.unbind();
-        return vbo;
-    }
-
-    // ========================================================================
-    // Rendering — World (block highlights)
-    // ========================================================================
 
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
         ShaderInstance shader = Shaders.getScanResultShader();
-        if (shader == null) return;
+        if (shader == null) {
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.info("[ItemHighlight] scanResultShader is null, skipping");
+            return;
+        }
 
         shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
 
-        // Rebuild VBO cache when results change (new scan data)
-        long gen = System.identityHashCode(results);
-        if (gen != vboCacheGeneration) {
-            rebuildVboCache(results, gen);
+        // Rebuild VBO cache when the result list grows (the tick() wave adds
+        // results incrementally to the same list object — identity-hash-based
+        // detection would miss these additions).
+        if (results.size() != lastRenderedResultCount) {
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.info("[ItemHighlight] VBO rebuild: {} results (was {}), {} VBOs cached",
+                        results.size(), lastRenderedResultCount, vboCache.size());
+            rebuildVboCache(results);
+            lastRenderedResultCount = results.size();
         }
+
+        if (ClientConfig.DEBUG_RENDER.get())
+            Scannable.LOGGER.info("[ItemHighlight] Drawing {} VBO(s), poseStack valid={}, shader={}",
+                    vboCache.size(), poseStack != null, shader != null);
 
         // Hand-depth trick: prevent overlay from rendering on top of held item
         renderHandDepth(poseStack, camera);
@@ -276,15 +270,68 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         renderType.clearRenderState();
     }
 
+    private int resolveColor(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        int color = state.getMapColor(level, pos).col;
+        Integer override = ClientConfig.getBlockColor(state.getBlock());
+        return override != null ? override : color;
+    }
+
+    private void rebuildVboCache(List<ScanResult> scanResults) {
+        invalidateVboCache();
+        Set<BlockPos> seen = new HashSet<>();
+        Level level = Minecraft.getInstance().level;
+        if (level == null) {
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.warn("[ItemHighlight] rebuildVboCache: level is null");
+            return;
+        }
+        for (ScanResult result : scanResults) {
+            ItemScanResult ir = (ItemScanResult) result;
+            if (!seen.add(ir.pos())) {
+                if (ClientConfig.DEBUG_RENDER.get())
+                    Scannable.LOGGER.info("[ItemHighlight]   skip duplicate: {}", ir.pos());
+                continue;
+            }
+            int color = resolveColor(level, ir.pos());
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.info("[ItemHighlight]   VBO at {} color=#{}", ir.pos(), String.format("%06x", color));
+            vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
+        }
+    }
+
+    private VertexBuffer buildVbo(BlockPos pos, int color) {
+        BufferBuilder buffer = Tesselator.getInstance().begin(
+                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        renderSingleBlockFaces(buffer, pos, color);
+        VertexBuffer vbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        vbo.bind();
+        vbo.upload(buffer.buildOrThrow());
+        VertexBuffer.unbind();
+        return vbo;
+    }
+
+
     private void renderHandDepth(PoseStack poseStack, Camera camera) {
         if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()
             || Minecraft.getInstance().options.hideGui
             || Minecraft.getInstance().gameMode.getPlayerMode() == net.minecraft.world.level.GameType.SPECTATOR
-            || Minecraft.getInstance().player == null) return;
+            || Minecraft.getInstance().player == null) {
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.info("[HandDepth] Skipped (not first-person or hidden GUI or spectator)");
+            return;
+        }
+
+        if (ClientConfig.DEBUG_RENDER.get())
+            Scannable.LOGGER.info("[HandDepth] Enter — pushing modelView matrix");
 
         try {
             PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
-            if (viewPose == null) return;
+            if (viewPose == null) {
+                if (ClientConfig.DEBUG_RENDER.get())
+                    Scannable.LOGGER.warn("[HandDepth] worldViewModelStack is null");
+                return;
+            }
 
             RenderSystem.colorMask(false, false, false, false);
             org.joml.Matrix4f viewMat = new org.joml.Matrix4f(viewPose.last().pose());
@@ -302,12 +349,13 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             bufferSource.endBatch();
             handPose.popPose();
             mvStack.popMatrix();
+            if (ClientConfig.DEBUG_RENDER.get())
+                Scannable.LOGGER.info("[HandDepth] Success — modelView restored");
         } catch (Throwable e) {
-            // Silently ignore hand-depth errors
+            Scannable.LOGGER.error("[HandDepth] Exception during hand render — modelView stack may be corrupted!", e);
         }
         RenderSystem.colorMask(true, true, true, true);
     }
-
     // ========================================================================
     // Geometry — matches ScanResultProviderBlock.BlockScanResult.render()
     // ========================================================================

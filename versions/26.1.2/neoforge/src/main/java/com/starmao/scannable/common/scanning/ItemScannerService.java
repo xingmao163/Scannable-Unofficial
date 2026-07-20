@@ -92,36 +92,22 @@ public final class ItemScannerService {
                     final double dz = pos.getZ() + 0.5 - center.z;
                     if (dx * dx + dy * dy + dz * dz > sqRadius) continue;
 
-                    // Collect unique handlers from all directions to catch
-                    // sided inventories (furnace fuel slot, etc.).
-                    final java.util.IdentityHashMap<ResourceHandler<ItemResource>, Boolean> seen = new java.util.IdentityHashMap<>();
-                    for (final Direction dir : Direction.values()) {
-                        final ResourceHandler<ItemResource> h = level.getCapability(Capabilities.Item.BLOCK, pos, dir);
-                        if (h != null) seen.put(h, Boolean.TRUE);
-                    }
-                    {
-                        final ResourceHandler<ItemResource> h = level.getCapability(Capabilities.Item.BLOCK, pos, null);
-                        if (h != null) seen.put(h, Boolean.TRUE);
-                    }
-                    if (seen.isEmpty()) continue;
+                    // Use default (null context) handler only. Per-direction queries return
+                    // separate wrapper instances with independent slot numbering, making
+                    // reliable dedup impossible (e.g. furnace input = slot 0 via UP, fuel =
+                    // slot 0 via NORTH — same index, different physical slots).
+                    final ResourceHandler<ItemResource> handler = level.getCapability(Capabilities.Item.BLOCK, pos, null);
+                    if (handler == null) continue;
                     containersFound++;
 
-                    // Deduplicate by (item, count) pairs across all handlers at
-                    // this position to avoid counting the same physical slot
-                    // through different handler instances.
                     final java.util.Map<Item, Integer> posTotal = new java.util.HashMap<>();
-                    final java.util.Set<String> seenSlotKeys = new java.util.HashSet<>();
-                    for (final ResourceHandler<ItemResource> handler : seen.keySet()) {
-                        for (int slot = 0; slot < handler.size(); slot++) {
-                            final ItemResource resource = handler.getResource(slot);
-                            if (resource.isEmpty()) continue;
-                            final Item item = resource.getItem();
-                            if (!targetItems.contains(item)) continue;
-                            final int count = handler.getAmountAsInt(slot);
-                            final String slotKey = BuiltInRegistries.ITEM.getKey(item) + ":" + count;
-                            if (!seenSlotKeys.add(slotKey)) continue;
-                            posTotal.merge(item, count, Integer::sum);
-                        }
+                    for (int slot = 0; slot < handler.size(); slot++) {
+                        final ItemResource resource = handler.getResource(slot);
+                        if (resource.isEmpty()) continue;
+                        final Item item = resource.getItem();
+                        if (!targetItems.contains(item)) continue;
+                        final int count = handler.getAmountAsInt(slot);
+                        posTotal.merge(item, count, Integer::sum);
                     }
                     for (final var entry : posTotal.entrySet()) {
                         final Identifier matchedId = BuiltInRegistries.ITEM.getKey(entry.getKey());

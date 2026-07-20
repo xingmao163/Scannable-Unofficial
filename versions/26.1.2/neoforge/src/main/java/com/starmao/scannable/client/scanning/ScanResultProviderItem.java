@@ -30,8 +30,6 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.transfer.access.ItemAccess;
-import org.joml.Matrix4f;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -49,6 +47,12 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
+    private long renderStartTime;
+    private long serverResultTime;
+
+    // VBO cache: pre-computed colors per position, rebuilt when results change
+    private final Map<BlockPos, Integer> cachedColors = new HashMap<>();
+    private int lastRenderedResultCount = -1;
 
     // Multi-tick chunk scanning state
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
@@ -219,6 +223,18 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         }
     }
 
+    /**
+     * Mark the item scan results as updated from a server packet.
+     *
+     * <p>Normal scan flow calls {@link #collectScanResults} which sets
+     * {@code renderStartTime} — but item scan results bypass that path and
+     * arrive directly from a network packet.
+     */
+    public void markResultsUpdated() {
+        renderStartTime = System.currentTimeMillis();
+        serverResultTime = renderStartTime;
+    }
+
     @Override
     public void render(ScanResultRenderContext context, MultiBufferSource bufferSource, PoseStack poseStack,
                        Camera renderInfo, float partialTicks, List<ScanResult> results) {
@@ -235,9 +251,39 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         super.reset();
         targetItems = List.of();
         results.clear();
+        invalidateColorCache();
         pendingChunkSections.clear();
         currentChunkSection = 0;
         chunkSectionsPerTick = 0;
+    }
+
+    // ====================================================================
+    // VBO cache management
+    // ====================================================================
+
+    private void invalidateColorCache() {
+        cachedColors.clear();
+        lastRenderedResultCount = -1;
+    }
+
+    private void rebuildColorCache(List<ScanResult> scanResults) {
+        cachedColors.clear();
+        Set<BlockPos> seen = new HashSet<>();
+        Level level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (ScanResult result : scanResults) {
+            ItemScanResult ir = (ItemScanResult) result;
+            if (!seen.add(ir.pos())) continue;
+            cachedColors.put(ir.pos(), resolveColor(level, ir.pos()));
+        }
+    }
+
+    private int resolveColor(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        int color = state.getMapColor(level, pos).col;
+        if (color == 0) color = 0x4466CC;
+        Integer override = ClientConfig.getBlockColor(state.getBlock());
+        return override != null ? override : color;
     }
 
     // ====================================================================
@@ -246,6 +292,14 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private void renderHighlights(MultiBufferSource bufferSource, PoseStack poseStack, Camera camera,
                                   List<ScanResult> results) {
+        // Rebuild color cache when the result list grows (the tick() wave adds
+        // results incrementally to the same list object — identity-hash-based
+        // detection would miss these additions).
+        if (results.size() != lastRenderedResultCount) {
+            rebuildColorCache(results);
+            lastRenderedResultCount = results.size();
+        }
+
         final var matrix = poseStack.last().pose();
 
         // Fill faces using the scan-result pipeline (POSITION_COLOR)
@@ -254,20 +308,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         // Outline edges using the lines pipeline (POSITION_COLOR)
         final VertexConsumer outline = bufferSource.getBuffer(ScanResultRenderType.LINES_TYPE);
 
-        Level level = Minecraft.getInstance().level;
-        for (ScanResult result : results) {
-            ItemScanResult itemResult = (ItemScanResult) result;
-            int color = 0x4466CC; // default color
-            // Re-fetch latest block color and check ClientConfig overrides
-            if (level != null) {
-                BlockState blockState = level.getBlockState(itemResult.pos());
-                int mapColor = blockState.getMapColor(level, itemResult.pos()).col;
-                if (mapColor != 0) color = mapColor;
-                Integer override = ClientConfig.getBlockColor(blockState.getBlock());
-                if (override != null) color = override;
-            }
-            renderBoxFaces(fill, matrix, itemResult.pos(), color);
-            renderBoxEdges(outline, matrix, itemResult.pos(), color);
+        for (var entry : cachedColors.entrySet()) {
+            renderBoxFaces(fill, matrix, entry.getKey(), entry.getValue());
+            renderBoxEdges(outline, matrix, entry.getKey(), entry.getValue());
         }
     }
 

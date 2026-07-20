@@ -9,6 +9,8 @@ import com.starmao.scannable.common.item.ConfigurableBlockScannerModuleItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -36,9 +38,10 @@ public enum ConfigurableBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the result provider that displays block scan results}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("blocks");
+        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
     }
 
     /**
@@ -58,6 +61,7 @@ public enum ConfigurableBlockScannerModule implements BlockScannerModule {
      * @param module the scanner module item stack containing configured blocks
      * @return a predicate that tests block states against the configured list
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<BlockState> getFilter(ItemStack module) {
         List<Block> blocks = List.of();

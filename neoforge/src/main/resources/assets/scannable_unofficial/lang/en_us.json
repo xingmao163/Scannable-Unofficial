@@ -60,6 +60,7 @@
 
   "scannable_unofficial.configuration.debug": "Debug",
   "scannable_unofficial.configuration.logItemScanner": "Debug Log",
+  "scannable_unofficial.configuration.renderScanner": "Rendering log",
 
   "scannable_unofficial.configuration.scanner": "Scanner",
   "scannable_unofficial.configuration.useEnergy": "Use Energy",

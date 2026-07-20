@@ -58,50 +58,49 @@ public final class ItemScannerService {
         }
         if (targetItems.isEmpty()) return results;
 
-        final BlockPos centrePos = BlockPos.containing(center);
-        final int radiusSq = radius * radius;
+        final double sqRadius = (double) radius * radius;
 
-        // Iterate in a cubic bounding box around the player
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    final BlockPos pos = centrePos.offset(dx, dy, dz);
-                    if (centrePos.distSqr(pos) > radiusSq) continue;
+        // Only scan loaded chunks within range
+        final int minCX = (int) Math.floor((center.x - radius) / 16);
+        final int maxCX = (int) Math.ceil((center.x + radius) / 16);
+        final int minCZ = (int) Math.floor((center.z - radius) / 16);
+        final int maxCZ = (int) Math.ceil((center.z + radius) / 16);
 
-                    final BlockEntity be = level.getBlockEntity(pos);
-                    if (be == null) continue;
+        int chunksChecked = 0;
+        int containersFound = 0;
 
-                    // Try all directions + null to catch sided inventories
-                    // (e.g. furnace fuel slot is side-only, not top/bottom).
-                    final java.util.Set<IItemHandler> seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-                    {
-                        final IItemHandler h = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
-                        if (h != null) seen.add(h);
-                    }
-                    for (final Direction dir : Direction.values()) {
-                        final IItemHandler h = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, dir);
-                        if (h != null) seen.add(h);
-                    }
-                    // Sum counts across ALL handlers at this position, but deduplicate
-                    // by (item, count) pairs to avoid counting the same physical slot
-                    // multiple times when different handler instances expose it.
-                    final java.util.Map<Item, Integer> posTotal = new java.util.HashMap<>();
-                    final java.util.Set<String> seenSlotKeys = new java.util.HashSet<>();
-                    for (final IItemHandler handler : seen) {
-                        for (int slot = 0; slot < handler.getSlots(); slot++) {
-                            final ItemStack stack = handler.getStackInSlot(slot);
-                            if (stack.isEmpty()) continue;
-                            final Item item = stack.getItem();
-                            if (!targetItems.contains(item)) continue;
-                            // Generate a key that identifies this (item, count) pair.
-                            // If the same pair appears from a different handler at the
-                            // same position, it's likely the same physical slot wrapped
-                            // by a different handler instance (e.g. furnace fuel slot
-                            // accessed from 4 horizontal directions).
-                            final String slotKey = BuiltInRegistries.ITEM.getKey(item) + ":" + stack.getCount();
-                            if (!seenSlotKeys.add(slotKey)) continue;
-                            posTotal.merge(item, stack.getCount(), Integer::sum);
-                        }
+        for (int cx = minCX; cx <= maxCX; cx++) {
+            for (int cz = minCZ; cz <= maxCZ; cz++) {
+                if (!level.hasChunk(cx, cz)) continue;
+                chunksChecked++;
+
+                // Iterate block entities in the chunk (much more efficient
+                // than scanning every block position)
+                final var chunk = level.getChunk(cx, cz);
+                for (final BlockEntity be : chunk.getBlockEntities().values()) {
+                    final BlockPos pos = be.getBlockPos();
+
+                    // Quick distance check
+                    final double dx = pos.getX() + 0.5 - center.x;
+                    final double dy = pos.getY() + 0.5 - center.y;
+                    final double dz = pos.getZ() + 0.5 - center.z;
+                    if (dx * dx + dy * dy + dz * dz > sqRadius) continue;
+
+                    // Query the default (non-sided) handler. The null context returns a handler
+                    // covering all accessible slots for virtually all blocks (chests, furnaces,
+                    // barrels, hoppers, etc.). Per-direction queries are not performed because
+                    // they return separate wrapper instances with independent slot numbering.
+                    final IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+                    if (handler == null) continue;
+                    containersFound++;
+
+                    final Map<Item, Integer> posTotal = new HashMap<>();
+                    for (int slot = 0; slot < handler.getSlots(); slot++) {
+                        final ItemStack stack = handler.getStackInSlot(slot);
+                        if (stack.isEmpty()) continue;
+                        final Item item = stack.getItem();
+                        if (!targetItems.contains(item)) continue;
+                        posTotal.merge(item, stack.getCount(), Integer::sum);
                     }
                     for (final var entry : posTotal.entrySet()) {
                         results.add(new ItemScanResultData(
@@ -109,14 +108,13 @@ public final class ItemScannerService {
                                 BuiltInRegistries.ITEM.getKey(entry.getKey()),
                                 entry.getValue()));
                     }
-
                 }
             }
         }
 
         if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ItemScannerService] Scanned radius {} around {} ({} chunk(s)), found {} result(s)",
-                    radius, centrePos, results.size());
+            Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
+                    chunksChecked, containersFound, results.size());
         }
 
         return results;

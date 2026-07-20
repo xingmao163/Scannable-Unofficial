@@ -22,10 +22,12 @@ import org.joml.Quaternionf;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
 /** Abstract base for scan result providers. */
+@OnlyIn(Dist.CLIENT)
 public abstract class AbstractScanResultProvider implements ScanResultProvider {
     protected Player player;
     protected Vec3 center;

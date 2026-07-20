@@ -13,6 +13,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,9 +51,10 @@ public enum RareOresBlockScannerModule implements BlockScannerModule {
         return ModConfig.SCANNER_ENERGY_COST_ORE_RARE.get();
     }
 
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("blocks");
+        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
     }
 
     @Override
@@ -59,6 +62,7 @@ public enum RareOresBlockScannerModule implements BlockScannerModule {
         return range * (float) (double) ModConfig.SCANNER_RANGE_MODIFIER_ORE_RARE.get();
     }
 
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<BlockState> getFilter(ItemStack module) {
         validateFilter();

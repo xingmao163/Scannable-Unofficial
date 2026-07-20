@@ -11,6 +11,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +52,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the result provider that displays block scan results for fluid blocks}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get("blocks");
@@ -69,6 +72,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the cached fluid block filter, rebuilding it if necessary}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<BlockState> getFilter(ItemStack module) {
         validateFilter();

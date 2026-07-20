@@ -12,6 +12,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +43,7 @@ public enum ConfigurableEntityScannerModule implements EntityScannerModule {
     /**
      * {@return the result provider that displays entity scan results}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get("entities");
@@ -52,6 +55,7 @@ public enum ConfigurableEntityScannerModule implements EntityScannerModule {
      * @param module the scanner module item stack containing configured entity type IDs
      * @return a predicate that tests entities against the configured type list
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<Entity> getFilter(ItemStack module) {
         List<Identifier> ids = List.of();

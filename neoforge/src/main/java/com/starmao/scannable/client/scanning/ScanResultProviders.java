@@ -21,15 +21,15 @@ public final class ScanResultProviders {
     public static final ProviderHolder<ScanResultProviderItem> ITEMS = new ProviderHolder<>("items", new ScanResultProviderItem());
 
     public static void initialize() {
-        PROVIDERS.put("blocks", BLOCKS.get());
-        PROVIDERS.put("entities", ENTITIES.get());
-        PROVIDERS.put("items", ITEMS.get());
+        PROVIDERS.put(ScanResultProviderRegistry.BLOCKS, BLOCKS.get());
+        PROVIDERS.put(ScanResultProviderRegistry.ENTITIES, ENTITIES.get());
+        PROVIDERS.put(ScanResultProviderRegistry.ITEMS, ITEMS.get());
 
         // Populate the cross-platform registry so common scanning modules
         // can access providers without importing client-only classes.
-        ScanResultProviderRegistry.register("blocks", BLOCKS::get);
-        ScanResultProviderRegistry.register("entities", ENTITIES::get);
-        ScanResultProviderRegistry.register("items", ITEMS::get);
+        ScanResultProviderRegistry.register(ScanResultProviderRegistry.BLOCKS, BLOCKS::get);
+        ScanResultProviderRegistry.register(ScanResultProviderRegistry.ENTITIES, ENTITIES::get);
+        ScanResultProviderRegistry.register(ScanResultProviderRegistry.ITEMS, ITEMS::get);
     }
 
     public static ScanResultProvider get(String name) {

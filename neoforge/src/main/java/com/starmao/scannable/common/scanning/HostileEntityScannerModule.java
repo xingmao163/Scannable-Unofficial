@@ -12,6 +12,8 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Scanner module that detects hostile / enemy entities (monsters).
@@ -33,9 +35,10 @@ public enum HostileEntityScannerModule implements EntityScannerModule {
     /**
      * {@return the result provider that displays entity scan results}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("entities");
+        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.ENTITIES);
     }
 
     /**
@@ -49,6 +52,7 @@ public enum HostileEntityScannerModule implements EntityScannerModule {
     /**
      * {@return the filter predicate that matches hostile entities}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<Entity> getFilter(ItemStack module) {
         return HostileEntityScanFilter.INSTANCE;

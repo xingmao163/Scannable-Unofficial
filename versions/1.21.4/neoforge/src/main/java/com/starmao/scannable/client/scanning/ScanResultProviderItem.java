@@ -46,17 +46,30 @@ import java.util.function.Consumer;
  * <p>Renders container highlights using VBO caching to match ScanResultProviderBlock.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
-    // ---- Scan state ---- //
     private long renderStartTime;
+    private long serverResultTime;
+
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
     private int currentChunkSection;
     private int chunkSectionsPerTick;
 
-    // ---- VBO cache ---- //
+    // VBO cache: one VertexBuffer per container position, rebuilt on new results
+
+    /**
+     * Called by {@link com.starmao.scannable.client.ScanManager#setServerItemResults}
+     * to initialise rendering state when server-side scan results arrive.
+     * <p>Normal scan flow calls {@link #collectScanResults} which sets
+     * {@code renderStartTime} — but item scan results bypass that path and
+     * arrive directly from a network packet.
+     */
+    public void markResultsUpdated() {
+        renderStartTime = System.currentTimeMillis();
+        serverResultTime = renderStartTime;
+    }
     private final Map<BlockPos, VertexBuffer> vboCache = new HashMap<>();
-    private long vboCacheGeneration = -1;
+    private int lastRenderedResultCount = -1;
 
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
@@ -192,15 +205,13 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     private void invalidateVboCache() {
         for (VertexBuffer vbo : vboCache.values()) vbo.close();
         vboCache.clear();
-        vboCacheGeneration = -1;
     }
-
-    private void rebuildVboCache(List<ScanResult> results, long generation) {
+    private void rebuildVboCache(List<ScanResult> scanResults) {
         invalidateVboCache();
         Set<BlockPos> seen = new HashSet<>();
         Level level = Minecraft.getInstance().level;
         if (level == null) return;
-        for (ScanResult result : results) {
+        for (ScanResult result : scanResults) {
             ItemScanResult ir = (ItemScanResult) result;
             if (!seen.add(ir.pos())) continue;
             BlockState state = level.getBlockState(ir.pos());
@@ -209,7 +220,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             if (override != null) color = override;
             vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
         }
-        vboCacheGeneration = generation;
     }
 
     private VertexBuffer buildVbo(BlockPos pos, int color) {
@@ -226,14 +236,18 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     // ========================================================================
     // World rendering
     // ========================================================================
-
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
         CompiledShaderProgram shader = RenderSystem.getShader();
         if (shader == null) return;
         shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
 
-        long gen = System.identityHashCode(results);
-        if (gen != vboCacheGeneration) rebuildVboCache(results, gen);
+        // Rebuild VBO cache when the result list grows (the tick() wave adds
+        // results incrementally to the same list object — identity-hash-based
+        // detection would miss these additions).
+        if (results.size() != lastRenderedResultCount) {
+            rebuildVboCache(results);
+            lastRenderedResultCount = results.size();
+        }
 
         renderHandDepth(poseStack, camera);
 

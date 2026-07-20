@@ -1,14 +1,13 @@
 package com.starmao.scannable.common.scanning.filter;
 
-import com.starmao.scannable.Scannable;
+import com.starmao.scannable.common.config.ConfigParsers;
 import com.starmao.scannable.common.config.ModConfig;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,9 +20,6 @@ public final class IgnoredBlocks {
 
     /**
      * Checks if a given block state matches any ignored block or block tag.
-     *
-     * @param state the block state to check
-     * @return {@code true} if the block should be ignored by scanners
      */
     public static boolean contains(final BlockState state) {
         validate();
@@ -46,26 +42,11 @@ public final class IgnoredBlocks {
     private static void validate() {
         if (ignoredBlocks != null && ignoredBlockTags != null) return;
 
-        ignoredBlocks = new HashSet<>();
-        ignoredBlockTags = new HashSet<>();
+        final List<? extends String> blockEntries = ModConfig.IGNORED_BLOCKS.get();
+        ignoredBlocks = new HashSet<>(ConfigParsers.parseBlocks(blockEntries));
 
-        for (final String entry : ModConfig.IGNORED_BLOCKS.get()) {
-            Identifier loc = Identifier.tryParse(entry);
-            if (loc != null) {
-                BuiltInRegistries.BLOCK.getOptional(loc).ifPresent(ignoredBlocks::add);
-            } else {
-                Scannable.LOGGER.warn("Invalid ignored block entry: {}", entry);
-            }
-        }
-
-        for (final String entry : ModConfig.IGNORED_BLOCK_TAGS.get()) {
-            Identifier loc = Identifier.tryParse(entry);
-            if (loc != null) {
-                ignoredBlockTags.add(TagKey.create(net.minecraft.core.registries.Registries.BLOCK, loc));
-            } else {
-                Scannable.LOGGER.warn("Invalid ignored block tag entry: {}", entry);
-            }
-        }
+        final List<? extends String> tagEntries = ModConfig.IGNORED_BLOCK_TAGS.get();
+        ignoredBlockTags = ConfigParsers.parseBlockTags(tagEntries);
     }
 
     private IgnoredBlocks() {}

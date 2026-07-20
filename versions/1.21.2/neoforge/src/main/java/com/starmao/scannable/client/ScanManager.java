@@ -134,19 +134,27 @@ public final class ScanManager {
         }
         if (results.isEmpty()) return;
 
+        // Clear previous item scan results so broken/moved containers don't persist.
+        final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
+        pendingResults.remove(provider);
+        synchronized (renderingResults) {
+            final List<ScanResult> old = renderingResults.remove(provider);
+            if (old != null) {
+                provider.reset();
+                old.forEach(ScanResult::close);
+            }
+        }
+
         lastScanCenter = center;
         currentStart = System.currentTimeMillis();
 
-        final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
-        pendingResults.put(provider, results);
+        // Initialize renderStartTime so the shader time uniform has a valid
+        // starting point (collectScanResults is never called for item results).
+        if (provider instanceof com.starmao.scannable.client.scanning.ScanResultProviderItem itemProvider) {
+            itemProvider.markResultsUpdated();
+        }
 
-        // Immediately move to rendering results (same rationale as updateScan)
-        pendingResults.forEach((p, list) -> {
-            synchronized (renderingResults) {
-                renderingResults.put(p, new ArrayList<>(list));
-            }
-        });
-        pendingResults.clear();
+        pendingResults.put(provider, results);
 
         if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
             com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());

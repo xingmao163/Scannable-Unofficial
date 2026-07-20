@@ -22,9 +22,14 @@ public enum ItemScannerModule implements ScannerModule {
         return ModConfig.SCANNER_ENERGY_COST_ITEM.get();
     }
 
+    @Override
+    public boolean hasResultProvider() {
+        return false; // Item scanning is server-driven, not provider-based
+    }
+
     @Nullable
     @Override
     public ScanResultProvider getResultProvider() {
-        return null; // Item scanning is server-driven, not provider-based
+        return null;
     }
 }

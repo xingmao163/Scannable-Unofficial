@@ -58,6 +58,7 @@
 
   "scannable_unofficial.configuration.debug": "调试",
   "scannable_unofficial.configuration.logItemScanner": "调试日志开关",
+  "scannable_unofficial.configuration.renderScanner": "渲染日志开关",
 
   "scannable_unofficial.configuration.scanner": "扫描仪",
   "scannable_unofficial.configuration.useEnergy": "是否消耗能量",

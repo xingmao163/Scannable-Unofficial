@@ -116,15 +116,14 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
 
         final Identifier id = key.get().identifier();
         final List<Identifier> list = new ArrayList<>(getIds(stack));
-        final int oldIndex = list.indexOf(id);
-        if (oldIndex == index) return;
+        if (index < list.size() && id.equals(list.get(index))) return;
 
-        if (index >= list.size()) {
-            list.add(id);
-        } else {
-            list.set(index, id);
-        }
-        if (oldIndex >= 0) list.remove(oldIndex);
+        // Remove any existing occurrence so the value moves (not duplicates).
+        list.remove(id);
+
+        // Clamp to [0, list.size()] so add(index, id) either inserts or appends.
+        int insertAt = Math.min(index, list.size());
+        list.add(insertAt, id);
 
         stack.set(getComponent(), List.copyOf(list));
     }

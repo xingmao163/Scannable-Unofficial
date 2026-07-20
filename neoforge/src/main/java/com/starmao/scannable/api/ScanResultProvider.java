@@ -7,6 +7,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +17,21 @@ import java.util.function.Consumer;
 /**
  * Interface for a scan result provider.
  * Collects scan results over multiple ticks and renders them.
+ * <p>
+ * <strong>Client-only.</strong> All methods use Minecraft client classes
+ * ({@link PoseStack}, {@link Camera}, {@link MultiBufferSource}) and are
+ * never available on a dedicated server. Implementations MUST be kept in
+ * client-side code or guarded by {@code FMLEnvironment.dist.isClient()}.
+ * <p>
+ * The {@link ScanResultProviderRegistry} uses a {@link java.util.function.Supplier}
+ * pattern to prevent classloading on the server. Third-party addons that implement
+ * this interface should wrap the provider in a Supplier and register via
+ * {@link ScanResultProviderRegistry#register(String, java.util.function.Supplier)},
+ * ensuring the implementing class is never loaded on a dedicated server.
+ *
+ * @see ScanResultProviderRegistry
  */
+@OnlyIn(Dist.CLIENT)
 public interface ScanResultProvider {
 
     /**

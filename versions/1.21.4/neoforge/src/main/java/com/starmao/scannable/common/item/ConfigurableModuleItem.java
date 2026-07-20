@@ -108,15 +108,11 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
 
         final ResourceLocation id = key.get().location();
         final List<ResourceLocation> list = new ArrayList<>(getIds(stack));
-        final int oldIndex = list.indexOf(id);
-        if (oldIndex == index) return;
 
-        if (index >= list.size()) {
-            list.add(id);
-        } else {
-            list.set(index, id);
-        }
-        if (oldIndex >= 0) list.remove(oldIndex);
+        // Remove existing occurrence first, then insert at target position
+        list.remove(id);
+        final int insertAt = Math.min(index, list.size());
+        list.add(insertAt, id);
 
         stack.set(getComponent(), List.copyOf(list));
     }

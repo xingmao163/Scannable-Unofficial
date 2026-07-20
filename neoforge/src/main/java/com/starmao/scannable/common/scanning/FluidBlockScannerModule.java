@@ -6,6 +6,8 @@ import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.scanning.filter.BlockCacheScanFilter;
 import com.starmao.scannable.common.scanning.filter.FluidTagScanFilter;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -48,9 +50,10 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the result provider that displays block scan results for fluid blocks}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("blocks");
+        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
     }
 
     /**
@@ -67,6 +70,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the cached fluid block filter, rebuilding it if necessary}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<BlockState> getFilter(ItemStack module) {
         validateFilter();

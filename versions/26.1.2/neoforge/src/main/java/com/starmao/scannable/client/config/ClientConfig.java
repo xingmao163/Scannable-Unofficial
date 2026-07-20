@@ -40,7 +40,7 @@ public final class ClientConfig {
                     "Example: \"minecraft:stone=0x808080\"")
             .defineListAllowEmpty(List.of("blocksColors"),
                     List::of,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> BLOCK_TAG_COLORS = BUILDER
             .comment("Colors for scanned blocks by block tag.",
@@ -48,14 +48,14 @@ public final class ClientConfig {
                     "Example: \"c:ores/diamond=0x2EB1E0\"")
             .defineListAllowEmpty(List.of("blockTagsColors"),
                     ClientConfig::defaultBlockTagColors,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid registry name.",
                     "Each entry: \"namespace:path=0xRRGGBB\"")
             .defineListAllowEmpty(List.of("fluidsColors"),
                     List::of,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_TAG_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid tag.",
@@ -65,7 +65,7 @@ public final class ClientConfig {
                             FluidTags.WATER.location() + "=0x" + Integer.toHexString(MapColor.WATER.col),
                             FluidTags.LAVA.location() + "=0x" + Integer.toHexString(MapColor.TERRACOTTA_ORANGE.col)
                     ),
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     static { BUILDER.pop(); }
 
@@ -150,57 +150,75 @@ public final class ClientConfig {
     // ========================================================================
 
     /**
+     * Result of parsing a single {@code "namespace:path=0xRRGGBB"} color entry.
+     */
+    private record ParseResult(boolean valid, Identifier key, Integer color, String error) {
+        static final ParseResult INVALID = new ParseResult(false, null, null, null);
+        static ParseResult ok(Identifier key, int color) {
+            return new ParseResult(true, key, color, null);
+        }
+        static ParseResult fail(String error) {
+            return new ParseResult(false, null, null, error);
+        }
+    }
+
+    /**
+     * Parse a single color config entry. Delegated by both validator and parser.
+     */
+    private static ParseResult parseColorEntry(final String entry) {
+        if (entry == null || entry.isBlank()) {
+            return ParseResult.fail("entry is null or blank");
+        }
+        int eq = entry.indexOf('=');
+        if (eq < 1) {
+            return ParseResult.fail("missing '=' separator (expected format: \"namespace:path=0xRRGGBB\")");
+        }
+        String key = entry.substring(0, eq);
+        String value = entry.substring(eq + 1);
+        Identifier id = Identifier.tryParse(key);
+        if (id == null) {
+            return ParseResult.fail("invalid key '" + key + "' — must be a valid Identifier");
+        }
+        String hex = (value.startsWith("0x") || value.startsWith("0X")) ? value.substring(2) : value;
+        if (hex.isEmpty()) {
+            return ParseResult.fail("missing color value after '='");
+        }
+        if (hex.length() != 6 && hex.length() != 8) {
+            return ParseResult.fail("color value '" + value + "' must be 6-digit RRGGBB or 8-digit AARRGGBB hex");
+        }
+        try {
+            int color = Integer.parseUnsignedInt(hex, 16);
+            return ParseResult.ok(id, color);
+        } catch (NumberFormatException e) {
+            return ParseResult.fail("color value '" + value + "' is not a valid hex number");
+        }
+    }
+
+    /**
      * Parse a list of {@code "key=0xRRGGBB"} entries into an immutable color map.
      */
     private static Map<Identifier, Integer> parseColorList(final List<? extends String> entries) {
         Map<Identifier, Integer> result = new HashMap<>();
         for (String entry : entries) {
-            if (entry == null) continue;
-            int eq = entry.indexOf('=');
-            if (eq < 1) {
-                Scannable.LOGGER.warn("Skipping malformed color entry (no '=' found): {}", entry);
+            if (entry == null) {
+                Scannable.LOGGER.warn("[ClientConfig] Skipping null color entry");
                 continue;
             }
-            String key = entry.substring(0, eq);
-            String value = entry.substring(eq + 1);
-            try {
-                Identifier id = Identifier.parse(key);
-                int color = value.startsWith("0x") || value.startsWith("0X")
-                        ? Integer.parseUnsignedInt(value.substring(2), 16)
-                        : Integer.parseUnsignedInt(value, 16);
-                result.put(id, color);
-            } catch (Exception e) {
-                Scannable.LOGGER.warn("Invalid color config entry '{}': {}", entry, e.getMessage());
+            ParseResult r = parseColorEntry(entry);
+            if (r.valid()) {
+                result.put(r.key(), r.color());
+            } else {
+                Scannable.LOGGER.warn("[ClientConfig] Skipping invalid color entry '{}': {}", entry, r.error());
             }
         }
         return Map.copyOf(result);
     }
 
     /**
-     * Default block tag colors matching common ore block textures.
+     * Validates a color config entry at config load time.
      */
-    private static List<String> defaultBlockTagColors() {
-        Object2IntMap<Identifier> map = new Object2IntOpenHashMap<>();
-        map.put(Tags.Blocks.ORES_COAL.location(), MapColor.COLOR_GRAY.col);
-        map.put(Tags.Blocks.ORES_IRON.location(), MapColor.COLOR_BROWN.col);
-        map.put(Tags.Blocks.ORES_GOLD.location(), MapColor.GOLD.col);
-        map.put(Tags.Blocks.ORES_LAPIS.location(), MapColor.LAPIS.col);
-        map.put(Tags.Blocks.ORES_DIAMOND.location(), MapColor.DIAMOND.col);
-        map.put(Tags.Blocks.ORES_REDSTONE.location(), MapColor.COLOR_RED.col);
-        map.put(Tags.Blocks.ORES_EMERALD.location(), MapColor.EMERALD.col);
-        map.put(Tags.Blocks.ORES_QUARTZ.location(), MapColor.QUARTZ.col);
-        map.put(Identifier.parse("c:ores/tin"), MapColor.COLOR_CYAN.col);
-        map.put(Identifier.parse("c:ores/copper"), MapColor.TERRACOTTA_ORANGE.col);
-        map.put(Identifier.parse("c:ores/lead"), MapColor.TERRACOTTA_BLUE.col);
-        map.put(Identifier.parse("c:ores/silver"), MapColor.COLOR_LIGHT_GRAY.col);
-        map.put(Identifier.parse("c:ores/nickel"), MapColor.COLOR_LIGHT_BLUE.col);
-        map.put(Identifier.parse("c:ores/platinum"), MapColor.TERRACOTTA_WHITE.col);
-        map.put(Identifier.parse("c:ores/mithril"), MapColor.COLOR_PURPLE.col);
-
-        return map.object2IntEntrySet().stream()
-                .map(e -> e.getKey().toString() + "=0x" + Integer.toHexString(e.getIntValue()))
-                .toList();
+    private static boolean isValidColorEntry(final Object obj) {
+        if (!(obj instanceof String entry)) return false;
+        return parseColorEntry(entry).valid();
     }
-
-    private ClientConfig() {}
 }

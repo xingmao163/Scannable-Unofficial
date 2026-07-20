@@ -1,19 +1,20 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
+import com.starmao.scannable.common.config.ConfigParsers;
+import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.scanning.filter.BlockCacheScanFilter;
 import com.starmao.scannable.common.scanning.filter.BlockScanFilter;
 import com.starmao.scannable.common.scanning.filter.BlockTagScanFilter;
 import com.starmao.scannable.common.scanning.filter.IgnoredBlocks;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +52,9 @@ public enum RareOresBlockScannerModule implements BlockScannerModule {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get("blocks");
+        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
     }
 
     @Override
@@ -61,6 +63,7 @@ public enum RareOresBlockScannerModule implements BlockScannerModule {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Predicate<BlockState> getFilter(ItemStack module) {
         validateFilter();
         return filter;
@@ -72,34 +75,22 @@ public enum RareOresBlockScannerModule implements BlockScannerModule {
         List<Predicate<BlockState>> filters = new ArrayList<>();
 
         // Extra rare block IDs (beyond the implicit top-level-ore-tag rule)
-        for (String entry : ModConfig.RARE_ORE_BLOCKS.get()) {
-            Identifier loc = Identifier.tryParse(entry);
-            if (loc != null) {
-                BuiltInRegistries.BLOCK.getOptional(loc).ifPresent(block ->
-                        filters.add(new BlockScanFilter(block)));
-            }
+        for (final Block block : ConfigParsers.parseBlocks(ModConfig.RARE_ORE_BLOCKS.get())) {
+            filters.add(new BlockScanFilter(block));
         }
 
         // Extra rare block tags (beyond the implicit top-level-ore-tag rule)
-        for (String entry : ModConfig.RARE_ORE_TAGS.get()) {
-            Identifier loc = Identifier.tryParse(entry);
-            if (loc != null) {
-                TagKey<Block> tag = TagKey.create(net.minecraft.core.registries.Registries.BLOCK, loc);
-                filters.add(new BlockTagScanFilter(tag));
-            }
+        for (final TagKey<Block> tag : ConfigParsers.parseBlockTags(ModConfig.RARE_ORE_TAGS.get())) {
+            filters.add(new BlockTagScanFilter(tag));
         }
 
         // Implicit rule: anything in the top-level ore tag that is neither
         // common nor ignored counts as rare.
-        String topTag = ModConfig.RARE_ORE_TOP_TAG.get();
-        if (!topTag.isBlank()) {
-            Identifier topLoc = Identifier.tryParse(topTag);
-            if (topLoc != null) {
-                TagKey<Block> topLevelOreTag = TagKey.create(net.minecraft.core.registries.Registries.BLOCK, topLoc);
-                filters.add(state -> !IgnoredBlocks.contains(state)
-                        && state.is(topLevelOreTag)
-                        && !CommonOresBlockScannerModule.INSTANCE.getFilter(ItemStack.EMPTY).test(state));
-            }
+        final TagKey<Block> topLevelOreTag = ConfigParsers.parseBlockTag(ModConfig.RARE_ORE_TOP_TAG.get());
+        if (topLevelOreTag != null) {
+            filters.add(state -> !IgnoredBlocks.contains(state)
+                    && state.is(topLevelOreTag)
+                    && !CommonOresBlockScannerModule.INSTANCE.getFilter(ItemStack.EMPTY).test(state));
         }
 
         if (filters.isEmpty()) {

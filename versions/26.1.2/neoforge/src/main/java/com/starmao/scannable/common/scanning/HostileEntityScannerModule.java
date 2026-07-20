@@ -8,6 +8,8 @@ import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.scanning.filter.HostileEntityScanFilter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -33,6 +35,7 @@ public enum HostileEntityScannerModule implements EntityScannerModule {
      * {@return the result provider that displays entity scan results}
      */
     @Override
+    @OnlyIn(Dist.CLIENT)
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get("entities");
     }
@@ -50,6 +53,7 @@ public enum HostileEntityScannerModule implements EntityScannerModule {
      * {@return the filter predicate that matches hostile entities}
      */
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Predicate<Entity> getFilter(ItemStack module) {
         return HostileEntityScanFilter.INSTANCE;
     }

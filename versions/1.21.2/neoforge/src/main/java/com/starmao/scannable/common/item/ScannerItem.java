@@ -304,14 +304,18 @@ public final class ScannerItem extends ModItem {
     private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
         ScannerContainer container = ScannerContainer.of(scanner);
         Container activeModules = container.getActiveModules();
-        boolean hasScannerModules = false;
+        boolean hasProviderModules = false;
+        boolean hasItemModule = false;
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
             modules.add(module);
-            hasScannerModules |= ModuleHelper.hasResultProvider(module);
+            hasProviderModules |= ModuleHelper.hasResultProvider(module);
+            hasItemModule |= module.getItem() instanceof ConfigurableItemScannerModuleItem;
         }
-        return hasScannerModules;
+        // ItemScannerModule.hasResultProvider() returns false (server-driven),
+        // so separate check is needed to allow item-only scans to start.
+        return hasProviderModules || hasItemModule;
     }
 
     // ---- Charging module tick ---- //

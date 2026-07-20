@@ -48,6 +48,7 @@ import java.util.function.Consumer;
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
     // ---- Scan state ---- //
     private long renderStartTime;
+    private long serverResultTime;
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
@@ -56,7 +57,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     // ---- VBO cache ---- //
     private final Map<BlockPos, VertexBuffer> vboCache = new HashMap<>();
-    private long vboCacheGeneration = -1;
+    private int lastRenderedResultCount = -1;
 
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
@@ -164,6 +165,15 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         renderStartTime = System.currentTimeMillis();
     }
 
+    /**
+     * Mark the results as freshly updated (e.g. from server data).
+     * Resets the render timer so the shader time uniform starts from zero.
+     */
+    public void markResultsUpdated() {
+        renderStartTime = System.currentTimeMillis();
+        serverResultTime = renderStartTime;
+    }
+
     @Override
     public void render(ScanResultRenderContext context, MultiBufferSource bufferSource, PoseStack poseStack,
                        Camera renderInfo, float partialTicks, List<ScanResult> results) {
@@ -192,10 +202,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     private void invalidateVboCache() {
         for (VertexBuffer vbo : vboCache.values()) vbo.close();
         vboCache.clear();
-        vboCacheGeneration = -1;
+        lastRenderedResultCount = -1;
     }
-
-    private void rebuildVboCache(List<ScanResult> results, long generation) {
+    private void rebuildVboCache(List<ScanResult> results) {
         invalidateVboCache();
         Set<BlockPos> seen = new HashSet<>();
         Level level = Minecraft.getInstance().level;
@@ -209,7 +218,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             if (override != null) color = override;
             vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
         }
-        vboCacheGeneration = generation;
     }
 
     private VertexBuffer buildVbo(BlockPos pos, int color) {
@@ -232,8 +240,13 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         if (shader == null) return;
         shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
 
-        long gen = System.identityHashCode(results);
-        if (gen != vboCacheGeneration) rebuildVboCache(results, gen);
+        // Rebuild VBO cache when the result list grows (the tick() wave adds
+        // results incrementally to the same list object — identity-hash-based
+        // detection would miss these additions).
+        if (results.size() != lastRenderedResultCount) {
+            rebuildVboCache(results);
+            lastRenderedResultCount = results.size();
+        }
 
         renderHandDepth(poseStack, camera);
 

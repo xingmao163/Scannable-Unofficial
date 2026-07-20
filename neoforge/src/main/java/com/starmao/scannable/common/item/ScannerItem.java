@@ -252,13 +252,12 @@ public final class ScannerItem extends ModItem {
         final ScannerContainer scannerContainer = ScannerContainer.of(stack);
         final var activeModules = scannerContainer.getActiveModules();
 
-        List<ResourceLocation> targetItemIds = List.of();
+        java.util.Set<ResourceLocation> targetItemIds = new java.util.HashSet<>();
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             final ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
             if (module.getItem() instanceof ConfigurableItemScannerModuleItem moduleItem) {
-                targetItemIds = moduleItem.getIds(module);
-                break;
+                targetItemIds.addAll(moduleItem.getIds(module));
             }
         }
 
@@ -277,9 +276,9 @@ public final class ScannerItem extends ModItem {
             }
 
             final List<ItemScanResultData> results = ItemScannerService.scan(
-                    level, center, (int) Math.ceil(scanRadius), targetItemIds);
-
-            Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
+                    level, center, (int) Math.ceil(scanRadius), new java.util.ArrayList<>(targetItemIds));
+            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get())
+                Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
 
             if (!results.isEmpty()) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
@@ -317,14 +316,18 @@ public final class ScannerItem extends ModItem {
     private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
         ScannerContainer container = ScannerContainer.of(scanner);
         Container activeModules = container.getActiveModules();
-        boolean hasScannerModules = false;
+        boolean hasProviderModules = false;
+        boolean hasItemModule = false;
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
             modules.add(module);
-            hasScannerModules |= ModuleHelper.hasResultProvider(module);
+            hasProviderModules |= ModuleHelper.hasResultProvider(module);
+            hasItemModule |= module.getItem() instanceof ConfigurableItemScannerModuleItem;
         }
-        return hasScannerModules;
+        // ItemScannerModule.hasResultProvider() returns false (server-driven),
+        // so separate check is needed to allow item-only scans to start.
+        return hasProviderModules || hasItemModule;
     }
 
     // ---- Charger module (periodic energy generation) ---- //
@@ -359,7 +362,7 @@ public final class ScannerItem extends ModItem {
         int amount = ModConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
         int capacity = ModConfig.SCANNER_ENERGY_CAPACITY.get();
         int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
-        int newEnergy = Math.min(capacity, current + amount);
+        int newEnergy = (int) Math.min(capacity, Math.min((long) current + amount, Integer.MAX_VALUE));
         stack.set(ModDataComponents.SCANNER_ENERGY.get(), newEnergy);
         stack.set(ModDataComponents.LAST_CHARGE_TICK.get(), currentTick);
     }

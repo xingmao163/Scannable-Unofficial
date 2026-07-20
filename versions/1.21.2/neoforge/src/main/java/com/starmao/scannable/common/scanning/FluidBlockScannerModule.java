@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Scanner module that detects fluid blocks (water, lava, etc.).
@@ -51,6 +53,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the result provider that displays block scan results for fluid blocks}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get("blocks");
@@ -70,6 +73,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     /**
      * {@return the cached fluid block filter, rebuilding it if necessary}
      */
+    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<BlockState> getFilter(ItemStack module) {
         validateFilter();
