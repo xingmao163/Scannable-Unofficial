@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.Item;
+
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -29,6 +31,13 @@ public final class ConfigurableBlockScannerModuleItem extends ConfigurableModule
     public ConfigurableBlockScannerModuleItem() {
         super(ConfigurableBlockScannerModule.INSTANCE,
                 (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand));
+    }
+
+    /** 1.21.2+ variant — Properties provided by DeferredRegister.Items. */
+    public ConfigurableBlockScannerModuleItem(Item.Properties properties) {
+        super(ConfigurableBlockScannerModule.INSTANCE,
+                (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override

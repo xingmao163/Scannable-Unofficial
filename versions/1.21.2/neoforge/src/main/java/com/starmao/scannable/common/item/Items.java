@@ -16,7 +16,8 @@ public final class Items {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Scannable.MOD_ID);
 
     /** The handheld scanner item — core item of the mod. */
-    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.register("scanner", unused -> new ScannerItem(new Item.Properties()));
+    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.register("scanner",
+            () -> new ScannerItem(new Item.Properties()));
 
     // ---- Scanner Modules ---- //
 
@@ -39,7 +40,8 @@ public final class Items {
     public static final DeferredItem<ConfigurableEntityScannerModuleItem> ENTITY_MODULE = ITEMS.register("entity_module",
             () -> new ConfigurableEntityScannerModuleItem());
     /** Placeholder module item with no scanning function (for recipe purposes). */
-    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.register("blank_module", () -> new ModItem());
+    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.register("blank_module",
+            () -> new ModItem());
     /** Configurable module — detects specific items in containers. */
     public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.register("item_module",
             () -> new ConfigurableItemScannerModuleItem());

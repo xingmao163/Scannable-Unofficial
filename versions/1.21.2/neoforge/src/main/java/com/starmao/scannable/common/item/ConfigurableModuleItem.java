@@ -3,6 +3,8 @@ package com.starmao.scannable.common.item;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.common.config.Constants;
 import net.minecraft.core.Registry;
+import net.minecraft.world.item.Item;
+
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -44,6 +46,14 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
     protected ConfigurableModuleItem(final ScannerModule module,
                                      final MenuFactory menuFactory) {
         super(module);
+        this.menuFactory = menuFactory;
+    }
+
+    /** 1.21.2+ variant — accepts Properties with descriptionId pre-set by DeferredRegister. */
+    protected ConfigurableModuleItem(final ScannerModule module,
+                                     final MenuFactory menuFactory,
+                                     final Item.Properties properties) {
+        super(module, properties);
         this.menuFactory = menuFactory;
     }
 
