@@ -1,15 +1,17 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
+issueTrackerURL = "https://github.com/xingmao163/Scannable-Unofficial/issues"
 license="${mod_license}"
 
 [[mods]]
 displayName="${mod_name}"
 version="${mod_version}"
 modId="${mod_id}"
+displayURL = "https://www.curseforge.com/minecraft/mc-mods/scannable-unofficial"
 updateJSONURL = "https://api.modrinth.com/updates/scannable-unofficial/forge_updates.json?neoforge=only"
-credits="Original Scannable by Florian 'Sangar' Nucke (MightyPirates)"
+credits="Original Scannable by 'Sangar'"
 authors="star_mao"
-description='''Unofficial Scannable'''
+description='''Unofficial high-level port of Scannable'''
 
 [[dependencies.${mod_id}]]
     modId="neoforge"

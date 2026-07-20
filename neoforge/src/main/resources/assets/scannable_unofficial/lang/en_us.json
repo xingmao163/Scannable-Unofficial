@@ -22,6 +22,8 @@
   "item.scannable_unofficial.block_module.desc": "Right-click block to configure specific blocks to detect",
   "item.scannable_unofficial.blank_module.desc": "A placeholder module with no function",
   "item.scannable_unofficial.item_module.desc": "Scans containers for configured items",
+  "item.scannable_unofficial.common_ores_module.desc": "Detects common ores: coal, iron, copper, gold, lapis lazuli, redstone",
+  "item.scannable_unofficial.rare_ores_module.desc": "Detects rare ores: diamond, emerald, quartz, netherite scrap",
   "item.scannable_unofficial.charger_module.desc": "Periodically recharges the scanner",
 
 
@@ -51,16 +53,21 @@
   "item.scannable_unofficial.block_module": "Block Module",
   "item.scannable_unofficial.item_module": "Item Module",
   "item.scannable_unofficial.blank_module": "Blank Module",
+  "item.scannable_unofficial.common_ores_module": "Common Ore Module",
+  "item.scannable_unofficial.rare_ores_module": "Rare Ore Module",
   "item.scannable_unofficial.charger_module": "Charging Module",
 
 
   "scannable_unofficial.configuration.debug": "Debug",
   "scannable_unofficial.configuration.logItemScanner": "Debug Log",
+
   "scannable_unofficial.configuration.scanner": "Scanner",
   "scannable_unofficial.configuration.useEnergy": "Use Energy",
+  "scannable_unofficial.configuration.chargeOnlyByModule": "Charge Only By Module",
   "scannable_unofficial.configuration.energyCapacity": "Energy Capacity(FE)",
   "scannable_unofficial.configuration.baseScanRadius": "Base Scan Radius(m)",
   "scannable_unofficial.configuration.resultStayDuration": "Result Stay Duration(ms)",
+
   "scannable_unofficial.configuration.energy": "Energy Costs(FE)",
   "scannable_unofficial.configuration.rangeEnergy": "Range Module",
   "scannable_unofficial.configuration.fluidEnergy": "Fluid Module",
@@ -69,23 +76,38 @@
   "scannable_unofficial.configuration.blockEnergy": "Block Module",
   "scannable_unofficial.configuration.entityEnergy": "Entity Module",
   "scannable_unofficial.configuration.itemEnergy": "Item Module",
+  "scannable_unofficial.configuration.commonOreEnergy": "Common Ore Module",
+  "scannable_unofficial.configuration.rareOreEnergy": "Rare Ore Module",
+
+  "scannable_unofficial.configuration.charger": "Charger Module",
+  "scannable_unofficial.configuration.intervalTicks": "Charge Interval (ticks)",
+  "scannable_unofficial.configuration.energyPerPulse": "Energy Per Pulse (FE)",
+
   "scannable_unofficial.configuration.range": "Range Modifiers",
   "scannable_unofficial.configuration.rangeRange": "Range Module",
   "scannable_unofficial.configuration.fluidRange": "Fluid Module",
   "scannable_unofficial.configuration.blockRange": "Block Module",
+  "scannable_unofficial.configuration.commonOreRange": "Common Ore Module",
+  "scannable_unofficial.configuration.rareOreRange": "Rare Ore Module",
+
   "scannable_unofficial.configuration.ignored.fluidsTags": "Ignored Fluid Tags",
   "scannable_unofficial.configuration.ignored": "Ignored Blocks",
   "scannable_unofficial.configuration.ignored.blocks": "Ignored Blocks",
   "scannable_unofficial.configuration.ignored.blockTags": "Ignored Block Tags",
+
+  "scannable_unofficial.configuration.ores.commonTags": "Common Ore Tags",
+  "scannable_unofficial.configuration.ores.commonBlocks": "Common Ore Blocks",
+  "scannable_unofficial.configuration.ores": "Top Rare Ore Tags",
+  "scannable_unofficial.configuration.rareTopTag": "Top Rare Ore Tag",
+  "scannable_unofficial.configuration.ores.rareTags": "Rare Ore Tags",
+  "scannable_unofficial.configuration.ores.rareBlocks": "Rare Ore Blocks",
+
   "scannable_unofficial.configuration.colors": "Colors",
   "scannable_unofficial.configuration.blocksColors": "Block Colors",
-  "scannable_unofficial.configuration.chargeOnlyByModule": "Charge Only By Module",
-  "scannable_unofficial.configuration.charger": "Charger Module",
-  "scannable_unofficial.configuration.intervalTicks": "Charge Interval (ticks)",
-  "scannable_unofficial.configuration.energyPerPulse": "Energy Per Pulse (FE)",
   "scannable_unofficial.configuration.blockTagsColors": "Block Tag Colors",
   "scannable_unofficial.configuration.fluidsColors": "Fluid Colors",
   "scannable_unofficial.configuration.fluidTagsColors": "Fluid Tag Colors",
+  
   "scannable_unofficial.configuration.misc": "Misc",
   "scannable_unofficial.configuration.hideBrokenBlocks": "Broken Block Highlight Hide"
 }

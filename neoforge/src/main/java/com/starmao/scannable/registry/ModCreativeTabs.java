@@ -33,6 +33,8 @@ public final class ModCreativeTabs {
                         output.accept(Items.ENTITY_MODULE.get());
                         output.accept(Items.FRIENDLY_ENTITY_MODULE.get());
                         output.accept(Items.HOSTILE_ENTITY_MODULE.get());
+                        output.accept(Items.COMMON_ORES_MODULE.get());
+                        output.accept(Items.RARE_ORES_MODULE.get());
                         output.accept(Items.ITEM_MODULE.get());
                         output.accept(Items.CHARGER_MODULE.get());
                     })

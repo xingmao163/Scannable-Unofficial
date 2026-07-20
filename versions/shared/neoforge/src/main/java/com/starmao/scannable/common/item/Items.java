@@ -44,6 +44,12 @@ public final class Items {
     public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.register("charger_module",
             (Function<ResourceLocation, ScannerModuleItem>) loc ->
                     new ScannerModuleItem(ModItem.props(loc, p -> p.stacksTo(1)), ChargingScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> COMMON_ORES_MODULE = ITEMS.register("common_ores_module",
+            (Function<ResourceLocation, ScannerModuleItem>) loc ->
+                    new ScannerModuleItem(ModItem.props(loc, p -> p.stacksTo(1)), CommonOresBlockScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> RARE_ORES_MODULE = ITEMS.register("rare_ores_module",
+            (Function<ResourceLocation, ScannerModuleItem>) loc ->
+                    new ScannerModuleItem(ModItem.props(loc, p -> p.stacksTo(1)), RareOresBlockScannerModule.INSTANCE));
 
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);

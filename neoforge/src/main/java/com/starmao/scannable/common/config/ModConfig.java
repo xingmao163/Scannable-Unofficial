@@ -36,7 +36,7 @@ public final class ModConfig {
     /** Maximum FE energy capacity of the scanner item. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_CAPACITY = BUILDER
             .comment("Amount of energy that can be stored in a scanner.")
-            .defineInRange("scanner.energyCapacity", 20000, 1, Integer.MAX_VALUE);
+            .defineInRange("scanner.energyCapacity", 5000, 1, Integer.MAX_VALUE);
 
     /** Base scan radius in blocks (without range modules). */
     public static final ModConfigSpec.IntValue SCANNER_BASE_RADIUS = BUILDER
@@ -85,6 +85,16 @@ public final class ModConfig {
             .comment("Energy cost of the item scanner module per scan.")
             .defineInRange("energy.itemEnergy", 100, 0, 10000);
 
+    /** Energy cost per scan for the common ores module. */
+    public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_ORE_COMMON = BUILDER
+            .comment("Energy cost of the common ores module per scan.")
+            .defineInRange("energy.commonOreEnergy", 75, 0, 10000);
+
+    /** Energy cost per scan for the rare ores module. */
+    public static final ModConfigSpec.IntValue SCANNER_ENERGY_COST_ORE_RARE = BUILDER
+            .comment("Energy cost of the rare ores module per scan.")
+            .defineInRange("energy.rareOreEnergy", 100, 0, 10000);
+
 
     // ---- Charger Module ----
 
@@ -103,6 +113,16 @@ public final class ModConfig {
     public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_RANGE = BUILDER
             .comment("Relative scan radius added by each range module.")
             .defineInRange("range.rangeRange", 0.5, 0.0, 1.0);
+
+    /** Relative effective scan range multiplier for the common ores module. */
+    public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_ORE_COMMON = BUILDER
+            .comment("Relative effective range of the common ores module.")
+            .defineInRange("range.commonOreRange", 0.25, 0.0, 1.0);
+
+    /** Relative effective scan range multiplier for the rare ores module. */
+    public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_ORE_RARE = BUILDER
+            .comment("Relative effective range of the rare ores module.")
+            .defineInRange("range.rareOreRange", 0.25, 0.0, 1.0);
 
     /** Relative effective scan range multiplier for the fluid module. */
     public static final ModConfigSpec.DoubleValue SCANNER_RANGE_MODIFIER_FLUID = BUILDER
@@ -132,6 +152,60 @@ public final class ModConfig {
                     () -> List.of("minecraft:command_block"),
                     entry -> entry instanceof String);
 
+
+    // ---- Common Ores ----
+
+    /** Tag IDs for blocks to detect with the common ores module. */
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> COMMON_ORE_TAGS = BUILDER
+            .comment("Block tags whose members are detected by the common ores scanner module.",
+                    "Default: common ore sub-tags (coal, iron, copper, gold, lapis, redstone).")
+            .defineListAllowEmpty(List.of("ores.commonTags"),
+                    () -> List.of(
+                            "c:ores/coal",
+                            "c:ores/iron",
+                            "c:ores/copper",
+                            "c:ores/gold",
+                            "c:ores/lapis",
+                            "c:ores/redstone"
+                    ),
+                    entry -> entry instanceof String);
+
+    /** Registry names of specific blocks to detect with the common ores module. */
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> COMMON_ORE_BLOCKS = BUILDER
+            .comment("Registry names of specific blocks detected by the common ores scanner module.")
+            .defineListAllowEmpty(List.of("ores.commonBlocks"),
+                    List::of,
+                    entry -> entry instanceof String);
+
+    // ---- Rare Ores ----
+
+    /** The top-level ore tag used by the rare ores module as the implicit "all ores" source. */
+    public static final ModConfigSpec.ConfigValue<String> RARE_ORE_TOP_TAG = BUILDER
+            .comment("Top-level ore tag (e.g. \"c:ores\"). Blocks matching this tag,",
+                    "but NOT matching common ore tags/blocks or ignored blocks,",
+                    "are automatically detected as rare ores. Set to empty to disable this implicit rule.")
+            .define("ores.rareTopTag", "c:ores");
+
+    /** Extra tag IDs for blocks detected by the rare ores module (beyond the implicit top-tag rule). */
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> RARE_ORE_TAGS = BUILDER
+            .comment("Extra block tags detected by the rare ores scanner module.",
+                    "Blocks matching these tags are detected even if they are not in the top-level ore tag.")
+            .defineListAllowEmpty(List.of("ores.rareTags"),
+                    () -> List.of(
+                            "c:ores/diamond",
+                            "c:ores/emerald",
+                            "c:ores/quartz",
+                            "c:ores/netherite_scrap"
+                    ),
+                    entry -> entry instanceof String);
+
+    /** Registry names of specific blocks detected by the rare ores module (beyond the implicit rule). */
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> RARE_ORE_BLOCKS = BUILDER
+            .comment("Registry names of specific blocks detected by the rare ores scanner module.",
+                    "These blocks are detected even if they are not in the top-level ore tag.")
+            .defineListAllowEmpty(List.of("ores.rareBlocks"),
+                    List::of,
+                    entry -> entry instanceof String);
     /** Block tags whose members are ignored by all scanner modules. */
     public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_BLOCK_TAGS = BUILDER
             .comment("Block tag names of tags that should be ignored by all scanner modules.")

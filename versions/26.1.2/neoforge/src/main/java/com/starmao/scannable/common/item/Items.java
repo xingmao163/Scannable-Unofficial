@@ -28,6 +28,10 @@ public final class Items {
             ModItem::new);
     public static final DeferredHolder<Item, ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.registerItem("item_module",
             ConfigurableItemScannerModuleItem::new);
+    public static final DeferredHolder<Item, ScannerModuleItem> COMMON_ORES_MODULE = ITEMS.registerItem("common_ores_module",
+            properties -> new ScannerModuleItem(CommonOresBlockScannerModule.INSTANCE, properties));
+    public static final DeferredHolder<Item, ScannerModuleItem> RARE_ORES_MODULE = ITEMS.registerItem("rare_ores_module",
+            properties -> new ScannerModuleItem(RareOresBlockScannerModule.INSTANCE, properties));
     public static final DeferredHolder<Item, ScannerModuleItem> CHARGER_MODULE = ITEMS.registerItem("charger_module",
             properties -> new ScannerModuleItem(ChargingScannerModule.INSTANCE, properties));
 

@@ -43,6 +43,12 @@ public final class Items {
     /** Configurable module — detects specific items in containers. */
     public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.register("item_module",
             () -> new ConfigurableItemScannerModuleItem());
+    /** Detects common ore blocks (coal, iron, copper, gold, lapis, redstone). */
+    public static final DeferredItem<ScannerModuleItem> COMMON_ORES_MODULE = ITEMS.register("common_ores_module",
+            () -> new ScannerModuleItem(CommonOresBlockScannerModule.INSTANCE));
+    /** Detects rare ore blocks (diamond, emerald, netherite, quartz, etc.). */
+    public static final DeferredItem<ScannerModuleItem> RARE_ORES_MODULE = ITEMS.register("rare_ores_module",
+            () -> new ScannerModuleItem(RareOresBlockScannerModule.INSTANCE));
     /** Scanner charging upgrade — charge items inside inventory. */
     public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.register("charger_module",
             () -> new ScannerModuleItem(ChargingScannerModule.INSTANCE));

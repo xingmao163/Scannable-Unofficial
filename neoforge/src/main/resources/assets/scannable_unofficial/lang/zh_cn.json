@@ -16,6 +16,8 @@
   "item.scannable_unofficial.item_module": "模块：物品",
   "item.scannable_unofficial.blank_module": "空白模块",
   "item.scannable_unofficial.charger_module": "模块：充能",
+  "item.scannable_unofficial.common_ores_module": "模块：普通矿物",
+  "item.scannable_unofficial.rare_ores_module": "模块：稀有矿物",
 
 
   "tooltip.scannable_unofficial.scanner.energy": "能量：%s / %s FE",
@@ -32,6 +34,8 @@
   "item.scannable_unofficial.block_module.desc": "右击方块配置要检测的方块类型",
   "item.scannable_unofficial.blank_module.desc": "一个无功能的占位模块",
   "item.scannable_unofficial.item_module.desc": "扫描容器中是否有指定物品",
+  "item.scannable_unofficial.common_ores_module.desc": "检测普通矿物：煤矿、铁、铜、金、青金石、红石",
+  "item.scannable_unofficial.rare_ores_module.desc": "检测稀有矿物：钻石、绿宝石、石英、远古残骸",
   "item.scannable_unofficial.charger_module.desc": "每隔一段时间自动为扫描器补充能量",
 
 
@@ -54,11 +58,14 @@
 
   "scannable_unofficial.configuration.debug": "调试",
   "scannable_unofficial.configuration.logItemScanner": "调试日志开关",
+
   "scannable_unofficial.configuration.scanner": "扫描仪",
   "scannable_unofficial.configuration.useEnergy": "是否消耗能量",
+  "scannable_unofficial.configuration.chargeOnlyByModule": "仅限模块充能",
   "scannable_unofficial.configuration.energyCapacity": "扫描器能量上限(FE)",
   "scannable_unofficial.configuration.baseScanRadius": "基础扫描半径(m)",
   "scannable_unofficial.configuration.resultStayDuration": "结果持续时长(ms)",
+
   "scannable_unofficial.configuration.energy": "能量消耗(FE)",
   "scannable_unofficial.configuration.rangeEnergy": "范围模块",
   "scannable_unofficial.configuration.fluidEnergy": "流体模块",
@@ -67,21 +74,37 @@
   "scannable_unofficial.configuration.blockEnergy": "方块模块",
   "scannable_unofficial.configuration.entityEnergy": "实体模块",
   "scannable_unofficial.configuration.itemEnergy": "物品模块",
-  "scannable_unofficial.configuration.range": "范围修正",
-  "scannable_unofficial.configuration.rangeRange": "范围模块",
-  "scannable_unofficial.configuration.fluidRange": "流体模块",
-  "scannable_unofficial.configuration.ignored.fluidsTags": "忽略的流体标签",
-  "scannable_unofficial.configuration.ignored.blocks": "忽略的方块",
-  "scannable_unofficial.configuration.ignored.blockTags": "忽略的方块标签",
-  "scannable_unofficial.configuration.colors": "颜色",
-  "scannable_unofficial.configuration.blocksColors": "方块颜色",
-  "scannable_unofficial.configuration.blockTagsColors": "方块标签颜色",
-  "scannable_unofficial.configuration.chargeOnlyByModule": "仅限模块充能",
+  "scannable_unofficial.configuration.commonOreEnergy": "普通矿物模块",
+  "scannable_unofficial.configuration.rareOreEnergy": "稀有矿物模块",
+
   "scannable_unofficial.configuration.charger": "充能模块",
   "scannable_unofficial.configuration.intervalTicks": "充能间隔(tick)",
   "scannable_unofficial.configuration.energyPerPulse": "每次充能(FE)",
+
+  "scannable_unofficial.configuration.range": "范围修正",
+  "scannable_unofficial.configuration.rangeRange": "范围模块",
+  "scannable_unofficial.configuration.fluidRange": "流体模块",
+  "scannable_unofficial.configuration.blockRange": "方块模块",
+  "scannable_unofficial.configuration.commonOreRange": "普通矿物模块",
+  "scannable_unofficial.configuration.rareOreRange": "稀有矿物模块",
+
+  "scannable_unofficial.configuration.ores.commonTags": "普通矿物标签",
+  "scannable_unofficial.configuration.ores.commonBlocks": "普通矿物方块",
+  "scannable_unofficial.configuration.ores": "顶级稀有矿物标签",
+  "scannable_unofficial.configuration.rareTopTag": "稀有矿物标签",
+  "scannable_unofficial.configuration.ores.rareTags": "稀有矿物标签",
+  "scannable_unofficial.configuration.ores.rareBlocks": "稀有矿物方块",
+
+  "scannable_unofficial.configuration.ignored.fluidsTags": "忽略的流体标签",
+  "scannable_unofficial.configuration.ignored.blocks": "忽略的方块",
+  "scannable_unofficial.configuration.ignored.blockTags": "忽略的方块标签",
+
+  "scannable_unofficial.configuration.colors": "颜色",
+  "scannable_unofficial.configuration.blocksColors": "方块颜色",
+  "scannable_unofficial.configuration.blockTagsColors": "方块标签颜色",
   "scannable_unofficial.configuration.fluidsColors": "流体颜色",
   "scannable_unofficial.configuration.fluidTagsColors": "流体标签颜色",
+
   "scannable_unofficial.configuration.misc": "杂项",
   "scannable_unofficial.configuration.hideBrokenBlocks": "破坏方块隐藏高亮"
 }

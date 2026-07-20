@@ -7,6 +7,9 @@
     "scannable_unofficial:friendly_entity_module",
     "scannable_unofficial:hostile_entity_module",
     "scannable_unofficial:block_module",
-    "scannable_unofficial:fluid_module"
+    "scannable_unofficial:fluid_module",
+    "scannable_unofficial:item_module",
+    "scannable_unofficial:common_ores_module",
+    "scannable_unofficial:rare_ores_module"
   ]
 }

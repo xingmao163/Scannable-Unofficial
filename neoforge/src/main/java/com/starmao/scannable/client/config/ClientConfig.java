@@ -40,7 +40,7 @@ public final class ClientConfig {
                     "Example: \"minecraft:stone=0x808080\"")
             .defineListAllowEmpty(List.of("blocksColors"),
                     List::of,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> BLOCK_TAG_COLORS = BUILDER
             .comment("Colors for scanned blocks by block tag.",
@@ -48,14 +48,14 @@ public final class ClientConfig {
                     "Example: \"c:ores/diamond=0x2EB1E0\"")
             .defineListAllowEmpty(List.of("blockTagsColors"),
                     ClientConfig::defaultBlockTagColors,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid registry name.",
                     "Each entry: \"namespace:path=0xRRGGBB\"")
             .defineListAllowEmpty(List.of("fluidsColors"),
                     List::of,
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FLUID_TAG_COLORS = BUILDER
             .comment("Colors for scanned fluids by fluid tag.",
@@ -65,7 +65,7 @@ public final class ClientConfig {
                             FluidTags.WATER.location() + "=0x" + Integer.toHexString(MapColor.WATER.col),
                             FluidTags.LAVA.location() + "=0x" + Integer.toHexString(MapColor.TERRACOTTA_ORANGE.col)
                     ),
-                    entry -> entry instanceof String);
+                    ClientConfig::isValidColorEntry);
 
     static { BUILDER.pop(); }
 
@@ -148,6 +148,35 @@ public final class ClientConfig {
     // ========================================================================
     // Helpers
     // ========================================================================
+
+    /**
+     * Validates a color config entry in {@code "namespace:path=0xRRGGBB"} format.
+     * <p>Called at config load time by {@link ModConfigSpec} so malformed entries
+     * are caught immediately, not lazily during scan rendering.
+     *
+     * @param obj the raw config value entry
+     * @return {@code true} if the entry has valid format
+     */
+    private static boolean isValidColorEntry(final Object obj) {
+        if (!(obj instanceof String entry)) return false;
+        int eq = entry.indexOf('=');
+        if (eq < 1) return false;
+        String key = entry.substring(0, eq);
+        String value = entry.substring(eq + 1);
+        // Validate key parses as a ResourceLocation
+        if (ResourceLocation.tryParse(key) == null) return false;
+        // Validate value is a valid hex color
+        try {
+            String hex = value.startsWith("0x") || value.startsWith("0X")
+                    ? value.substring(2) : value;
+            // Must be 6-digit RGB (RRGGBB) or 8-digit ARGB (AARRGGBB)
+            if (hex.length() != 6 && hex.length() != 8) return false;
+            Integer.parseUnsignedInt(hex, 16);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
     /**
      * Parse a list of {@code "key=0xRRGGBB"} entries into an immutable color map.

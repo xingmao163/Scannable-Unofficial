@@ -5,7 +5,6 @@ import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.common.network.data.ScanResultEntry;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.starmao.scannable.Scannable;
@@ -74,12 +73,6 @@ public final class ScanManager {
 
 
 
-    // ---- Backwards compatibility with old ScanManager API ---- //
-
-    private static boolean isCharging = false;
-    private static final List<RenderableResult> currentResults = new ArrayList<>();
-    private static final List<RenderableResult> renderingFallbackResults = new ArrayList<>();
-    private static long fallbackResultsStartTime = -1;
 
     // ---- Public API ---- //
 
@@ -113,7 +106,7 @@ public final class ScanManager {
             Scannable.LOGGER.info("[ScanManager] initialized provider: {}", provider.getClass().getSimpleName());
         }
 
-        isCharging = true;
+
     }
 
     /**
@@ -188,7 +181,7 @@ public final class ScanManager {
                 totalResults, collectingProviders.size());
 
         clear();
-        isCharging = false;
+
 
         lastScanCenter = Objects.requireNonNull(entity.position());
         currentStart = System.currentTimeMillis();
@@ -217,12 +210,9 @@ public final class ScanManager {
         collectingProviders.clear();
         collectingResults.clear();
         scanningTicks = 0;
-        isCharging = false;
+
     }
 
-    public static boolean isCharging() {
-        return isCharging;
-    }
 
     public static void tick() {
         if (lastScanCenter == null || currentStart < 0) return;
@@ -245,7 +235,7 @@ public final class ScanManager {
                     }
                 }
                 if (renderingResults.isEmpty()) {
-                    clearAll();
+                    clear();
                 }
             }
             return;
@@ -313,21 +303,6 @@ public final class ScanManager {
         // TODO(Phase 3b): re-enable the GUI result overlay once the render path is rebuilt.
     }
 
-    // ---- Backwards compat methods for old renderers ---- //
-
-    public static void setScanResults(Vec3 center, List<ScanResultEntry> results) {
-        // Legacy: converts old scan results to new format - handled by server scan as before
-        lastScanCenter = center;
-        fallbackResultsStartTime = System.currentTimeMillis();
-        // The results will show as wireframe boxes via ResultRenderHandler
-        synchronized (currentResults) {
-            currentResults.clear();
-            for (var entry : results) {
-                currentResults.add(new RenderableResult(entry));
-            }
-        }
-        ScannerRenderer.INSTANCE.ping(center);
-    }
 
     @Nullable
     public static Vec3 getLastScanCenter() {
@@ -339,15 +314,7 @@ public final class ScanManager {
         return computeRadius(currentStart, (float) computeScanGrowthDuration());
     }
 
-    public static List<RenderableResult> getRenderingResults() {
-        synchronized (renderingFallbackResults) {
-            return new ArrayList<>(renderingFallbackResults);
-        }
-    }
 
-    public static boolean hasActiveResults() {
-        return fallbackResultsStartTime > 0 || !renderingResults.isEmpty() || !pendingResults.isEmpty();
-    }
 
     // ---- Internal ---- //
 
@@ -364,37 +331,5 @@ public final class ScanManager {
         currentStart = -1;
     }
 
-    private static void clearAll() {
-        clear();
-        synchronized (currentResults) {
-            currentResults.clear();
-        }
-        synchronized (renderingFallbackResults) {
-            renderingFallbackResults.clear();
-        }
-        fallbackResultsStartTime = -1;
-    }
 
-    // ---- Backwards compat inner class ---- //
-
-    public static class RenderableResult {
-        private final ScanResultEntry entry;
-        private final net.minecraft.world.phys.AABB renderBounds;
-        private final Vec3 positionVec;
-
-        RenderableResult(ScanResultEntry entry) {
-            this.entry = entry;
-            net.minecraft.core.BlockPos pos = entry.pos();
-            this.renderBounds = new net.minecraft.world.phys.AABB(pos.getX(), pos.getY(), pos.getZ(),
-                    pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
-            this.positionVec = Vec3.atCenterOf(pos);
-        }
-
-        public net.minecraft.core.BlockPos getPosition() { return entry.pos(); }
-        public Vec3 getPositionVec() { return positionVec; }
-        public net.minecraft.world.phys.AABB getRenderBounds() { return renderBounds; }
-        public String getDisplayName() { return entry.displayName(); }
-        public int getRemainingCount() { return entry.remainingCount(); }
-        public String getHint() { return entry.hint(); }
-    }
 }
