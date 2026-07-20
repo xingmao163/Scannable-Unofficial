@@ -17,9 +17,9 @@ import java.util.List;
 /**
  * Server-to-client scan result for the item scanner module.
  *
- * <p>The server sends this after processing a {@link C2SItemScanRequest}.
- * The client receives the results and passes them to the scan result
- * provider for rendering.
+ * <p>The server sends this after scanning completes (see {@code ScannerItem.finishScanServer()}).
+ * The client receives the results and passes them to {@code ScanManager.setServerItemResults()}
+ * for rendering.
  */
 public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) implements CustomPacketPayload {
     static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "s2c_item_scan");

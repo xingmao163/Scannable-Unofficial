@@ -92,27 +92,38 @@ public final class ItemScannerService {
                     final double dz = pos.getZ() + 0.5 - center.z;
                     if (dx * dx + dy * dy + dz * dz > sqRadius) continue;
 
-                    // Check for item handler capability via transfer API
-                    ResourceHandler<ItemResource> handler = null;
+                    // Collect unique handlers from all directions to catch
+                    // sided inventories (furnace fuel slot, etc.).
+                    final java.util.IdentityHashMap<ResourceHandler<ItemResource>, Boolean> seen = new java.util.IdentityHashMap<>();
                     for (final Direction dir : Direction.values()) {
-                        handler = level.getCapability(Capabilities.Item.BLOCK, pos, dir);
-                        if (handler != null) break;
+                        final ResourceHandler<ItemResource> h = level.getCapability(Capabilities.Item.BLOCK, pos, dir);
+                        if (h != null) seen.put(h, Boolean.TRUE);
                     }
-                    if (handler == null) continue;
+                    {
+                        final ResourceHandler<ItemResource> h = level.getCapability(Capabilities.Item.BLOCK, pos, null);
+                        if (h != null) seen.put(h, Boolean.TRUE);
+                    }
+                    if (seen.isEmpty()) continue;
                     containersFound++;
 
-                    // Scan inventory for target items — track each item type separately
-                    final Map<Item, Integer> itemCounts = new HashMap<>();
-                    for (int slot = 0; slot < handler.size(); slot++) {
-                        final ItemResource resource = handler.getResource(slot);
-                        if (resource.isEmpty()) continue;
-                        if (targetItems.contains(resource.getItem())) {
+                    // Deduplicate by (item, count) pairs across all handlers at
+                    // this position to avoid counting the same physical slot
+                    // through different handler instances.
+                    final java.util.Map<Item, Integer> posTotal = new java.util.HashMap<>();
+                    final java.util.Set<String> seenSlotKeys = new java.util.HashSet<>();
+                    for (final ResourceHandler<ItemResource> handler : seen.keySet()) {
+                        for (int slot = 0; slot < handler.size(); slot++) {
+                            final ItemResource resource = handler.getResource(slot);
+                            if (resource.isEmpty()) continue;
+                            final Item item = resource.getItem();
+                            if (!targetItems.contains(item)) continue;
                             final int count = handler.getAmountAsInt(slot);
-                            itemCounts.merge(resource.getItem(), count, Integer::sum);
+                            final String slotKey = BuiltInRegistries.ITEM.getKey(item) + ":" + count;
+                            if (!seenSlotKeys.add(slotKey)) continue;
+                            posTotal.merge(item, count, Integer::sum);
                         }
                     }
-
-                    for (final Map.Entry<Item, Integer> entry : itemCounts.entrySet()) {
+                    for (final var entry : posTotal.entrySet()) {
                         final Identifier matchedId = BuiltInRegistries.ITEM.getKey(entry.getKey());
                         results.add(new ItemScanResultData(pos, matchedId, entry.getValue()));
                     }

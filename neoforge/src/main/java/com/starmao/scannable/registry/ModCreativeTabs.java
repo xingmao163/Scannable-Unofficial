@@ -1,7 +1,9 @@
 package com.starmao.scannable.registry;
 
 import com.starmao.scannable.Scannable;
+import com.starmao.scannable.common.item.ModItem;
 import com.starmao.scannable.common.item.Items;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -13,7 +15,8 @@ import java.util.function.Supplier;
 
 /**
  * Registration of the mod's creative mode tab.
- * <p>Contains all scanner items and modules in a single tab group.
+ * <p>All {@link ModItem} subclasses are automatically discovered via
+ * {@link BuiltInRegistries#ITEM} — no manual item list to maintain.
  */
 public final class ModCreativeTabs {
     private static final DeferredRegister<CreativeModeTab> TABS =
@@ -25,18 +28,10 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.scannable_unofficial"))
                     .icon(() -> new ItemStack(Items.SCANNER.get()))
                     .displayItems((params, output) -> {
-                        output.accept(Items.SCANNER.get());
-                        output.accept(Items.BLANK_MODULE.get());
-                        output.accept(Items.RANGE_MODULE.get());
-                        output.accept(Items.FLUID_MODULE.get());
-                        output.accept(Items.BLOCK_MODULE.get());
-                        output.accept(Items.ENTITY_MODULE.get());
-                        output.accept(Items.FRIENDLY_ENTITY_MODULE.get());
-                        output.accept(Items.HOSTILE_ENTITY_MODULE.get());
-                        output.accept(Items.COMMON_ORES_MODULE.get());
-                        output.accept(Items.RARE_ORES_MODULE.get());
-                        output.accept(Items.ITEM_MODULE.get());
-                        output.accept(Items.CHARGER_MODULE.get());
+                        // All ModItem subclasses, automatically discovered
+                        BuiltInRegistries.ITEM.stream()
+                                .filter(item -> item instanceof ModItem)
+                                .forEach(item -> output.accept(new ItemStack(item)));
                     })
                     .build());
 

@@ -71,11 +71,45 @@ public final class ItemScannerService {
                     final BlockEntity be = level.getBlockEntity(pos);
                     if (be == null) continue;
 
-                    final IItemHandler handler = level.getCapability(
-                            Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
-                    if (handler == null) continue;
+                    // Try all directions + null to catch sided inventories
+                    // (e.g. furnace fuel slot is side-only, not top/bottom).
+                    final java.util.Set<IItemHandler> seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+                    {
+                        final IItemHandler h = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+                        if (h != null) seen.add(h);
+                    }
+                    for (final Direction dir : Direction.values()) {
+                        final IItemHandler h = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, dir);
+                        if (h != null) seen.add(h);
+                    }
+                    // Sum counts across ALL handlers at this position, but deduplicate
+                    // by (item, count) pairs to avoid counting the same physical slot
+                    // multiple times when different handler instances expose it.
+                    final java.util.Map<Item, Integer> posTotal = new java.util.HashMap<>();
+                    final java.util.Set<String> seenSlotKeys = new java.util.HashSet<>();
+                    for (final IItemHandler handler : seen) {
+                        for (int slot = 0; slot < handler.getSlots(); slot++) {
+                            final ItemStack stack = handler.getStackInSlot(slot);
+                            if (stack.isEmpty()) continue;
+                            final Item item = stack.getItem();
+                            if (!targetItems.contains(item)) continue;
+                            // Generate a key that identifies this (item, count) pair.
+                            // If the same pair appears from a different handler at the
+                            // same position, it's likely the same physical slot wrapped
+                            // by a different handler instance (e.g. furnace fuel slot
+                            // accessed from 4 horizontal directions).
+                            final String slotKey = BuiltInRegistries.ITEM.getKey(item) + ":" + stack.getCount();
+                            if (!seenSlotKeys.add(slotKey)) continue;
+                            posTotal.merge(item, stack.getCount(), Integer::sum);
+                        }
+                    }
+                    for (final var entry : posTotal.entrySet()) {
+                        results.add(new ItemScanResultData(
+                                pos,
+                                BuiltInRegistries.ITEM.getKey(entry.getKey()),
+                                entry.getValue()));
+                    }
 
-                    scanHandler(handler, targetItems, pos, results);
                 }
             }
         }
@@ -88,30 +122,6 @@ public final class ItemScannerService {
         return results;
     }
 
-    private static void scanHandler(
-            final IItemHandler handler,
-            final List<Item> targetItems,
-            final BlockPos pos,
-            final List<ItemScanResultData> results) {
-
-        final Map<Item, Integer> matches = new HashMap<>();
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            final ItemStack stack = handler.getStackInSlot(slot);
-            if (stack.isEmpty()) continue;
-            if (targetItems.contains(stack.getItem())) {
-                matches.merge(stack.getItem(), stack.getCount(), Integer::sum);
-            }
-        }
-
-        if (!matches.isEmpty()) {
-            for (final Map.Entry<Item, Integer> entry : matches.entrySet()) {
-                results.add(new ItemScanResultData(
-                        pos,
-                        BuiltInRegistries.ITEM.getKey(entry.getKey()),
-                        entry.getValue()));
-            }
-        }
-    }
 
     private ItemScannerService() {}
 }

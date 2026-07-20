@@ -1,6 +1,5 @@
 package com.starmao.scannable.common.network;
 
-import com.starmao.scannable.common.network.message.C2SItemScanRequest;
 import com.starmao.scannable.common.network.message.RemoveConfiguredModuleItemAtMessage;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
 import com.starmao.scannable.Scannable;
@@ -32,11 +31,6 @@ public final class Network {
                 RemoveConfiguredModuleItemAtMessage.TYPE,
                 RemoveConfiguredModuleItemAtMessage.STREAM_CODEC,
                 RemoveConfiguredModuleItemAtMessage::handle
-        );
-        registrar.playToServer(
-                C2SItemScanRequest.TYPE,
-                C2SItemScanRequest.STREAM_CODEC,
-                C2SItemScanRequest::handle
         );
         registrar.playToClient(
                 S2CItemScanResult.TYPE,

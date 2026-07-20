@@ -356,17 +356,20 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         float pitch = renderInfo.xRot();
         boolean showDistance = renderInfo.entity().isShiftKeyDown();
 
-        // Group results by position -- same container may have multiple matching item types
-        final java.util.Map<BlockPos, java.util.List<ItemScanResult>> byPos = new java.util.LinkedHashMap<>();
+        // Merge counts per position per item type (multi-direction may produce duplicates)
+        final java.util.Map<BlockPos, java.util.Map<ItemStack, Integer>> byPos = new java.util.LinkedHashMap<>();
         for (final ScanResult r : results) {
             final ItemScanResult ir = (ItemScanResult) r;
-            byPos.computeIfAbsent(ir.pos(), k -> new java.util.ArrayList<>()).add(ir);
+            byPos.computeIfAbsent(ir.pos(), k -> new java.util.LinkedHashMap<>())
+                 .merge(ir.item(), ir.totalCount(), Integer::sum);
         }
 
-        // Keep only first result per position -- we'll show all items in the label
         final java.util.List<ScanResult> deduped = new java.util.ArrayList<>();
-        for (final var entry : byPos.entrySet()) {
-            deduped.add(entry.getValue().get(0));
+        for (final var posEntry : byPos.entrySet()) {
+            final BlockPos pos = posEntry.getKey();
+            final java.util.Map<ItemStack, Integer> items = posEntry.getValue();
+            final ItemStack firstItem = items.keySet().iterator().next();
+            deduped.add(new ItemScanResult(pos, firstItem, items.get(firstItem)));
         }
 
         deduped.sort(Comparator.comparing(r ->
@@ -376,19 +379,19 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                 ScanResult::getPosition,
                 result -> com.starmao.scannable.Scannable.id("textures/gui/overlay/info.png"),
                 result -> {
-                    // Show ALL configured items found in this container
-                    final java.util.List<ItemScanResult> allItems = byPos.get(
-                            ((ItemScanResult) result).pos());
-                    if (allItems == null || allItems.size() == 1) {
-                        ItemScanResult r = (ItemScanResult) result;
-                        return Component.literal(r.item().getHoverName().getString())
-                                .append(Component.literal(" x" + r.totalCount()));
+                    final BlockPos resultPos = ((ItemScanResult) result).pos();
+                    final java.util.Map<ItemStack, Integer> allItems = byPos.get(resultPos);
+                    if (allItems == null) return Component.literal("");
+                    if (allItems.size() == 1) {
+                        final var entry = allItems.entrySet().iterator().next();
+                        return Component.literal(entry.getKey().getHoverName().getString())
+                                .append(Component.literal(" x" + entry.getValue()));
                     }
                     final StringBuilder sb = new StringBuilder();
-                    for (final ItemScanResult ir : allItems) {
+                    for (final var entry : allItems.entrySet()) {
                         if (!sb.isEmpty()) sb.append(", ");
-                        sb.append(ir.item().getHoverName().getString())
-                          .append(" x").append(ir.totalCount());
+                        sb.append(entry.getKey().getHoverName().getString())
+                          .append(" x").append(entry.getValue());
                     }
                     return Component.literal(sb.toString());
                 },

@@ -271,9 +271,20 @@ public final class ScannerItem extends ModItem {
 
         if (!targetItemIds.isEmpty()) {
             final Vec3 center = player.position();
-            final int scanRadius = 64;
+
+            // Compute scan radius from config, adjusted by installed range modules.
+            float scanRadius = ModConfig.SCANNER_BASE_RADIUS.get();
+            for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
+                final ItemStack module = activeModules.getItem(slot);
+                if (module.isEmpty()) continue;
+                final var opt = ModuleHelper.getModule(module);
+                if (opt.isPresent()) {
+                    scanRadius = opt.get().adjustGlobalRange(scanRadius);
+                }
+            }
+
             final List<ItemScanResultData> results = ItemScannerService.scan(
-                    level, center, scanRadius, targetItemIds);
+                    level, center, (int) Math.ceil(scanRadius), targetItemIds);
 
             if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());

@@ -43,88 +43,62 @@ import java.util.function.Consumer;
 /**
  * Scan result provider for the container item scanner module.
  *
- * <p>Scans all blocks within range and checks block entities for an item handler
- * capability ({@link IItemHandler}). For containers that have one, iterates their
- * inventory looking for user-configured items. Matching containers are highlighted
- * with the found item's name and total quantity displayed.
+ * <p>Renders container highlights using VBO caching to match ScanResultProviderBlock.
  */
 public final class ScanResultProviderItem extends AbstractScanResultProvider {
-
-
+    // ---- Scan state ---- //
+    private long renderStartTime;
     private List<Item> targetItems = List.of();
     private final List<ItemScanResult> results = new ArrayList<>();
-    private long renderStartTime;
-
-    // Multi-tick chunk scanning state
     private final List<ChunkSectionPos> pendingChunkSections = new ArrayList<>();
     private int currentChunkSection;
     private int chunkSectionsPerTick;
 
+    // ---- VBO cache ---- //
+    private final Map<BlockPos, VertexBuffer> vboCache = new HashMap<>();
+    private long vboCacheGeneration = -1;
+
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
         super.initialize(player, modules, center, radius, scanTicks);
-
         results.clear();
         pendingChunkSections.clear();
         targetItems = List.of();
 
-        // Read configured target items from the item scanner module's stack
         for (ItemStack stack : modules) {
             if (stack.getItem() instanceof ConfigurableItemScannerModuleItem moduleItem) {
                 targetItems = moduleItem.getValues(stack);
                 break;
             }
         }
-
         if (targetItems.isEmpty()) {
-            Scannable.LOGGER.warn("[ItemScanner] No target items configured!");
-            if (player != null) {
-                player.displayClientMessage(
-                        Component.translatable("message.scannable_unofficial.scanner.no_target_items"),
-                        true);
-            }
+            if (player != null)
+                player.displayClientMessage(Component.translatable("message.scannable_unofficial.scanner.no_target_items"), true);
             return;
         }
 
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-            Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
-            for (Item target : targetItems) {
-                Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
-            }
-        }
-
-        // Calculate chunk sections that intersect the scan sphere
-        BlockPos minPos = BlockPos.containing(center).offset(-this.radius, -this.radius, -this.radius);
-        BlockPos maxPos = BlockPos.containing(center).offset(this.radius, this.radius, this.radius);
+        BlockPos minPos = BlockPos.containing(center).offset(-(int) radius, -(int) radius, -(int) radius);
+        BlockPos maxPos = BlockPos.containing(center).offset((int) radius, (int) radius, (int) radius);
         ChunkPos minChunk = new ChunkPos(minPos);
         ChunkPos maxChunk = new ChunkPos(maxPos);
-
         int minSection = Math.max(player.level().getSectionIndex(minPos.getY()), 0);
-        int maxSection = Math.min(player.level().getSectionIndex(maxPos.getY()),
-                player.level().getSectionsCount() - 1);
+        int maxSection = Math.min(player.level().getSectionIndex(maxPos.getY()), player.level().getSectionsCount() - 1);
 
         for (int sectionIdx = minSection; sectionIdx <= maxSection; sectionIdx++) {
             for (int cz = minChunk.z; cz <= maxChunk.z; cz++) {
                 for (int cx = minChunk.x; cx <= maxChunk.x; cx++) {
                     int chunkY = player.level().getSectionYFromSectionIndex(sectionIdx);
-                    double dx = Math.min(
-                            Math.abs(new ChunkPos(cx, cz).getMinBlockX() - center.x),
+                    double dx = Math.min(Math.abs(new ChunkPos(cx, cz).getMinBlockX() - center.x),
                             Math.abs(new ChunkPos(cx, cz).getMaxBlockX() - center.x));
-                    double dz = Math.min(
-                            Math.abs(new ChunkPos(cx, cz).getMinBlockZ() - center.z),
+                    double dz = Math.min(Math.abs(new ChunkPos(cx, cz).getMinBlockZ() - center.z),
                             Math.abs(new ChunkPos(cx, cz).getMaxBlockZ() - center.z));
-                    double dy = Math.min(
-                            Math.abs(SectionPos.sectionToBlockCoord(chunkY, 0) - center.y),
+                    double dy = Math.min(Math.abs(SectionPos.sectionToBlockCoord(chunkY, 0) - center.y),
                             Math.abs(SectionPos.sectionToBlockCoord(chunkY, SectionPos.SECTION_MAX_INDEX) - center.y));
-                    double sqDist = dx * dx + dy * dy + dz * dz;
-
-                    if (sqDist > this.radius * this.radius) continue;
-
-                    pendingChunkSections.add(new ChunkSectionPos(cx, cz, sectionIdx, sqDist));
+                    if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
+                    pendingChunkSections.add(new ChunkSectionPos(cx, cz, sectionIdx, dx * dx + dy * dy + dz * dz));
                 }
             }
         }
-
         pendingChunkSections.sort(Comparator.comparingDouble(p -> p.squareDistToCenter));
         chunkSectionsPerTick = Math.max(1, Mth.ceil(pendingChunkSections.size() / (float) scanTicks));
         currentChunkSection = 0;
@@ -133,21 +107,16 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     @Override
     public void computeScanResults() {
         if (targetItems.isEmpty()) return;
-
         Level level = player.level();
         for (int i = 0; i < chunkSectionsPerTick; i++) {
             if (currentChunkSection >= pendingChunkSections.size()) return;
-
             ChunkSectionPos csp = pendingChunkSections.get(currentChunkSection);
             currentChunkSection++;
-
             ChunkAccess chunk = level.getChunk(csp.chunkX, csp.chunkZ, ChunkStatus.FULL, false);
             if (chunk == null) continue;
-
             LevelChunkSection[] sections = chunk.getSections();
             LevelChunkSection section = sections[csp.chunkSectionIndex];
             if (section == null || section.hasOnlyAir()) continue;
-
             int bottomY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(csp.chunkSectionIndex));
             PalettedContainer<BlockState> palette = section.getStates();
             int originX = chunk.getPos().getWorldPosition().getX();
@@ -158,44 +127,24 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                     for (int x = 0; x < 16; x++) {
                         BlockState state = palette.get(x, y, z);
                         if (state.isAir()) continue;
-
-                        int gx = originX + x;
-                        int gy = bottomY + y;
-                        int gz = originZ + z;
-                        BlockPos pos = new BlockPos(gx, gy, gz);
-
-                        // Quick distance check
-                        if (center.distanceToSqr(gx + 0.5, gy + 0.5, gz + 0.5) > this.radius * this.radius) {
+                        BlockPos pos = new BlockPos(originX + x, bottomY + y, originZ + z);
+                        if (center.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > radius * radius)
                             continue;
-                        }
-
-                        // Check if this block exposes an item handler (has inventory)
-                        // Try all directions (null context may not match registered providers)
                         IItemHandler itemHandler = null;
-                        for (final var dir : net.minecraft.core.Direction.values()) {
+                        for (var dir : net.minecraft.core.Direction.values()) {
                             itemHandler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, dir);
                             if (itemHandler != null) break;
                         }
                         if (itemHandler == null) continue;
-                        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
-                            Scannable.LOGGER.info("[ItemScanner] Found container at {} with {} slots", pos, itemHandler.getSlots());
-                        }
-
-                        // Scan inventory for target items — track each item type separately
-                        java.util.Map<Item, Integer> itemCounts = new java.util.HashMap<>();
+                        Map<Item, Integer> itemCounts = new HashMap<>();
                         for (int slot = 0; slot < itemHandler.getSlots(); slot++) {
                             ItemStack slotStack = itemHandler.getStackInSlot(slot);
                             if (slotStack.isEmpty()) continue;
-                            if (isTargetItem(slotStack)) {
+                            if (isTargetItem(slotStack))
                                 itemCounts.merge(slotStack.getItem(), slotStack.getCount(), Integer::sum);
-                            }
                         }
-
-                        for (var entry : itemCounts.entrySet()) {
+                        for (var entry : itemCounts.entrySet())
                             results.add(new ItemScanResult(pos, entry.getKey().getDefaultInstance(), entry.getValue()));
-                            Scannable.LOGGER.info("[ItemScanner] Found {} x{} at {}",
-                                    entry.getKey().getDefaultInstance().getHoverName().getString(), entry.getValue(), pos);
-                        }
                     }
                 }
             }
@@ -204,22 +153,14 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     private boolean isTargetItem(ItemStack stack) {
         if (stack.isEmpty() || targetItems.isEmpty()) return false;
-        for (Item target : targetItems) {
+        for (Item target : targetItems)
             if (target == stack.getItem()) return true;
-        }
         return false;
     }
 
     @Override
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
-        Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
-        for (ItemScanResult result : results) {
-            BlockState blockState = level.getBlockState(result.pos());
-            int color = blockState.getMapColor(level, result.pos()).col;
-            if (color == 0) color = 0x4466CC;  // DEFAULT_COLOR from BlockScanResult
-
-            callback.accept(result);
-        }
+        results.forEach(callback);
         renderStartTime = System.currentTimeMillis();
     }
 
@@ -227,7 +168,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     public void render(ScanResultRenderContext context, MultiBufferSource bufferSource, PoseStack poseStack,
                        Camera renderInfo, float partialTicks, List<ScanResult> results) {
         if (results.isEmpty()) return;
-
         switch (context) {
             case WORLD -> renderHighlights(poseStack, renderInfo, results);
             case GUI -> renderItemLabels(bufferSource, poseStack, renderInfo, results);
@@ -239,103 +179,147 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         super.reset();
         targetItems = List.of();
         results.clear();
+        invalidateVboCache();
         pendingChunkSections.clear();
         currentChunkSection = 0;
         chunkSectionsPerTick = 0;
-        renderStartTime = 0;
     }
 
-    // ====================================================================
-    // Rendering — World (block highlights)
-    // ====================================================================
+    // ========================================================================
+    // VBO cache
+    // ========================================================================
+
+    private void invalidateVboCache() {
+        for (VertexBuffer vbo : vboCache.values()) vbo.close();
+        vboCache.clear();
+        vboCacheGeneration = -1;
+    }
+
+    private void rebuildVboCache(List<ScanResult> results, long generation) {
+        invalidateVboCache();
+        Set<BlockPos> seen = new HashSet<>();
+        Level level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (ScanResult result : results) {
+            ItemScanResult ir = (ItemScanResult) result;
+            if (!seen.add(ir.pos())) continue;
+            BlockState state = level.getBlockState(ir.pos());
+            int color = state.getMapColor(level, ir.pos()).col;
+            Integer override = ClientConfig.getBlockColor(state.getBlock());
+            if (override != null) color = override;
+            vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
+        }
+        vboCacheGeneration = generation;
+    }
+
+    private VertexBuffer buildVbo(BlockPos pos, int color) {
+        BufferBuilder buffer = Tesselator.getInstance().begin(
+                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        renderSingleBlockFaces(buffer, pos, color);
+        VertexBuffer vbo = new VertexBuffer(com.mojang.blaze3d.buffers.BufferUsage.DYNAMIC_WRITE);
+        vbo.bind();
+        vbo.upload(buffer.buildOrThrow());
+        VertexBuffer.unbind();
+        return vbo;
+    }
+
+    // ========================================================================
+    // World rendering
+    // ========================================================================
 
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
-        if (renderStartTime == 0) {
-            renderStartTime = System.currentTimeMillis();
-        }
+        CompiledShaderProgram shader = RenderSystem.getShader();
+        if (shader == null) return;
+        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+
+        long gen = System.identityHashCode(results);
+        if (gen != vboCacheGeneration) rebuildVboCache(results, gen);
+
+        renderHandDepth(poseStack, camera);
 
         RenderType renderType = getHighlightRenderLayer();
         renderType.setupRenderState();
-
-        CompiledShaderProgram shader = RenderSystem.getShader();
-        if (shader != null) {
-            shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+        for (VertexBuffer vbo : vboCache.values()) {
+            vbo.bind();
+            vbo.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(), shader);
+            VertexBuffer.unbind();
         }
-
-        BufferBuilder buffer = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-
-        Level level = Minecraft.getInstance().level;
-        for (ScanResult result : results) {
-            ItemScanResult itemResult = (ItemScanResult) result;
-            int color = 0x4466CC; // default color
-            // 重新获取最新的方块颜色，并检查 ClientConfig 颜色覆盖
-            if (level != null) {
-                BlockState blockState = level.getBlockState(itemResult.pos());
-                int mapColor = blockState.getMapColor(level, itemResult.pos()).col;
-                if (mapColor != 0) color = mapColor;
-                Integer override = ClientConfig.getBlockColor(blockState.getBlock());
-                if (override != null) color = override;
-            }
-            renderBoxFaces(buffer, itemResult.pos(), color);
-        }
-
-        var data = buffer.buildOrThrow();
-
-        // Set model-view matrix to include camera offset for world-coordinate vertices
-        var savedModelView = new Matrix4f(RenderSystem.getModelViewMatrix());
-        RenderSystem.getModelViewMatrix().set(poseStack.last().pose());
-
-        try {
-            BufferUploader.drawWithShader(data);
-        } finally {
-            RenderSystem.getModelViewMatrix().set(savedModelView);
-        }
-
         renderType.clearRenderState();
     }
 
-    private static void renderBoxFaces(VertexConsumer buffer, BlockPos pos, int color) {
+    @SuppressWarnings("null")
+    private void renderHandDepth(PoseStack poseStack, Camera camera) {
+        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()
+            || Minecraft.getInstance().options.hideGui
+            || Minecraft.getInstance().gameMode.getPlayerMode() == net.minecraft.world.level.GameType.SPECTATOR
+            || Minecraft.getInstance().player == null) return;
+        try {
+            PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
+            if (viewPose == null) return;
+            RenderSystem.colorMask(false, false, false, false);
+            Matrix4f viewMat = new Matrix4f(viewPose.last().pose());
+            var mvStack = RenderSystem.getModelViewStack();
+            mvStack.pushMatrix().mul(viewMat);
+            PoseStack handPose = new PoseStack();
+            handPose.pushPose();
+            handPose.mulPose(viewMat.invert(new Matrix4f()));
+            var bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
+            Minecraft.getInstance().gameRenderer.itemInHandRenderer.renderHandsWithItems(
+                camera.getPartialTickTime(), handPose, bufferSource,
+                (net.minecraft.client.player.LocalPlayer) Minecraft.getInstance().player,
+                Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, camera.getPartialTickTime()));
+            bufferSource.endBatch();
+            handPose.popPose();
+            mvStack.popMatrix();
+        } catch (Throwable e) { /* ignore */ }
+        RenderSystem.colorMask(true, true, true, true);
+    }
+
+    // ========================================================================
+    // Geometry — matches ScanResultProviderBlock
+    // ========================================================================
+
+    private static void renderSingleBlockFaces(VertexConsumer buffer, BlockPos pos, int color) {
         float cx = pos.getX(), cy = pos.getY(), cz = pos.getZ();
         float r = ((color >> 16) & 0xFF) / 255f;
         float g = ((color >> 8) & 0xFF) / 255f;
         float b = (color & 0xFF) / 255f;
-
-        // -X (0.8f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 0.8f);
-        // +X (0.8f)
-        buffer.addVertex(cx + 1, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.8f);
-        // -Y (0.7f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1f, 0f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.7f);
-        // +Y (1.0f)
-        buffer.addVertex(cx, cy + 1, cz).setUv(0f, 0f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0f, 1f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 0f).setColor(r, g, b, 1.0f);
-        // -Z (0.9f)
-        buffer.addVertex(cx, cy, cz).setUv(0f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(0f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1f, 0f).setColor(r, g, b, 0.9f);
-        // +Z (0.9f)
-        buffer.addVertex(cx, cy, cz + 1).setUv(0f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1f, 0f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1f, 1f).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0f, 1f).setColor(r, g, b, 0.9f);
+        // Matches BlockScanResult.render() per-face alpha
+        // -X (0.8)
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 0.8f);
+        // +X (0.8)
+        buffer.addVertex(cx + 1, cy, cz).setUv(0, 0).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.8f);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.8f);
+        // -Y (0.7)
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.7f);
+        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, 0.7f);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 1).setColor(r, g, b, 0.7f);
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.7f);
+        // +Y (1.0)
+        buffer.addVertex(cx, cy + 1, cz).setUv(0, 0).setColor(r, g, b, 1.0f);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, 1.0f);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 1.0f);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 1.0f);
+        // -Z (0.9)
+        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx, cy + 1, cz).setUv(0, 1).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 1).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, 0.9f);
+        // +Z (0.9)
+        buffer.addVertex(cx, cy, cz + 1).setUv(0, 0).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 0).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.9f);
+        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, 0.9f);
     }
 
-    // ====================================================================
-    // Rendering — GUI (item labels in world view)
-    // ====================================================================
+    // ========================================================================
+    // GUI rendering (item labels)
+    // ========================================================================
 
     private void renderItemLabels(MultiBufferSource bufferSource, PoseStack poseStack, Camera renderInfo,
                                   List<ScanResult> results) {
@@ -345,17 +329,20 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         float pitch = renderInfo.getXRot();
         boolean showDistance = renderInfo.getEntity().isShiftKeyDown();
 
-        // Group results by position — same container may have multiple matching item types
-        final java.util.Map<BlockPos, java.util.List<ItemScanResult>> byPos = new java.util.LinkedHashMap<>();
+        // Merge counts per position per item type (multi-direction may produce duplicates)
+        final Map<BlockPos, Map<ItemStack, Integer>> byPos = new LinkedHashMap<>();
         for (final ScanResult r : results) {
             final ItemScanResult ir = (ItemScanResult) r;
-            byPos.computeIfAbsent(ir.pos(), k -> new java.util.ArrayList<>()).add(ir);
+            byPos.computeIfAbsent(ir.pos(), k -> new LinkedHashMap<>())
+                 .merge(ir.item(), ir.totalCount(), Integer::sum);
         }
 
-        // Keep only first result per position — we'll show all items in the label
-        final java.util.List<ScanResult> deduped = new java.util.ArrayList<>();
-        for (final var entry : byPos.entrySet()) {
-            deduped.add(entry.getValue().get(0));
+        final List<ScanResult> deduped = new ArrayList<>();
+        for (final var posEntry : byPos.entrySet()) {
+            final BlockPos pos = posEntry.getKey();
+            final Map<ItemStack, Integer> items = posEntry.getValue();
+            final ItemStack firstItem = items.keySet().iterator().next();
+            deduped.add(new ItemScanResult(pos, firstItem, items.get(firstItem)));
         }
 
         deduped.sort(Comparator.comparing(r ->
@@ -365,29 +352,29 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                 ScanResult::getPosition,
                 result -> ModTextures.ICON_INFO,
                 result -> {
-                    // Show ALL configured items found in this container
-                    final java.util.List<ItemScanResult> allItems = byPos.get(
-                            ((ItemScanResult) result).pos());
-                    if (allItems == null || allItems.size() == 1) {
-                        ItemScanResult r = (ItemScanResult) result;
-                        return Component.literal(r.item().getHoverName().getString())
-                                .append(Component.literal(" x" + r.totalCount()));
+                    final BlockPos resultPos = ((ItemScanResult) result).pos();
+                    final Map<ItemStack, Integer> allItems = byPos.get(resultPos);
+                    if (allItems == null) return Component.literal("");
+                    if (allItems.size() == 1) {
+                        final var entry = allItems.entrySet().iterator().next();
+                        return Component.literal(entry.getKey().getHoverName().getString())
+                                .append(Component.literal(" x" + entry.getValue()));
                     }
                     final StringBuilder sb = new StringBuilder();
-                    for (final ItemScanResult ir : allItems) {
+                    for (final var entry : allItems.entrySet()) {
                         if (!sb.isEmpty()) sb.append(", ");
-                        sb.append(ir.item().getHoverName().getString())
-                          .append(" x").append(ir.totalCount());
+                        sb.append(entry.getKey().getHoverName().getString())
+                          .append(" x").append(entry.getValue());
                     }
                     return Component.literal(sb.toString());
                 },
                 result -> true,
-                4, 0.999f);
+                MAX_ICONS, ICON_CONE_DOT);
     }
 
-    // ====================================================================
+    // ========================================================================
     // Render layers
-    // ====================================================================
+    // ========================================================================
 
     private static RenderType getHighlightRenderLayer() {
         return RenderType.create("item_scan_highlight",
@@ -402,10 +389,9 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                         .createCompositeState(false));
     }
 
-    // ====================================================================
-    // Data classes
-    // ====================================================================
+    // ========================================================================
+    // Data
+    // ========================================================================
 
     private record ChunkSectionPos(int chunkX, int chunkZ, int chunkSectionIndex, double squareDistToCenter) {}
-
 }

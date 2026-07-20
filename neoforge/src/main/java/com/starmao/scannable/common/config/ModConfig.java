@@ -1,6 +1,7 @@
 package com.starmao.scannable.common.config;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.Tags;
 
 import java.util.List;
 
@@ -47,7 +48,6 @@ public final class ModConfig {
     public static final ModConfigSpec.IntValue SCANNER_RESULT_STAY_DURATION = BUILDER
             .comment("How long scan results remain visible, in milliseconds.")
             .defineInRange("scanner.resultStayDuration", 10000, 1000, 60000 * 5);
-
     // ---- Energy Costs ----
 
     /** Energy cost per scan for the range module. */
@@ -134,6 +134,7 @@ public final class ModConfig {
             .comment("Relative effective range of the configurable block module.")
             .defineInRange("range.blockRange", 0.5, 0.0, 1.0);
 
+
     // ---- Fluids ----
 
     /** Fluid tags that the fluid scanner module should skip. */
@@ -160,14 +161,7 @@ public final class ModConfig {
             .comment("Block tags whose members are detected by the common ores scanner module.",
                     "Default: common ore sub-tags (coal, iron, copper, gold, lapis, redstone).")
             .defineListAllowEmpty(List.of("ores.commonTags"),
-                    () -> List.of(
-                            "c:ores/coal",
-                            "c:ores/iron",
-                            "c:ores/copper",
-                            "c:ores/gold",
-                            "c:ores/lapis",
-                            "c:ores/redstone"
-                    ),
+                    ModConfig::getDefaultCommonOreTags,
                     entry -> entry instanceof String);
 
     /** Registry names of specific blocks to detect with the common ores module. */
@@ -191,12 +185,7 @@ public final class ModConfig {
             .comment("Extra block tags detected by the rare ores scanner module.",
                     "Blocks matching these tags are detected even if they are not in the top-level ore tag.")
             .defineListAllowEmpty(List.of("ores.rareTags"),
-                    () -> List.of(
-                            "c:ores/diamond",
-                            "c:ores/emerald",
-                            "c:ores/quartz",
-                            "c:ores/netherite_scrap"
-                    ),
+                    ModConfig::getDefaultRareOreTags,
                     entry -> entry instanceof String);
 
     /** Registry names of specific blocks detected by the rare ores module (beyond the implicit rule). */
@@ -216,4 +205,30 @@ public final class ModConfig {
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ModConfig() {}
+
+    /**
+     * {@return the default set of common ore tags, sourced from NeoForge {@link Tags.Blocks} constants}
+     */
+    private static List<String> getDefaultCommonOreTags() {
+        return List.of(
+                Tags.Blocks.ORES_COAL.location().toString(),
+                Tags.Blocks.ORES_IRON.location().toString(),
+                "c:ores/copper",
+                Tags.Blocks.ORES_GOLD.location().toString(),
+                Tags.Blocks.ORES_LAPIS.location().toString(),
+                Tags.Blocks.ORES_REDSTONE.location().toString()
+        );
+    }
+
+    /**
+     * {@return the default set of rare ore tags, sourced from NeoForge {@link Tags.Blocks} constants}
+     */
+    private static List<String> getDefaultRareOreTags() {
+        return List.of(
+                Tags.Blocks.ORES_DIAMOND.location().toString(),
+                Tags.Blocks.ORES_EMERALD.location().toString(),
+                Tags.Blocks.ORES_QUARTZ.location().toString(),
+                "c:ores/netherite_scrap"
+        );
+    }
 }
