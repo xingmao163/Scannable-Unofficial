@@ -9,6 +9,7 @@ import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.client.shader.Shaders;
+import com.starmao.scannable.client.renderer.HandDepthRenderer;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import com.starmao.scannable.Scannable;
 import net.minecraft.client.Camera;
@@ -263,7 +264,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
                     vboCache.size(), poseStack != null, shader != null);
 
         // Hand-depth trick: prevent overlay from rendering on top of held item
-        renderHandDepth(poseStack, camera);
+        HandDepthRenderer.writeHandDepth(camera.getPartialTickTime());
 
         RenderType renderType = getHighlightRenderLayer();
         renderType.setupRenderState();
@@ -316,51 +317,6 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         return vbo;
     }
 
-
-    private void renderHandDepth(PoseStack poseStack, Camera camera) {
-        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()
-            || Minecraft.getInstance().options.hideGui
-            || Minecraft.getInstance().gameMode.getPlayerMode() == net.minecraft.world.level.GameType.SPECTATOR
-            || Minecraft.getInstance().player == null) {
-            if (ServerConfig.DEBUG_RENDER.get())
-                Scannable.LOGGER.info("[HandDepth] Skipped (not first-person or hidden GUI or spectator)");
-            return;
-        }
-
-        if (ServerConfig.DEBUG_RENDER.get())
-            Scannable.LOGGER.info("[HandDepth] Enter — pushing modelView matrix");
-
-        try {
-            PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
-            if (viewPose == null) {
-                if (ServerConfig.DEBUG_RENDER.get())
-                    Scannable.LOGGER.warn("[HandDepth] worldViewModelStack is null");
-                return;
-            }
-
-            RenderSystem.colorMask(false, false, false, false);
-            org.joml.Matrix4f viewMat = new org.joml.Matrix4f(viewPose.last().pose());
-            var mvStack = RenderSystem.getModelViewStack();
-            mvStack.pushMatrix().mul(viewMat);
-            PoseStack handPose = new PoseStack();
-            handPose.pushPose();
-            handPose.mulPose(viewMat.invert(new org.joml.Matrix4f()));
-            var bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
-            Minecraft.getInstance().gameRenderer.itemInHandRenderer.renderHandsWithItems(
-                camera.getPartialTickTime(), handPose, bufferSource,
-                (net.minecraft.client.player.LocalPlayer) Minecraft.getInstance().player,
-                Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, camera.getPartialTickTime())
-            );
-            bufferSource.endBatch();
-            handPose.popPose();
-            mvStack.popMatrix();
-            if (ServerConfig.DEBUG_RENDER.get())
-                Scannable.LOGGER.info("[HandDepth] Success — modelView restored");
-        } catch (Throwable e) {
-            Scannable.LOGGER.error("[HandDepth] Exception during hand render — modelView stack may be corrupted!", e);
-        }
-        RenderSystem.colorMask(true, true, true, true);
-    }
     // ========================================================================
     // Geometry — matches ScanResultProviderBlock.BlockScanResult.render()
     // ========================================================================

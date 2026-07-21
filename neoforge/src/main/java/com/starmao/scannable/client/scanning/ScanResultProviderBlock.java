@@ -12,6 +12,7 @@ import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.client.shader.Shaders;
+import com.starmao.scannable.client.renderer.HandDepthRenderer;
 import com.starmao.scannable.common.scanning.filter.IgnoredBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -239,36 +240,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         shader.safeGetUniform("timeScale").set(ts);
 
         // Re-render hands into depth buffer to avoid rendering overlay on top of player hands.
-        if (Minecraft.getInstance().options.getCameraType().isFirstPerson()
-            && !Minecraft.getInstance().options.hideGui
-            && Minecraft.getInstance().gameMode.getPlayerMode() != net.minecraft.world.level.GameType.SPECTATOR
-            && Minecraft.getInstance().player != null
-            && !(Minecraft.getInstance().getCameraEntity() instanceof net.minecraft.world.entity.LivingEntity living && living.isSleeping())) {
-            RenderSystem.colorMask(false, false, false, false);
-            try {
-                PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
-                if (viewPose != null) {
-                    org.joml.Matrix4f viewMat = new org.joml.Matrix4f(viewPose.last().pose());
-                    var mvStack = RenderSystem.getModelViewStack();
-                    mvStack.pushMatrix().mul(viewMat);
-                    PoseStack handPose = new PoseStack();
-                    handPose.pushPose();
-                    handPose.mulPose(viewMat.invert(new org.joml.Matrix4f()));
-                    var bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
-                    Minecraft.getInstance().gameRenderer.itemInHandRenderer.renderHandsWithItems(
-                        partialTicks, handPose, bufferSource,
-                        (net.minecraft.client.player.LocalPlayer) Minecraft.getInstance().player,
-                        Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, partialTicks)
-                    );
-                    bufferSource.endBatch();
-                    handPose.popPose();
-                    mvStack.popMatrix();
-                }
-            } catch (final Throwable e) {
-                LOGGER.error("Failed to render hand into depth buffer", e);
-            }
-            RenderSystem.colorMask(true, true, true, true);
-        }
+        HandDepthRenderer.writeHandDepth(partialTicks);
 
 
         RenderType renderType = getBlockScanResultRenderLayer();

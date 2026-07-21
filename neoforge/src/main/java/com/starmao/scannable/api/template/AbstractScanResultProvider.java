@@ -140,16 +140,18 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
 
     // ---- Render layers ---- //
 
+    private static final RenderType SCAN_RESULT_LAYER = RenderType.create("scan_result",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS, 65536, false, false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
     protected static RenderType getRenderLayer() {
-        return RenderType.create("scan_result",
-                DefaultVertexFormat.POSITION_COLOR,
-                VertexFormat.Mode.QUADS, 65536, false, false,
-                RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                        .createCompositeState(false));
+        return SCAN_RESULT_LAYER;
     }
 
     protected static RenderType getRenderLayer(ResourceLocation textureLocation) {

@@ -1,5 +1,6 @@
 package com.starmao.scannable.common.container;
 
+import com.starmao.scannable.common.item.ConfigurableModuleItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
@@ -8,7 +9,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-
 /**
  * Base container menu for configurable scanner module configuration screens.
  * <p>Provides a standard player inventory layout and tracks the hand-held
@@ -39,8 +39,18 @@ public abstract class AbstractModuleContainerMenu extends AbstractContainerMenu 
     public Player getPlayer() { return player; }
     public InteractionHand getHand() { return hand; }
 
-    /** Removes the configured target at the given index from the module item. */
-    public abstract void removeItemAt(int index);
+    /**
+     * Removes the configured target at the given index from the module item.
+     * <p>Default implementation handles any {@link ConfigurableModuleItem}.
+     * Subclasses may override for custom behaviour.
+     */
+    public void removeItemAt(int index) {
+        ItemStack stack = getPlayer().getItemInHand(getHand());
+        if (stack.getItem() instanceof ConfigurableModuleItem<?> item) {
+            item.removeValueAt(stack, index);
+        }
+    }
+
     /** Sets a configured target at the given index on the module item. */
     public abstract void setItemAt(int index, ResourceLocation value);
 

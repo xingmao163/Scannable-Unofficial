@@ -23,13 +23,6 @@ public class ItemModuleContainerMenu extends AbstractModuleContainerMenu {
         super(Containers.ITEM_MODULE_CONTAINER.get(), windowId, inventory, hand);
     }
 
-    @Override
-    public void removeItemAt(int index) {
-        ItemStack stack = getPlayer().getItemInHand(getHand());
-        if (stack.getItem() instanceof ConfigurableItemScannerModuleItem item) {
-            item.removeValueAt(stack, index);
-        }
-    }
 
     @Override
     public void setItemAt(int index, ResourceLocation name) {
