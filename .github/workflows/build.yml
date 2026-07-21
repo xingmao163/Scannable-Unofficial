@@ -70,12 +70,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Mod (${{ matrix.target }})
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.target_version == '' || matrix.target == inputs.target_version)) || (github.event_name != 'workflow_dispatch' && matrix.target == '1.21.1') }}
         run: ./gradlew build --stacktrace -x test -PtargetVersion=${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
-        with:
+        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.target_version == '' || matrix.target == inputs.target_version)) || (github.event_name != 'workflow_dispatch' && matrix.target == '1.21.1') }}
           name: Scannable-Unofficial-${{ matrix.target }}-${{ github.sha }}
           path: build/libs/*.jar
           retention-days: 14

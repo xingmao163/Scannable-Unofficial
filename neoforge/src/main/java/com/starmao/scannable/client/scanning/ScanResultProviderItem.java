@@ -318,46 +318,16 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     }
 
     // ========================================================================
-    // Geometry — matches ScanResultProviderBlock.BlockScanResult.render()
+    // Geometry — delegates to BlockFaceRenderer for vertex order
     // ========================================================================
 
     private static void renderSingleBlockFaces(VertexConsumer buffer, BlockPos pos, int color) {
-        float cx = pos.getX(), cy = pos.getY(), cz = pos.getZ();
         float r = ((color >> 16) & 0xFF) / 255f;
         float g = ((color >> 8) & 0xFF) / 255f;
         float b = (color & 0xFF) / 255f;
 
-        // Matches BlockScanResult.render() conventions: per-face alpha, UV 0..1
-        // -X face (alpha 0.8)
-        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 0.8f);
-        // +X face (alpha 0.8)
-        buffer.addVertex(cx + 1, cy, cz).setUv(0, 0).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.8f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.8f);
-        // -Y face (alpha 0.7)
-        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 1).setColor(r, g, b, 0.7f);
-        buffer.addVertex(cx, cy, cz + 1).setUv(0, 1).setColor(r, g, b, 0.7f);
-        // +Y face (alpha 1.0)
-        buffer.addVertex(cx, cy + 1, cz).setUv(0, 0).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 1.0f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 0).setColor(r, g, b, 1.0f);
-        // -Z face (alpha 0.9)
-        buffer.addVertex(cx, cy, cz).setUv(0, 0).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz).setUv(0, 1).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz).setUv(1, 1).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz).setUv(1, 0).setColor(r, g, b, 0.9f);
-        // +Z face (alpha 0.9)
-        buffer.addVertex(cx, cy, cz + 1).setUv(0, 0).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy, cz + 1).setUv(1, 0).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx + 1, cy + 1, cz + 1).setUv(1, 1).setColor(r, g, b, 0.9f);
-        buffer.addVertex(cx, cy + 1, cz + 1).setUv(0, 1).setColor(r, g, b, 0.9f);
+        com.starmao.scannable.client.renderer.BlockFaceRenderer.emitBlockFaces(pos, (x, y, z, u, v, alpha) ->
+                buffer.addVertex(x, y, z).setUv(u, v).setColor(r, g, b, alpha));
     }
 
     // ========================================================================

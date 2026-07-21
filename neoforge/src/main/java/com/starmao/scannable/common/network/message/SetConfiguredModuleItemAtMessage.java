@@ -37,13 +37,6 @@ public record SetConfiguredModuleItemAtMessage(int windowId, int index, Resource
     }
 
     public static void handle(SetConfiguredModuleItemAtMessage msg, net.neoforged.neoforge.network.handling.IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player &&
-                player.containerMenu != null &&
-                player.containerMenu.containerId == msg.windowId &&
-                player.containerMenu instanceof AbstractModuleContainerMenu) {
-                ((AbstractModuleContainerMenu) player.containerMenu).setItemAt(msg.index, msg.value);
-            }
-        });
+        com.starmao.scannable.common.network.handler.ModuleContainerMenuHandler.handleSet(msg.windowId, msg.index, msg.value, ctx);
     }
 }

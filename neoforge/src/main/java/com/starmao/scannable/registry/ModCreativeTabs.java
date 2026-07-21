@@ -30,7 +30,7 @@ public final class ModCreativeTabs {
                     .displayItems((params, output) -> {
                         // All ModItem subclasses, automatically discovered
                         BuiltInRegistries.ITEM.stream()
-                                .filter(item -> item instanceof ModItem)
+                                .filter(item -> Scannable.MOD_ID.equals(BuiltInRegistries.ITEM.getKey(item).getNamespace()))
                                 .forEach(item -> output.accept(new ItemStack(item)));
                     })
                     .build());

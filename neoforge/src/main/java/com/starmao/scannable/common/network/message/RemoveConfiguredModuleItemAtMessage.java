@@ -36,13 +36,6 @@ public record RemoveConfiguredModuleItemAtMessage(int windowId, int index) imple
     }
 
     public static void handle(RemoveConfiguredModuleItemAtMessage msg, net.neoforged.neoforge.network.handling.IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player &&
-                player.containerMenu != null &&
-                player.containerMenu.containerId == msg.windowId &&
-                player.containerMenu instanceof AbstractModuleContainerMenu) {
-                ((AbstractModuleContainerMenu) player.containerMenu).removeItemAt(msg.index);
-            }
-        });
+        com.starmao.scannable.common.network.handler.ModuleContainerMenuHandler.handleRemove(msg.windowId, msg.index, ctx);
     }
 }

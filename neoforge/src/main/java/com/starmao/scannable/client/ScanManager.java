@@ -28,6 +28,7 @@ import org.joml.Matrix4f;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Central orchestrator for the client-side scan lifecycle. */
 public final class ScanManager {
@@ -69,7 +70,7 @@ public final class ScanManager {
 
     private static final Set<ScanResultProvider> collectingProviders = new HashSet<>();
     private static final Map<ScanResultProvider, List<ScanResult>> collectingResults = new HashMap<>();
-    private static final Map<ScanResultProvider, List<ScanResult>> pendingResults = new HashMap<>();
+    private static final Map<ScanResultProvider, List<ScanResult>> pendingResults = new ConcurrentHashMap<>();
     private static final Map<ScanResultProvider, List<ScanResult>> renderingResults = new HashMap<>();
     private static final List<ScanResult> renderingList = new ArrayList<>();
 

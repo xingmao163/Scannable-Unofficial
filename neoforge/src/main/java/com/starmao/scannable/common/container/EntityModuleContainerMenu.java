@@ -24,10 +24,6 @@ public class EntityModuleContainerMenu extends AbstractModuleContainerMenu {
         super(Containers.ENTITY_MODULE_CONTAINER.get(), windowId, inventory, hand);
     }
 
-    protected EntityModuleContainerMenu(MenuType<?> type, int windowId, Inventory inventory, InteractionHand hand) {
-        super(type, windowId, inventory, hand);
-    }
-
 
     @Override
     public void setItemAt(int index, ResourceLocation name) {

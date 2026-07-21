@@ -1,10 +1,10 @@
 package com.starmao.scannable.common.inventory;
 
+import com.starmao.scannable.Scannable;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Iterator;
 
 /**
@@ -77,6 +77,8 @@ public final class ContainerSlice implements Container, Iterable<ItemStack> {
     public void setItem(int index, ItemStack stack) {
         if (isIndexInBounds(index)) {
             container.setItem(offset + index, stack);
+        } else {
+            Scannable.LOGGER.warn("ContainerSlice out-of-bounds setItem({}) on slice offset={} length={}", index, offset, length);
         }
     }
 

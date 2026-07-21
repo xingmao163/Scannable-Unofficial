@@ -1,86 +1,45 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.api.BlockScannerModule;
-import com.starmao.scannable.api.ScanResultProvider;
-import com.starmao.scannable.api.ScanResultProviderRegistry;
-import com.starmao.scannable.common.config.ConfigParsers;
 import com.starmao.scannable.common.config.ServerConfig;
-import com.starmao.scannable.common.scanning.filter.BlockCacheScanFilter;
-import com.starmao.scannable.common.scanning.filter.BlockScanFilter;
-import com.starmao.scannable.common.scanning.filter.BlockTagScanFilter;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Scanner module that detects common ore blocks (coal, iron, copper, gold, lapis, redstone).
  *
  * <p>Which blocks are considered "common ores" is controlled by the
  * {@link ServerConfig#COMMON_ORE_TAGS} and {@link ServerConfig#COMMON_ORE_BLOCKS}
- * configuration entries. The filter is lazily built and cached; call
- * {@link #clearCache()} when config changes are applied.
+ * configuration entries. The filter is lazily built and cached.
  *
- * <p>Singleton enum — stateless.
+ * <p>Singleton — use {@link #INSTANCE}.
  */
-public enum CommonOresBlockScannerModule implements BlockScannerModule {
-    INSTANCE;
+public final class CommonOresBlockScannerModule extends AbstractOreBlockScannerModule {
+    public static final CommonOresBlockScannerModule INSTANCE = new CommonOresBlockScannerModule();
 
-    private Predicate<BlockState> filter;
+    private CommonOresBlockScannerModule() {}
 
     /** Clears the cached filter so it is rebuilt on the next scan. */
     public static void clearCache() {
-        INSTANCE.filter = null;
+        INSTANCE.clearFilter();
     }
 
     @Override
-    public int getEnergyCost(ItemStack module) {
+    protected int getEnergyCostConfig() {
         return ServerConfig.SCANNER_ENERGY_COST_ORE_COMMON.get();
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
+    protected float getRangeModifierConfig() {
+        return ServerConfig.SCANNER_RANGE_MODIFIER_ORE_COMMON.get().floatValue();
     }
 
     @Override
-    public float adjustLocalRange(float range) {
-        return range * (float) (double) ServerConfig.SCANNER_RANGE_MODIFIER_ORE_COMMON.get();
+    protected List<? extends String> getBlockConfig() {
+        return ServerConfig.COMMON_ORE_BLOCKS.get();
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public Predicate<BlockState> getFilter(ItemStack module) {
-        validateFilter();
-        return filter;
-    }
-
-    private void validateFilter() {
-        if (filter != null) return;
-
-        List<Predicate<BlockState>> filters = new ArrayList<>();
-
-        // Specific block IDs
-        for (final Block block : ConfigParsers.parseBlocks(ServerConfig.COMMON_ORE_BLOCKS.get())) {
-            filters.add(new BlockScanFilter(block));
-        }
-
-        // Block tags
-        for (final TagKey<Block> tag : ConfigParsers.parseBlockTags(ServerConfig.COMMON_ORE_TAGS.get())) {
-            filters.add(new BlockTagScanFilter(tag));
-        }
-
-        if (filters.isEmpty()) {
-            filter = state -> false;
-        } else {
-            filter = new BlockCacheScanFilter(filters);
-        }
+    protected List<? extends String> getTagConfig() {
+        return ServerConfig.COMMON_ORE_TAGS.get();
     }
 }
