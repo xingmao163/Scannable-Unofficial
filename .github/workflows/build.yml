@@ -11,7 +11,18 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-
+    inputs:
+      target_version:
+        description: '目标版本（留空则构建全部）'
+        required: false
+        type: choice
+        options:
+          - ''
+          - 1.21.1
+          - 1.21.2
+          - 1.21.3
+          - 1.21.4
+          - 26.1.2
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,6 +30,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
     timeout-minutes: 20
     strategy:
       matrix:
