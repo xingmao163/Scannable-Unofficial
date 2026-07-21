@@ -232,7 +232,11 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         ShaderInstance shader = Shaders.getScanResultShader();
         if (shader == null) return;
 
-        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+        float t = (System.currentTimeMillis() - renderStartTime) / 1000.0f;
+        float ts = ((float) Math.sin(t * 2.5) + 1.0f) * 0.5f;
+        ts = ts * 0.15f + 0.85f;
+        shader.safeGetUniform("time").set(t);
+        shader.safeGetUniform("timeScale").set(ts);
 
         // Re-render hands into depth buffer to avoid rendering overlay on top of player hands.
         if (Minecraft.getInstance().options.getCameraType().isFirstPerson()

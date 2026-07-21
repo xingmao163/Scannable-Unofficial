@@ -240,7 +240,11 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             return;
         }
 
-        shader.safeGetUniform("time").set((System.currentTimeMillis() - renderStartTime) / 1000.0f);
+        float t = (System.currentTimeMillis() - renderStartTime) / 1000.0f;
+        float ts = ((float) Math.sin(t * 2.5) + 1.0f) * 0.5f;
+        ts = ts * 0.15f + 0.85f;
+        shader.safeGetUniform("time").set(t);
+        shader.safeGetUniform("timeScale").set(ts);
 
         // Rebuild VBO cache when the result list grows (the tick() wave adds
         // results incrementally to the same list object — identity-hash-based
