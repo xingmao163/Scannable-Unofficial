@@ -71,7 +71,7 @@ jobs:
 
       - name: Build Mod (${{ matrix.target }})
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
-        run: ./gradlew build --no-daemon --stacktrace -x test -PtargetVersion=${{ matrix.target }}
+        run: ./gradlew build --stacktrace -x test -PtargetVersion=${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}

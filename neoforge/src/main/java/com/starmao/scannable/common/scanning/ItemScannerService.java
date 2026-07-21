@@ -17,8 +17,10 @@ import net.neoforged.neoforge.items.IItemHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Stateless server-side scanner for the item scanner module.
@@ -52,7 +54,7 @@ public final class ItemScannerService {
         if (targetItemIds == null || targetItemIds.isEmpty()) return results;
 
         // Resolve target items from registry names
-        final List<Item> targetItems = new ArrayList<>();
+        final Set<Item> targetItems = new HashSet<>();
         for (final ResourceLocation id : targetItemIds) {
             BuiltInRegistries.ITEM.getOptional(id).ifPresent(targetItems::add);
         }
