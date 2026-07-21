@@ -23,6 +23,7 @@ on:
           - 1.21.3
           - 1.21.4
           - 26.1.2
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -30,7 +31,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
     timeout-minutes: 20
     strategy:
       matrix:
@@ -70,12 +70,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Mod (${{ matrix.target }})
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
         run: ./gradlew build --no-daemon --stacktrace -x test -PtargetVersion=${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.target_version == '' || matrix.target == inputs.target_version }}
         with:
           name: Scannable-Unofficial-${{ matrix.target }}-${{ github.sha }}
           path: build/libs/*.jar
           retention-days: 14
           compression-level: 9
-          if-no-files-found: error
+          if-no-files-found: warn
