@@ -6,45 +6,40 @@ import net.neoforged.neoforge.common.Tags;
 import java.util.List;
 
 /**
- * Central common configuration for the scanner mod.
- * <p>Defines all server-authoritative config values using NeoForge's
- * {@link ModConfigSpec} system, covering energy costs, scan ranges,
- * ignored blocks/fluids, and debug flags.
- * <p>Config file: {@code config/scannable_unofficial-server.toml}
+ * Server-authoritative configuration for gameplay balance.
+ *
+ * <p>These values control energy costs, scan ranges, ignored blocks/fluids,
+ * and ore detection — all settings that affect gameplay and should be
+ * controlled by the server admin. The config file is
+ * {@code config/scannable_unofficial-server.toml}.
  */
-public final class ModConfig {
+public final class ServerConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-
-    // ---- Debug ----
-
-    /** Debug logging for item scanner operations. */
-    public static final ModConfigSpec.BooleanValue DEBUG_LOG_ITEM_SCANNER = BUILDER
-            .comment("Enable debug logging for item scanner operations (scanning process and statistics).")
-            .define("debug.logItemScanner", false);
 
     // ---- Scanner ----
 
     /** Whether the scanner consumes energy when performing a scan. */
     public static final ModConfigSpec.BooleanValue SCANNER_USE_ENERGY = BUILDER
             .comment("Whether the scanner consumes energy when performing a scan.")
+            .worldRestart()
             .define("scanner.useEnergy", true);
 
     /** When true, the scanner can only be charged by the charger module, not by external FE sources. */
     public static final ModConfigSpec.BooleanValue SCANNER_CHARGE_ONLY_BY_MODULE = BUILDER
             .comment("When true, the scanner can only be charged by the charger module, not by external FE sources like chargers from other mods.")
+            .worldRestart()
             .define("scanner.chargeOnlyByModule", false);
-
     /** Maximum FE energy capacity of the scanner item. */
     public static final ModConfigSpec.IntValue SCANNER_ENERGY_CAPACITY = BUILDER
             .comment("Amount of energy that can be stored in a scanner.")
+            .worldRestart()
             .defineInRange("scanner.energyCapacity", 5000, 1, Integer.MAX_VALUE);
-
     /** Base scan radius in blocks (without range modules). */
     public static final ModConfigSpec.IntValue SCANNER_BASE_RADIUS = BUILDER
             .comment("The basic scan radius without range modules. Higher values increase computational overhead.")
+            .worldRestart()
             .defineInRange("scanner.baseScanRadius", 64, 16, 128);
-
-    /** Duration (ms) that scan results remain visible on screen. */
+    /** How long scan results remain visible, in milliseconds. */
     public static final ModConfigSpec.IntValue SCANNER_RESULT_STAY_DURATION = BUILDER
             .comment("How long scan results remain visible, in milliseconds.")
             .defineInRange("scanner.resultStayDuration", 10000, 1000, 60000 * 5);
@@ -95,7 +90,6 @@ public final class ModConfig {
             .comment("Energy cost of the rare ores module per scan.")
             .defineInRange("energy.rareOreEnergy", 100, 0, 10000);
 
-
     // ---- Charger Module ----
 
     /** Ticks between each charge pulse from the charger module. */
@@ -134,7 +128,6 @@ public final class ModConfig {
             .comment("Relative effective range of the configurable block module.")
             .defineInRange("range.blockRange", 0.5, 0.0, 1.0);
 
-
     // ---- Fluids ----
 
     /** Fluid tags that the fluid scanner module should skip. */
@@ -153,6 +146,12 @@ public final class ModConfig {
                     () -> List.of("minecraft:command_block"),
                     entry -> entry instanceof String);
 
+    /** Block tags whose members are ignored by all scanner modules. */
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_BLOCK_TAGS = BUILDER
+            .comment("Block tag names of tags that should be ignored by all scanner modules.")
+            .defineListAllowEmpty(List.of("ignored.blockTags"),
+                    List::of,
+                    entry -> entry instanceof String);
 
     // ---- Common Ores ----
 
@@ -161,7 +160,7 @@ public final class ModConfig {
             .comment("Block tags whose members are detected by the common ores scanner module.",
                     "Default: common ore sub-tags (coal, iron, copper, gold, lapis, redstone).")
             .defineListAllowEmpty(List.of("ores.commonTags"),
-                    ModConfig::getDefaultCommonOreTags,
+                    ServerConfig::getDefaultCommonOreTags,
                     entry -> entry instanceof String);
 
     /** Registry names of specific blocks to detect with the common ores module. */
@@ -185,7 +184,7 @@ public final class ModConfig {
             .comment("Extra block tags detected by the rare ores scanner module.",
                     "Blocks matching these tags are detected even if they are not in the top-level ore tag.")
             .defineListAllowEmpty(List.of("ores.rareTags"),
-                    ModConfig::getDefaultRareOreTags,
+                    ServerConfig::getDefaultRareOreTags,
                     entry -> entry instanceof String);
 
     /** Registry names of specific blocks detected by the rare ores module (beyond the implicit rule). */
@@ -195,20 +194,41 @@ public final class ModConfig {
             .defineListAllowEmpty(List.of("ores.rareBlocks"),
                     List::of,
                     entry -> entry instanceof String);
-    /** Block tags whose members are ignored by all scanner modules. */
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_BLOCK_TAGS = BUILDER
-            .comment("Block tag names of tags that should be ignored by all scanner modules.")
-            .defineListAllowEmpty(List.of("ignored.blockTags"),
-                    List::of,
-                    entry -> entry instanceof String);
+
+
+    // ---- Hook Integration ----
+
+    /** Whether JEI ghost-drag is enabled for module configuration. */
+    public static final ModConfigSpec.BooleanValue HOOK_ALLOW_JEI = BUILDER
+            .comment("Allow JEI (Just Enough Items) drag-and-drop for module configuration slots.")
+            .worldRestart()
+            .define("hook.allowJeiDragDrop", true);
+
+    /** Whether EMI drag-drop is enabled for module configuration. */
+    public static final ModConfigSpec.BooleanValue HOOK_ALLOW_EMI = BUILDER
+            .comment("Allow EMI drag-and-drop for module configuration slots.")
+            .worldRestart()
+            .define("hook.allowEmiDragDrop", true);
+
+    // ---- Debug ----
+
+    /** Enable debug logging for item scanner operations. */
+    public static final ModConfigSpec.BooleanValue DEBUG_LOG_ITEM_SCANNER = BUILDER
+            .comment("Enable debug logging for item scanner operations (scanning process and statistics).")
+            .define("debug.logItemScanner", false);
+
+    /** Enable verbose logging of scan highlight rendering. */
+    public static final ModConfigSpec.BooleanValue DEBUG_RENDER = BUILDER
+            .comment("Enable verbose logging of scan highlight rendering",
+                    "(VBO rebuilds, hand-depth pass, frustum state).",
+                    "Use this to diagnose highlight visibility issues.",
+                    "Requires restart or '/reload' to take effect.")
+            .define("debug.renderScanner", false);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
-    private ModConfig() {}
+    private ServerConfig() {}
 
-    /**
-     * {@return the default set of common ore tags, sourced from NeoForge {@link Tags.Blocks} constants}
-     */
     private static List<String> getDefaultCommonOreTags() {
         return List.of(
                 Tags.Blocks.ORES_COAL.location().toString(),
@@ -220,9 +240,6 @@ public final class ModConfig {
         );
     }
 
-    /**
-     * {@return the default set of rare ore tags, sourced from NeoForge {@link Tags.Blocks} constants}
-     */
     private static List<String> getDefaultRareOreTags() {
         return List.of(
                 Tags.Blocks.ORES_DIAMOND.location().toString(),

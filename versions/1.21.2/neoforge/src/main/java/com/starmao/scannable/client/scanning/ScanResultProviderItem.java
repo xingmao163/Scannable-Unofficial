@@ -9,7 +9,6 @@ import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.client.shader.Shaders;
-import com.starmao.scannable.common.config.ModConfig;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

@@ -1,6 +1,7 @@
 package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.client.gui.ConfigurableItemScannerModuleContainerScreen;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
@@ -30,6 +31,8 @@ public class ItemModuleGhostHandler implements IGhostIngredientHandler<Configura
         if (!doStart) {
             return List.of();
         }
+
+        if (!ServerConfig.HOOK_ALLOW_JEI.get()) return List.of();
 
         final Optional<ItemStack> itemStackOpt = ingredient.getItemStack();
         if (itemStackOpt.isEmpty() || itemStackOpt.get().isEmpty()) {

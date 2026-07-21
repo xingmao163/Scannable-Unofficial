@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.network.message;
 
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -62,7 +62,7 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
     public static void handle(final S2CItemScanResult msg, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!ctx.player().level().isClientSide()) return;
-            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
             }
             com.starmao.scannable.client.ScanManager.setServerItemResults(msg.center, msg.results);

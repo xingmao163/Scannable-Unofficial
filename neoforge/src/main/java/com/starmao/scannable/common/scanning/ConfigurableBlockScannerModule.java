@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
@@ -32,7 +32,7 @@ public enum ConfigurableBlockScannerModule implements BlockScannerModule {
      */
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_BLOCK.get();
+        return ServerConfig.SCANNER_ENERGY_COST_BLOCK.get();
     }
 
     /**
@@ -52,7 +52,7 @@ public enum ConfigurableBlockScannerModule implements BlockScannerModule {
      */
     @Override
     public float adjustLocalRange(float range) {
-        return range * (float) (double) ModConfig.SCANNER_RANGE_MODIFIER_BLOCK.get();
+        return range * (float) (double) ServerConfig.SCANNER_RANGE_MODIFIER_BLOCK.get();
     }
 
     /**

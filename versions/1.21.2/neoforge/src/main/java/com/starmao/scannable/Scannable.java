@@ -2,7 +2,7 @@ package com.starmao.scannable;
 
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.common.capability.ScannerModuleCapability;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.container.Containers;
 import com.starmao.scannable.common.inventory.ScannerContainer;
 import com.starmao.scannable.common.inventory.ScannerItemHandler;
@@ -50,8 +50,7 @@ public final class Scannable {
         modEventBus.addListener(Scannable::registerCapabilities);
         Network.register(modEventBus);
 
-        // --- Config ---
-        modContainer.registerConfig(Type.COMMON, ModConfig.SPEC);
+        modContainer.registerConfig(Type.SERVER, ServerConfig.SPEC);
         modContainer.registerConfig(Type.CLIENT, ClientConfig.SPEC);
 
         modEventBus.addListener(Scannable::onModConfigEvent);
@@ -71,7 +70,7 @@ public final class Scannable {
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {
-        if (event.getConfig().getSpec() == ModConfig.SPEC) {
+        if (event.getConfig().getSpec() == ServerConfig.SPEC) {
             FluidBlockScannerModule.clearCache();
             com.starmao.scannable.common.scanning.filter.IgnoredBlocks.clearCache();
         } else if (event.getConfig().getSpec() == ClientConfig.SPEC) {

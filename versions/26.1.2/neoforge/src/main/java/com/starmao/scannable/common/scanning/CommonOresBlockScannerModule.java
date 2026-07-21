@@ -4,7 +4,7 @@ import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.config.ConfigParsers;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.scanning.filter.BlockCacheScanFilter;
 import com.starmao.scannable.common.scanning.filter.BlockScanFilter;
 import com.starmao.scannable.common.scanning.filter.BlockTagScanFilter;
@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  * Scanner module that detects common ore blocks (coal, iron, copper, gold, lapis, redstone).
  *
  * <p>Which blocks are considered "common ores" is controlled by the
- * {@link ModConfig#COMMON_ORE_TAGS} and {@link ModConfig#COMMON_ORE_BLOCKS}
+ * {@link ServerConfig#COMMON_ORE_TAGS} and {@link ServerConfig#COMMON_ORE_BLOCKS}
  * configuration entries. The filter is lazily built and cached; call
  * {@link #clearCache()} when config changes are applied.
  *
@@ -41,7 +41,7 @@ public enum CommonOresBlockScannerModule implements BlockScannerModule {
 
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_ORE_COMMON.get();
+        return ServerConfig.SCANNER_ENERGY_COST_ORE_COMMON.get();
     }
 
     @Override
@@ -52,7 +52,7 @@ public enum CommonOresBlockScannerModule implements BlockScannerModule {
 
     @Override
     public float adjustLocalRange(float range) {
-        return range * (float) (double) ModConfig.SCANNER_RANGE_MODIFIER_ORE_COMMON.get();
+        return range * (float) (double) ServerConfig.SCANNER_RANGE_MODIFIER_ORE_COMMON.get();
     }
 
     @Override
@@ -68,12 +68,12 @@ public enum CommonOresBlockScannerModule implements BlockScannerModule {
         List<Predicate<BlockState>> filters = new ArrayList<>();
 
         // Specific block IDs
-        for (final Block block : ConfigParsers.parseBlocks(ModConfig.COMMON_ORE_BLOCKS.get())) {
+        for (final Block block : ConfigParsers.parseBlocks(ServerConfig.COMMON_ORE_BLOCKS.get())) {
             filters.add(new BlockScanFilter(block));
         }
 
         // Block tags
-        for (final TagKey<Block> tag : ConfigParsers.parseBlockTags(ModConfig.COMMON_ORE_TAGS.get())) {
+        for (final TagKey<Block> tag : ConfigParsers.parseBlockTags(ServerConfig.COMMON_ORE_TAGS.get())) {
             filters.add(new BlockTagScanFilter(tag));
         }
 

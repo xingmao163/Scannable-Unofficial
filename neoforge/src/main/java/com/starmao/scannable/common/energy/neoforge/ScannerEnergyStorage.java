@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.energy.neoforge;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.energy.EnergyStorage;
@@ -9,13 +9,13 @@ import net.neoforged.neoforge.energy.EnergyStorage;
  * NeoForge {@link EnergyStorage} implementation for the scanner item.
  * <p>Persists energy changes to the item's {@link ModDataComponents#SCANNER_ENERGY}
  * data component so energy survives item serialisation.
- * Capacity is read from {@link ModConfig#SCANNER_ENERGY_CAPACITY}.
+ * Capacity is read from {@link ServerConfig#SCANNER_ENERGY_CAPACITY}.
  */
 public final class ScannerEnergyStorage extends EnergyStorage {
     private final ItemStack container;
 
     public ScannerEnergyStorage(ItemStack container) {
-        super(ModConfig.SCANNER_ENERGY_CAPACITY.get());
+        super(ServerConfig.SCANNER_ENERGY_CAPACITY.get());
         this.container = container;
         this.energy = Math.max(0, Math.min(capacity, container.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0)));
     }
@@ -27,10 +27,10 @@ public final class ScannerEnergyStorage extends EnergyStorage {
 
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
         // When chargeOnlyByModule is enabled, block external charging.
         // The charger module bypasses this by writing directly to the DataComponent.
-        if (ModConfig.SCANNER_CHARGE_ONLY_BY_MODULE.get()) return 0;
+        if (ServerConfig.SCANNER_CHARGE_ONLY_BY_MODULE.get()) return 0;
         int energyReceived = super.receiveEnergy(maxReceive, simulate);
         if (!simulate && energyReceived != 0) {
             container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
@@ -40,7 +40,7 @@ public final class ScannerEnergyStorage extends EnergyStorage {
 
     @Override
     public int extractEnergy(int maxExtract, boolean simulate) {
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
         int energyExtracted = super.extractEnergy(maxExtract, simulate);
         if (!simulate && energyExtracted != 0) {
             container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);

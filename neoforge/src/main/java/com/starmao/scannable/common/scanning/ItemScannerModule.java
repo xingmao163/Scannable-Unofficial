@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +19,7 @@ public enum ItemScannerModule implements ScannerModule {
 
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_ITEM.get();
+        return ServerConfig.SCANNER_ENERGY_COST_ITEM.get();
     }
 
     @Override

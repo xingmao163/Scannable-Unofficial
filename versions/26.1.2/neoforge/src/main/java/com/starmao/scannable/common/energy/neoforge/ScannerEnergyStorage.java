@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.energy.neoforge;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
@@ -18,7 +18,7 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 public final class ScannerEnergyStorage extends ItemAccessEnergyHandler {
 
     public ScannerEnergyStorage(ItemStack container) {
-        super(ItemAccess.forStack(container), ModDataComponents.SCANNER_ENERGY.get(), ModConfig.SCANNER_ENERGY_CAPACITY.get());
+        super(ItemAccess.forStack(container), ModDataComponents.SCANNER_ENERGY.get(), ServerConfig.SCANNER_ENERGY_CAPACITY.get());
     }
 
     public static ScannerEnergyStorage of(ItemStack container) {
@@ -27,13 +27,13 @@ public final class ScannerEnergyStorage extends ItemAccessEnergyHandler {
 
     @Override
     public int insert(int maxInsert, TransactionContext transaction) {
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
         return super.insert(maxInsert, transaction);
     }
 
     @Override
     public int extract(int maxExtract, TransactionContext transaction) {
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return 0;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
         return super.extract(maxExtract, transaction);
     }
 

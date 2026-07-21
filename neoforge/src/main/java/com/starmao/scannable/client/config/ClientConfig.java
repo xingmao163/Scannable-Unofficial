@@ -73,12 +73,6 @@ public final class ClientConfig {
 
     static { BUILDER.push("debug"); }
 
-    public static final ModConfigSpec.BooleanValue DEBUG_RENDER = BUILDER
-            .comment("Enable verbose logging of scan highlight rendering",
-                    "(VBO rebuilds, hand-depth pass, frustum state).",
-                    "Use this to diagnose highlight visibility issues.",
-                    "Requires restart or '/reload' to take effect.")
-            .define("renderScanner", false);
 
     static { BUILDER.pop(); }
 

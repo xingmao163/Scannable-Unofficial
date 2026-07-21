@@ -6,7 +6,7 @@ import com.starmao.scannable.common.config.Constants;
 import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.container.ScannerContainerMenu;
 import com.starmao.scannable.common.inventory.ScannerContainer;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.energy.ItemEnergyStorage;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
 import com.starmao.scannable.common.scanning.ItemScannerService;
@@ -111,7 +111,7 @@ public final class ScannerItem extends ModItem {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return ModConfig.SCANNER_USE_ENERGY.get();
+        return ServerConfig.SCANNER_USE_ENERGY.get();
     }
 
     @Override
@@ -265,7 +265,7 @@ public final class ScannerItem extends ModItem {
             final Vec3 center = player.position();
 
             // Compute scan radius from config, adjusted by installed range modules.
-            float scanRadius = ModConfig.SCANNER_BASE_RADIUS.get();
+            float scanRadius = ServerConfig.SCANNER_BASE_RADIUS.get();
             for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
                 final ItemStack module = activeModules.getItem(slot);
                 if (module.isEmpty()) continue;
@@ -277,7 +277,7 @@ public final class ScannerItem extends ModItem {
 
             final List<ItemScanResultData> results = ItemScannerService.scan(
                     level, center, (int) Math.ceil(scanRadius), new java.util.ArrayList<>(targetItemIds));
-            if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get())
+            if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get())
                 Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
 
             if (!results.isEmpty()) {
@@ -296,7 +296,7 @@ public final class ScannerItem extends ModItem {
     }
 
     private static boolean tryConsumeEnergy(Player player, ItemStack scanner, List<ItemStack> modules, boolean simulate) {
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return true;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return true;
         if (player.isCreative()) return true;
 
         Optional<ItemEnergyStorage> energyStorage = ItemEnergyStorage.of(scanner);
@@ -337,7 +337,7 @@ public final class ScannerItem extends ModItem {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
         if (level.isClientSide()) return;
         if (!(entity instanceof Player)) return;
-        if (!ModConfig.SCANNER_USE_ENERGY.get()) return;
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return;
 
         var container = ScannerContainer.of(stack);
         var activeModules = container.getActiveModules();
@@ -355,12 +355,12 @@ public final class ScannerItem extends ModItem {
 
         long lastTick = stack.getOrDefault(ModDataComponents.LAST_CHARGE_TICK.get(), 0L);
         long currentTick = level.getGameTime();
-        int interval = ModConfig.CHARGER_MODULE_INTERVAL.get();
+        int interval = ServerConfig.CHARGER_MODULE_INTERVAL.get();
         if (currentTick - lastTick < interval) return;
 
         // Direct DataComponent write bypasses the chargeOnlyByModule guard in ScannerEnergyStorage.
-        int amount = ModConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
-        int capacity = ModConfig.SCANNER_ENERGY_CAPACITY.get();
+        int amount = ServerConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
+        int capacity = ServerConfig.SCANNER_ENERGY_CAPACITY.get();
         int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
         int newEnergy = (int) Math.min(capacity, Math.min((long) current + amount, Integer.MAX_VALUE));
         stack.set(ModDataComponents.SCANNER_ENERGY.get(), newEnergy);

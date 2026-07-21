@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.EntityScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
@@ -36,7 +36,7 @@ public enum ConfigurableEntityScannerModule implements EntityScannerModule {
      */
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_ENTITY.get();
+        return ServerConfig.SCANNER_ENERGY_COST_ENTITY.get();
     }
 
     /**

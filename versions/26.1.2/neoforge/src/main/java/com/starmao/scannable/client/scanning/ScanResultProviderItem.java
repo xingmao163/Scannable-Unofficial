@@ -9,7 +9,7 @@ import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.client.renderer.ScanResultRenderType;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -86,7 +86,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             return;
         }
 
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
             Scannable.LOGGER.info("[ItemScanner] Scanning for {} target item(s):", targetItems.size());
             for (Item target : targetItems) {
                 Scannable.LOGGER.info("[ItemScanner]   - {}", target.getName(target.getDefaultInstance()).getString());
@@ -208,7 +208,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
 
     @Override
     public void collectScanResults(BlockGetter level, Consumer<ScanResult> callback) {
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
             Scannable.LOGGER.info("[ItemScanner] Collecting {} scan result(s)", results.size());
         }
         for (ItemScanResult result : results) {

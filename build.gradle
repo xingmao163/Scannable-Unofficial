@@ -183,6 +183,11 @@ if (!jei_version) {
         exclude 'com/starmao/scannable/integration/jei/**'
     }
 }
+if (!emi_version) {
+    sourceSets.main.java {
+        exclude 'com/starmao/scannable/integration/emi/**'
+    }
+}
 dependencies {
     if (jei_version) {
         compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"

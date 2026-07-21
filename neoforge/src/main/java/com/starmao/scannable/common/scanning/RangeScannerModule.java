@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScannerModule;
 import net.minecraft.util.Mth;
@@ -22,7 +22,7 @@ public enum RangeScannerModule implements ScannerModule {
      */
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_RANGE.get();
+        return ServerConfig.SCANNER_ENERGY_COST_RANGE.get();
     }
 
     /**
@@ -54,6 +54,6 @@ public enum RangeScannerModule implements ScannerModule {
      */
     @Override
     public float adjustGlobalRange(float range) {
-        return range + Mth.ceil(ModConfig.SCANNER_BASE_RADIUS.get() * ModConfig.SCANNER_RANGE_MODIFIER_RANGE.get());
+        return range + Mth.ceil(ServerConfig.SCANNER_BASE_RADIUS.get() * ServerConfig.SCANNER_RANGE_MODIFIER_RANGE.get());
     }
 }

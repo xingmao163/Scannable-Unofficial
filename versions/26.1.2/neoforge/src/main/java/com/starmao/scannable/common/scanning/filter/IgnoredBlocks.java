@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.scanning.filter;
 
 import com.starmao.scannable.common.config.ConfigParsers;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,10 +42,10 @@ public final class IgnoredBlocks {
     private static void validate() {
         if (ignoredBlocks != null && ignoredBlockTags != null) return;
 
-        final List<? extends String> blockEntries = ModConfig.IGNORED_BLOCKS.get();
+        final List<? extends String> blockEntries = ServerConfig.IGNORED_BLOCKS.get();
         ignoredBlocks = new HashSet<>(ConfigParsers.parseBlocks(blockEntries));
 
-        final List<? extends String> tagEntries = ModConfig.IGNORED_BLOCK_TAGS.get();
+        final List<? extends String> tagEntries = ServerConfig.IGNORED_BLOCK_TAGS.get();
         ignoredBlockTags = ConfigParsers.parseBlockTags(tagEntries);
     }
 

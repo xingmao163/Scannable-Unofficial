@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.scanning;
 
 import com.starmao.scannable.Scannable;
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -112,7 +112,7 @@ public final class ItemScannerService {
             }
         }
 
-        if (ModConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
             Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
                     chunksChecked, containersFound, results.size());
         }

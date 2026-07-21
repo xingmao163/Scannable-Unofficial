@@ -7,6 +7,7 @@ import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.config.ClientConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.client.shader.Shaders;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import com.starmao.scannable.Scannable;
@@ -235,7 +236,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
     private void renderHighlights(PoseStack poseStack, Camera camera, List<ScanResult> results) {
         ShaderInstance shader = Shaders.getScanResultShader();
         if (shader == null) {
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.info("[ItemHighlight] scanResultShader is null, skipping");
             return;
         }
@@ -250,14 +251,14 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         // results incrementally to the same list object — identity-hash-based
         // detection would miss these additions).
         if (results.size() != lastRenderedResultCount) {
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.info("[ItemHighlight] VBO rebuild: {} results (was {}), {} VBOs cached",
                         results.size(), lastRenderedResultCount, vboCache.size());
             rebuildVboCache(results);
             lastRenderedResultCount = results.size();
         }
 
-        if (ClientConfig.DEBUG_RENDER.get())
+        if (ServerConfig.DEBUG_RENDER.get())
             Scannable.LOGGER.info("[ItemHighlight] Drawing {} VBO(s), poseStack valid={}, shader={}",
                     vboCache.size(), poseStack != null, shader != null);
 
@@ -286,19 +287,19 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
         Set<BlockPos> seen = new HashSet<>();
         Level level = Minecraft.getInstance().level;
         if (level == null) {
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.warn("[ItemHighlight] rebuildVboCache: level is null");
             return;
         }
         for (ScanResult result : scanResults) {
             ItemScanResult ir = (ItemScanResult) result;
             if (!seen.add(ir.pos())) {
-                if (ClientConfig.DEBUG_RENDER.get())
+                if (ServerConfig.DEBUG_RENDER.get())
                     Scannable.LOGGER.info("[ItemHighlight]   skip duplicate: {}", ir.pos());
                 continue;
             }
             int color = resolveColor(level, ir.pos());
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.info("[ItemHighlight]   VBO at {} color=#{}", ir.pos(), String.format("%06x", color));
             vboCache.put(ir.pos(), buildVbo(ir.pos(), color));
         }
@@ -321,18 +322,18 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             || Minecraft.getInstance().options.hideGui
             || Minecraft.getInstance().gameMode.getPlayerMode() == net.minecraft.world.level.GameType.SPECTATOR
             || Minecraft.getInstance().player == null) {
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.info("[HandDepth] Skipped (not first-person or hidden GUI or spectator)");
             return;
         }
 
-        if (ClientConfig.DEBUG_RENDER.get())
+        if (ServerConfig.DEBUG_RENDER.get())
             Scannable.LOGGER.info("[HandDepth] Enter — pushing modelView matrix");
 
         try {
             PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
             if (viewPose == null) {
-                if (ClientConfig.DEBUG_RENDER.get())
+                if (ServerConfig.DEBUG_RENDER.get())
                     Scannable.LOGGER.warn("[HandDepth] worldViewModelStack is null");
                 return;
             }
@@ -353,7 +354,7 @@ public final class ScanResultProviderItem extends AbstractScanResultProvider {
             bufferSource.endBatch();
             handPose.popPose();
             mvStack.popMatrix();
-            if (ClientConfig.DEBUG_RENDER.get())
+            if (ServerConfig.DEBUG_RENDER.get())
                 Scannable.LOGGER.info("[HandDepth] Success — modelView restored");
         } catch (Throwable e) {
             Scannable.LOGGER.error("[HandDepth] Exception during hand render — modelView stack may be corrupted!", e);

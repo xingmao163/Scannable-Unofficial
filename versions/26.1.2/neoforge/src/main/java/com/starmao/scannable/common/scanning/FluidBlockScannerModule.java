@@ -1,6 +1,6 @@
 package com.starmao.scannable.common.scanning;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
@@ -46,7 +46,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
      */
     @Override
     public int getEnergyCost(ItemStack module) {
-        return ModConfig.SCANNER_ENERGY_COST_FLUID.get();
+        return ServerConfig.SCANNER_ENERGY_COST_FLUID.get();
     }
 
     /**
@@ -66,7 +66,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
      */
     @Override
     public float adjustLocalRange(float range) {
-        return range * (float) (double) ModConfig.SCANNER_RANGE_MODIFIER_FLUID.get();
+        return range * (float) (double) ServerConfig.SCANNER_RANGE_MODIFIER_FLUID.get();
     }
 
     /**
@@ -83,7 +83,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
         if (filter != null) return;
 
         List<Predicate<BlockState>> filters = new ArrayList<>();
-        List<? extends String> ignoredTags = ModConfig.IGNORED_FLUID_TAGS.get();
+        List<? extends String> ignoredTags = ServerConfig.IGNORED_FLUID_TAGS.get();
         BuiltInRegistries.FLUID.getTags().forEach(named -> {
             TagKey<Fluid> tag = named.key();
             if (!ignoredTags.contains(tag.location().toString())) {

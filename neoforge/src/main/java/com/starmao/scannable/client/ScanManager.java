@@ -1,6 +1,6 @@
 package com.starmao.scannable.client;
 
-import com.starmao.scannable.common.config.ModConfig;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.client.scanning.ItemScanResult;
 import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.item.ModuleHelper;
@@ -37,7 +37,11 @@ public final class ScanManager {
     private static final int SCAN_GROWTH_DURATION = 2000;
     private static final int REFERENCE_RENDER_DISTANCE = 12;
     private static int getScanStayDuration() {
-        return com.starmao.scannable.common.config.ModConfig.SCANNER_RESULT_STAY_DURATION.get();
+        try {
+            return ServerConfig.SCANNER_RESULT_STAY_DURATION.get();
+        } catch (IllegalStateException e) {
+            return 10000; // default fallback before config is loaded
+        }
     }
 
     private static final ByteBufferBuilder RENDER_BUFFER = new ByteBufferBuilder(256);
@@ -86,7 +90,7 @@ public final class ScanManager {
     public static void beginScan(Player player, List<ItemStack> stacks) {
         cancelScan();
 
-        float scanRadius = ModConfig.SCANNER_BASE_RADIUS.get();
+        float scanRadius = ServerConfig.SCANNER_BASE_RADIUS.get();
 
         List<ScannerModule> modules = new ArrayList<>();
         for (ItemStack stack : stacks) {
@@ -150,7 +154,7 @@ public final class ScanManager {
         }
 
         pendingResults.put(provider, results);
-        if (com.starmao.scannable.common.config.ModConfig.DEBUG_LOG_ITEM_SCANNER.get())
+        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get())
             com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
     }
 
