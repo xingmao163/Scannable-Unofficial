@@ -49,7 +49,7 @@ public final class ScannerContainerMenu extends AbstractContainerMenu {
         // Player inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 77 + row * 18));
             }
         }
         for (int slot = 0; slot < 9; ++slot) {

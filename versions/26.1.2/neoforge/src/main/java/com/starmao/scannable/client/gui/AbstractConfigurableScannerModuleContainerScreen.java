@@ -43,8 +43,6 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         super(container, inventory, title, 176, 133);
         this.listCaption = listCaption;
         this.inventory = inventory;
-        inventoryLabelX = 8;
-        inventoryLabelY = 39;
     }
 
     private ItemStack getHeldItem() {
@@ -67,7 +65,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
     @Override
     protected void extractLabels(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY) {
-        super.extractLabels(graphics, mouseX, mouseY);
+        graphics.text(font, title, titleLabelX, titleLabelY, 0xFF404040, false);
         graphics.text(font, listCaption, 8, 23, 0xFF404040, false);
 
         final ItemStack stack = getHeldItem();

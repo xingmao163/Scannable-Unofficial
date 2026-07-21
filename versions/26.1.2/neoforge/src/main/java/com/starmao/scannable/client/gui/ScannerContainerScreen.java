@@ -23,8 +23,6 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
 
     public ScannerContainerScreen(final ScannerContainerMenu container, final Inventory inventory, final Component title) {
         super(container, inventory, title, 176, 159);
-        inventoryLabelX = 8;
-        inventoryLabelY = 65;
     }
 
     @Override
@@ -37,7 +35,7 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
 
     @Override
     protected void extractLabels(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY) {
-        super.extractLabels(graphics, mouseX, mouseY);
+        graphics.text(font, title, titleLabelX, titleLabelY, 0xFF404040, false);
 
         graphics.text(font, ACTIVE_TEXT, 8, 23, 0xFF404040, false);
         graphics.text(font, INACTIVE_TEXT, 8, 49, 0xFF404040, false);

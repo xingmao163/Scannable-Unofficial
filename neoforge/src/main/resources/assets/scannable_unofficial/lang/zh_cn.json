@@ -104,8 +104,5 @@
   "scannable_unofficial.configuration.blocksColors": "方块颜色",
   "scannable_unofficial.configuration.blockTagsColors": "方块标签颜色",
   "scannable_unofficial.configuration.fluidsColors": "流体颜色",
-  "scannable_unofficial.configuration.fluidTagsColors": "流体标签颜色",
-
-  "scannable_unofficial.configuration.misc": "杂项",
-  "scannable_unofficial.configuration.hideBrokenBlocks": "破坏方块隐藏高亮"
+  "scannable_unofficial.configuration.fluidTagsColors": "流体标签颜色"
 }

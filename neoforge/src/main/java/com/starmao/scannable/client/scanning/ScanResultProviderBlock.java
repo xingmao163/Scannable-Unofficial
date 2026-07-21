@@ -266,17 +266,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
             RenderSystem.colorMask(true, true, true, true);
         }
 
-        // Live hide-broken-blocks update: prune cells that no longer match and rebuild affected VBOs
-        Level level = Minecraft.getInstance().level;
-        Player viewer = Minecraft.getInstance().player;
-        if (level != null) {
-            for (ScanResult result : results) {
-                BlockScanResult blockResult = (BlockScanResult) result;
-                if (blockResult.needsLiveRefresh()) {
-                    blockResult.refreshVisible(level, viewer);
-                }
-            }
-        }
 
         RenderType renderType = getBlockScanResultRenderLayer();
         renderType.setupRenderState();
@@ -355,8 +344,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         private final Set<BlockPos> blocks;
         private int color;
         @Nullable private VertexBuffer vbo;
-        @Nullable private Set<BlockPos> visibleBlocks;
-        private long lastVisibleCheck;
 
         BlockScanResult(Block block, BlockPos pos) {
             this.block = block;
@@ -398,49 +385,15 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 }
             }
 
-            visibleBlocks = blocks;
             buildVbo();
         }
 
-        boolean needsLiveRefresh() {
-            return ClientConfig.HIDE_BROKEN_BLOCKS.get();
-        }
 
-        void refreshVisible(Level level, Player viewer) {
-            if (visibleBlocks == null) return;
-            // Only recheck periodically to avoid excessive chunk lookups
-            long now = System.currentTimeMillis();
-            if (now - lastVisibleCheck < 200) return;
-            lastVisibleCheck = now;
 
-            Set<BlockPos> present = new HashSet<>();
-            for (BlockPos cell : blocks) {
-                if (cellPresent(level, viewer, cell)) {
-                    present.add(cell);
-                }
-            }
-            if (present.equals(visibleBlocks)) return;
-            visibleBlocks = present;
-            if (present.isEmpty()) {
-                if (vbo != null) {
-                    vbo.close();
-                    vbo = null;
-                }
-            } else {
-                buildVbo();
-            }
-        }
-
-        private boolean cellPresent(Level level, Player viewer, BlockPos cell) {
-            if (!level.hasChunkAt(cell)) {
-                return true; // Unloaded -> unknown, assume present.
-            }
-            return level.getBlockState(cell).is(block);
-        }
 
         @SuppressWarnings("null")
         private void buildVbo() {
-            if (visibleBlocks == null || visibleBlocks.isEmpty()) return;
+            if (blocks.isEmpty()) return;
             BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             render(buffer, new PoseStack());
             if (vbo == null) {
@@ -452,7 +405,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         }
 
         boolean hasVisible() {
-            return visibleBlocks == null || !visibleBlocks.isEmpty();
+            return true;
         }
 
         boolean isRoot() {
@@ -490,7 +443,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
             float sizeUvX = (float) (1.0 / bounds.getXsize());
             float sizeUvY = (float) (1.0 / bounds.getYsize());
             float sizeUvZ = (float) (1.0 / bounds.getZsize());
-            Set<BlockPos> cells = visibleBlocks != null ? visibleBlocks : blocks;
+            Set<BlockPos> cells = blocks;
             for (BlockPos cell : cells) {
                 // Render each exposed face with UV coordinates for coloring
                 float cx = cell.getX(), cy = cell.getY(), cz = cell.getZ();

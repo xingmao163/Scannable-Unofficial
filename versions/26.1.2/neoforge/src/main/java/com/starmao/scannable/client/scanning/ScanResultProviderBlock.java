@@ -195,17 +195,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         }
         if (context != ScanResultRenderContext.WORLD) return;
 
-        // Live hide-broken-blocks update: prune cells that no longer match
-        Level level = Minecraft.getInstance().level;
-        Player viewer = Minecraft.getInstance().player;
-        if (level != null) {
-            for (ScanResult result : results) {
-                BlockScanResult blockResult = (BlockScanResult) result;
-                if (blockResult.needsLiveRefresh()) {
-                    blockResult.refreshVisible(level, viewer);
-                }
-            }
-        }
 
         final PoseStack.Pose pose = poseStack.last();
         final VertexConsumer fill = bufferSource.getBuffer(ScanResultRenderType.SHIMMER_TYPE);
@@ -337,8 +326,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         @Nullable private BlockScanResult parent;
         private final Set<BlockPos> blocks;
         int color;
-        @Nullable private Set<BlockPos> visibleBlocks;
-        private long lastVisibleCheck;
 
         BlockScanResult(Block block, BlockPos pos) {
             this.block = block;
@@ -380,39 +367,13 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 }
             }
 
-            visibleBlocks = blocks;
         }
 
-        boolean needsLiveRefresh() {
-            return ClientConfig.HIDE_BROKEN_BLOCKS.get();
-        }
 
-        void refreshVisible(Level level, Player viewer) {
-            if (visibleBlocks == null) return;
-            // Only recheck periodically to avoid excessive chunk lookups
-            long now = System.currentTimeMillis();
-            if (now - lastVisibleCheck < 200) return;
-            lastVisibleCheck = now;
 
-            Set<BlockPos> present = new HashSet<>();
-            for (BlockPos cell : blocks) {
-                if (cellPresent(level, viewer, cell)) {
-                    present.add(cell);
-                }
-            }
-            if (present.equals(visibleBlocks)) return;
-            visibleBlocks = present;
-        }
-
-        private boolean cellPresent(Level level, Player viewer, BlockPos cell) {
-            if (!level.hasChunkAt(cell)) {
-                return true; // Unloaded -> unknown, assume present.
-            }
-            return level.getBlockState(cell).is(block);
-        }
 
         boolean hasVisible() {
-            return visibleBlocks == null || !visibleBlocks.isEmpty();
+            return true;
         }
 
         boolean isRoot() {

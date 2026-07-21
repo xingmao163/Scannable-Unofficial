@@ -42,8 +42,6 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         this.listCaption = listCaption;
         this.inventory = inventory;
         this.imageHeight = 133;
-        this.inventoryLabelX = 8;
-        this.inventoryLabelY = 39;
     }
 
     private ItemStack getHeldItem() {
@@ -76,7 +74,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        super.renderLabels(graphics, mouseX, mouseY);
+        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
         graphics.drawString(font, listCaption, 8, 23, 0x404040, false);
 
         ItemStack stack = getHeldItem();

@@ -22,8 +22,6 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
     public ScannerContainerScreen(ScannerContainerMenu container, Inventory inventory, Component title) {
         super(container, inventory, title);
         this.imageHeight = 159;
-        this.inventoryLabelX = 8;
-        this.inventoryLabelY = 65;
     }
 
     @Override
@@ -35,7 +33,7 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        super.renderLabels(graphics, mouseX, mouseY);
+        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
         graphics.drawString(font, ACTIVE_TEXT, 8, 23, 0x404040, false);
         graphics.drawString(font, INACTIVE_TEXT, 8, 49, 0x404040, false);
     }

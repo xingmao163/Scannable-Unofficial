@@ -82,15 +82,6 @@ public final class ClientConfig {
 
     static { BUILDER.pop(); }
 
-    static { BUILDER.push("misc"); }
-
-    public static final ModConfigSpec.BooleanValue HIDE_BROKEN_BLOCKS = BUILDER
-            .comment("Hide the highlight of a scanned block once it has been broken or replaced,",
-                    "without needing to rescan. Purely visual.")
-            .define("hideBrokenBlocks", true);
-
-
-    static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
     // ========================================================================

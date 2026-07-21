@@ -107,8 +107,5 @@
   "scannable_unofficial.configuration.blocksColors": "Block Colors",
   "scannable_unofficial.configuration.blockTagsColors": "Block Tag Colors",
   "scannable_unofficial.configuration.fluidsColors": "Fluid Colors",
-  "scannable_unofficial.configuration.fluidTagsColors": "Fluid Tag Colors",
-  
-  "scannable_unofficial.configuration.misc": "Misc",
-  "scannable_unofficial.configuration.hideBrokenBlocks": "Broken Block Highlight Hide"
+  "scannable_unofficial.configuration.fluidTagsColors": "Fluid Tag Colors"
 }
