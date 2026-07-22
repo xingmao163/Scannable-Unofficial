@@ -72,8 +72,6 @@ public final class Scannable {
     private static void onModConfigEvent(final ModConfigEvent event) {
         if (event.getConfig().getSpec() == ServerConfig.SPEC) {
             FluidBlockScannerModule.clearCache();
-            com.starmao.scannable.common.scanning.CommonOresBlockScannerModule.clearCache();
-            com.starmao.scannable.common.scanning.RareOresBlockScannerModule.clearCache();
             com.starmao.scannable.common.scanning.filter.IgnoredBlocks.clearCache();
         } else if (event.getConfig().getSpec() == ClientConfig.SPEC) {
             com.starmao.scannable.client.config.ClientConfig.clearCache();
