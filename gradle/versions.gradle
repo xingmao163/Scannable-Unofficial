@@ -45,18 +45,6 @@ ext {
             jei_version             : '20.0.0.4',
             mod_version             : '1.2.0',
         ],
-        [
-            name                    : '26.1.2',
-            minecraft_version       : '26.1.2',
-            minecraft_version_range : '[26.1.2]',
-            neo_version             : '26.1.2.71',
-            neo_version_range       : '[26,27)',
-            parchment_minecraft     : '',
-            parchment_mappings      : '',
-            jei_version             : '29.6.2.31',
-            emi_version             : '',
-            mod_version             : '1.2.0',
-        ],
     ]
 
     sharedRepositories = [

@@ -11,7 +11,7 @@ def targetVersion = findProperty('targetVersion') ?: '1.21.1'
 def vcfg = supportedVersions.find { it.name == targetVersion }
 if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
 
-def javaVersion = targetVersion.startsWith('26') ? 25 : 21
+def javaVersion = 21
 java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
 def versionParts = targetVersion.tokenize('.')
@@ -19,9 +19,9 @@ def majorVer = versionParts[0].toInteger()
 def minorVer = versionParts.size() > 1 ? versionParts[1].toInteger() : 0
 def patchVer = versionParts.size() > 2 ? versionParts[2].toInteger() : 0
 
-def shouldExcludeShaders = majorVer > 1 || (majorVer == 1 && minorVer >= 21 && minorVer <= 25 && patchVer >= 6) || (majorVer == 1 && minorVer > 25)
+def shouldExcludeShaders = majorVer == 1 && (minorVer > 25 || (minorVer >= 21 && minorVer <= 25 && patchVer >= 6))
 def isOldDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer <= 3
-def isNewDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer >= 4 || majorVer > 1
+def isNewDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer >= 4
 
 ext.minecraft_version     = vcfg.minecraft_version
 ext.minecraft_version_range = vcfg.minecraft_version_range
@@ -94,6 +94,11 @@ if (hasVersionOverride || hasSharedResources) {
     }
     sourceSets.main.resources.srcDirs = [mergedResources]
     tasks.named('processResources').configure { dependsOn 'mergeNeoforgeResources' }
+    tasks.named('processResources').configure { mustRunAfter 'mergeNeoforgeResources' }
+    // Ensure NeoGradle artifact generation runs after resource merge:
+    tasks.matching { it.name.startsWith('create') && it.name.contains('Artifacts') }.configureEach {
+        mustRunAfter 'mergeNeoforgeResources'
+    }
 } else {
     sourceSets.main.resources {
         srcDir('neoforge/src/main/resources')
@@ -183,6 +188,7 @@ if (!jei_version) {
         exclude 'com/starmao/scannable/integration/jei/**'
     }
 }
+
 if (!emi_version) {
     sourceSets.main.java {
         exclude 'com/starmao/scannable/integration/emi/**'

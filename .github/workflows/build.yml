@@ -22,7 +22,6 @@ on:
           - 1.21.2
           - 1.21.3
           - 1.21.4
-          - 26.1.2
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,7 +33,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        target: [1.21.1, 1.21.2, 1.21.3, 1.21.4, 26.1.2]
+        target: [1.21.1, 1.21.2, 1.21.3, 1.21.4]
         include:
           - target: 1.21.1
             java: 21
@@ -44,9 +43,6 @@ jobs:
             java: 21
           - target: 1.21.4
             java: 21
-          - target: 26.1.2
-            java: 25
-      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
