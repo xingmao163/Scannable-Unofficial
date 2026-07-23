@@ -25,12 +25,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Central orchestrator for the client-side scan lifecycle. */
+@OnlyIn(Dist.CLIENT)
 public final class ScanManager {
     public static final int SCAN_COMPUTE_DURATION = 40;
     private static final int SCAN_INITIAL_RADIUS = 10;

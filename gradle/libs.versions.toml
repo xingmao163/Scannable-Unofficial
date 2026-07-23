@@ -1,5 +1,5 @@
 [versions]
-neomoddev = "2.0.141"
+neomoddev = "2.0.142"
 
 [plugins]
 neomoddev = { id = "net.neoforged.moddev", version.ref = "neomoddev" }

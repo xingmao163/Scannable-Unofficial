@@ -3,10 +3,13 @@ package com.starmao.scannable.client.audio;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
 /** Manages scanner audio feedback. */
+@OnlyIn(Dist.CLIENT)
 public final class SoundManager {
     private static final SoundEvent SCANNER_CHARGE = SoundEvent.createVariableRangeEvent(
             com.starmao.scannable.Scannable.id("scanner_charge"));

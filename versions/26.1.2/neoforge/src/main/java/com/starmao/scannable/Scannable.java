@@ -13,7 +13,7 @@ import com.starmao.scannable.common.scanning.FluidBlockScannerModule;
 import com.starmao.scannable.common.tags.ItemTags;
 import com.starmao.scannable.registry.ModCreativeTabs;
 import com.starmao.scannable.common.container.ModMenus;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -22,6 +22,7 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,15 +57,15 @@ public final class Scannable {
         modEventBus.addListener(Scannable::onModConfigEvent);
 
         // --- Client-only setup ---
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
+
             // Make the Config button clickable in the Mods screen.
             // Uses ClientRegistrations (method annotated @OnlyIn(Dist.CLIENT))
             // so RuntimeDistCleaner strips the client-only class references on server.
             com.starmao.scannable.client.ClientRegistrations.registerConfigScreen(modContainer);
 
         }
-
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {
@@ -79,14 +80,29 @@ public final class Scannable {
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         // Energy storage — enables FE charge/discharge on the scanner item
-        event.registerItem(Capabilities.EnergyStorage.ITEM,
+        event.registerItem(Capabilities.Energy.ITEM,
                 (stack, ctx) -> com.starmao.scannable.common.energy.neoforge.ScannerEnergyStorage.of(stack),
                 Items.SCANNER.get());
 
         // Item handler — exposes the scanner's internal module inventory
         // to hoppers, other mods, etc.
-        event.registerItem(Capabilities.ItemHandler.ITEM,
-                (stack, ctx) -> new ScannerItemHandler(ScannerContainer.of(stack)),
+        event.registerItem(Capabilities.Item.ITEM,
+                (stack, ctx) -> {
+                    var handler = new com.starmao.scannable.common.inventory.ScannerItemHandler(ScannerContainer.of(stack));
+                    return new net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>() {
+                        @Override public int size() { return handler.getSlots(); }
+                        @Override public net.neoforged.neoforge.transfer.item.ItemResource getResource(int slot) { var s = handler.getStackInSlot(slot); return s.isEmpty() ? null : net.neoforged.neoforge.transfer.item.ItemResource.of(s); }
+                        @Override public long getAmountAsLong(int slot) { return handler.getStackInSlot(slot).getCount(); }
+                        @Override public long getCapacityAsLong(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource) { return handler.getSlotLimit(slot); }
+                        @Override public boolean isValid(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource) { return true; }
+                        @Override public int insert(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext ctx) {
+                            return 0;
+                        }
+                        @Override public int extract(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext ctx) {
+                            return 0;
+                        }
+                    };
+                },
                 Items.SCANNER.get());
 
         // ScannerModule capability — uniform access to scanning behaviour
@@ -102,7 +118,7 @@ public final class Scannable {
                 Items.CHARGER_MODULE.get());
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 }

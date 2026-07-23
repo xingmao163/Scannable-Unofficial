@@ -11,7 +11,7 @@ def targetVersion = findProperty('targetVersion') ?: '1.21.1'
 def vcfg = supportedVersions.find { it.name == targetVersion }
 if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
 
-def javaVersion = 21
+def javaVersion = (targetVersion == '26.1' || targetVersion == '26.1.2') ? 25 : 21
 java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
 def versionParts = targetVersion.tokenize('.')
@@ -21,8 +21,7 @@ def patchVer = versionParts.size() > 2 ? versionParts[2].toInteger() : 0
 
 def shouldExcludeShaders = majorVer == 1 && (minorVer > 25 || (minorVer >= 21 && minorVer <= 25 && patchVer >= 6))
 def isOldDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer <= 3
-def isNewDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer >= 4
-
+def isNewDataGenFormat = (majorVer == 1 && minorVer == 21 && patchVer >= 4) || majorVer == 26
 ext.minecraft_version     = vcfg.minecraft_version
 ext.minecraft_version_range = vcfg.minecraft_version_range
 ext.neo_version           = vcfg.neo_version
@@ -149,13 +148,20 @@ neoForge {
             }
         }
         if (isNewDataGenFormat) {
-            serverData {
-                serverData()
-                programArguments.addAll dataGenArgs
-            }
-            clientData {
-                clientData()
-                programArguments.addAll dataGenArgs
+            if (targetVersion == '26.1.2') {
+                data {
+                    clientData()
+                    programArguments.addAll dataGenArgs
+                }
+            } else {
+                serverData {
+                    serverData()
+                    programArguments.addAll dataGenArgs
+                }
+                clientData {
+                    clientData()
+                    programArguments.addAll dataGenArgs
+                }
             }
         }
         configureEach {
