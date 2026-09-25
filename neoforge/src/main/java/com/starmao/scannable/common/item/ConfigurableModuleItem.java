@@ -3,6 +3,8 @@ package com.starmao.scannable.common.item;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.common.config.Constants;
 import net.minecraft.core.Registry;
+import net.minecraft.world.item.Item;
+
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -11,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -45,6 +46,14 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
     protected ConfigurableModuleItem(final ScannerModule module,
                                      final MenuFactory menuFactory) {
         super(module);
+        this.menuFactory = menuFactory;
+    }
+
+    /** 1.21.2+ variant — accepts Properties with descriptionId pre-set by DeferredRegister. */
+    protected ConfigurableModuleItem(final ScannerModule module,
+                                     final MenuFactory menuFactory,
+                                     final Item.Properties properties) {
+        super(module, properties);
         this.menuFactory = menuFactory;
     }
 
@@ -109,13 +118,10 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
 
         final ResourceLocation id = key.get().location();
         final List<ResourceLocation> list = new ArrayList<>(getIds(stack));
-        if (index < list.size() && id.equals(list.get(index))) return;
 
-        // Remove any existing occurrence so the value moves (not duplicates).
+        // Remove existing occurrence first, then insert at target position
         list.remove(id);
-
-        // Clamp to [0, list.size()] so add(index, id) either inserts or appends.
-        int insertAt = Math.min(index, list.size());
+        final int insertAt = Math.min(index, list.size());
         list.add(insertAt, id);
 
         stack.set(getComponent(), List.copyOf(list));
@@ -147,10 +153,10 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(final Level level, final Player player, final InteractionHand hand) {
+    public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
         final ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide() && player instanceof final ServerPlayer serverPlayer) {
             serverPlayer.openMenu(new MenuProvider() {
@@ -165,7 +171,7 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
                 }
             }, buf -> buf.writeEnum(hand));
         }
-        return InteractionResultHolder.success(stack);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

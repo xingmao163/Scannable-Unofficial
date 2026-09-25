@@ -1,103 +1,68 @@
 package com.starmao.scannable.client.shader;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
+import com.starmao.scannable.Scannable;
+import net.minecraft.client.renderer.ShaderDefines;
+import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import net.minecraft.server.packs.resources.ResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
-/** Manages custom GL shaders for the scanner effect. */
-public final class Shaders implements ResourceManagerReloadListener {
+/**
+ * Manages custom GL shader definitions for the scanner effect.
+ *
+ * <p>In Minecraft 1.21.2, {@link ShaderProgram} is a record definition that
+ * references a shader loaded by the {@code ShaderManager}. The actual compilation
+ * and lifecycle is handled by the game's shader system. Custom shaders must have
+ * their {@code .json}, {@code .vsh}, and {@code .fsh} files in
+ * {@code assets/&lt;modid&gt;/shaders/core/}.</p>
+ */
+public final class Shaders {
     private static final Logger LOGGER = LoggerFactory.getLogger(Shaders.class);
-    private static final Shaders INSTANCE = new Shaders();
-    private static final List<ShaderReference> SHADERS = new ArrayList<>();
 
-    @Nullable public static ShaderInstance scanEffectShader;
-    @Nullable public static ShaderInstance scanResultShader;
+    /** Publicly accessible shader definition for the scan result shader. */
+    public static final ShaderProgram SCAN_RESULT;
 
+    @Nullable
+    private static ShaderProgram scanEffectShader;
+
+    @Nullable
+    private static ShaderProgram scanResultShader;
+
+    static {
+        SCAN_RESULT = createShader("scan_result", DefaultVertexFormat.POSITION_TEX_COLOR);
+        scanResultShader = SCAN_RESULT;
+        scanEffectShader = createShader("scan_effect", DefaultVertexFormat.POSITION_TEX);
+    }
+
+    private static ShaderProgram createShader(String name, VertexFormat format) {
+        return new ShaderProgram(
+                ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, name),
+                format,
+                ShaderDefines.EMPTY
+        );
+    }
+
+    /**
+     * No-op initialization. Shader definitions are initialized in the static
+     * initializer. The game's {@code ShaderManager} handles actual compilation
+     * and reloading of GL shaders.
+     */
     public static void initialize() {
-        addShader("scan_effect", DefaultVertexFormat.POSITION_TEX, shader -> scanEffectShader = shader);
-        addShader("scan_result", DefaultVertexFormat.POSITION_TEX_COLOR, shader -> scanResultShader = shader);
-        loadAndListenToReload();
+        LOGGER.debug("Shader definitions initialized: scan_effect, scan_result");
     }
 
     @Nullable
-    public static ShaderInstance getScanEffectShader() {
+    public static ShaderProgram getScanEffectShader() {
         return scanEffectShader;
     }
 
     @Nullable
-    public static ShaderInstance getScanResultShader() {
+    public static ShaderProgram getScanResultShader() {
         return scanResultShader;
-    }
-
-    @Override
-    public void onResourceManagerReload(ResourceManager manager) {
-        reloadShaders(manager);
-    }
-
-    private static void loadAndListenToReload() {
-        Minecraft.getInstance().submitAsync(() -> {
-            ResourceManager manager = Minecraft.getInstance().getResourceManager();
-            INSTANCE.onResourceManagerReload(manager);
-            if (manager instanceof ReloadableResourceManager reloadableManager) {
-                reloadableManager.registerReloadListener(INSTANCE);
-            }
-        });
-    }
-
-    private static void reloadShaders(ResourceProvider provider) {
-        RenderSystem.assertOnRenderThread();
-        SHADERS.forEach(reference -> reference.reload(provider));
-    }
-
-    private static void addShader(String name, VertexFormat format, Consumer<ShaderInstance> reloadAction) {
-        SHADERS.add(new ShaderReference(name, format, reloadAction));
-    }
-
-    private static final class ShaderReference {
-        private final String name;
-        private final VertexFormat format;
-        private final Consumer<ShaderInstance> reloadAction;
-        @Nullable private ShaderInstance shader;
-
-        ShaderReference(String name, VertexFormat format, Consumer<ShaderInstance> reloadAction) {
-            this.name = name;
-            this.format = format;
-            this.reloadAction = reloadAction;
-        }
-
-        void reload(ResourceProvider provider) {
-            if (shader != null) {
-                shader.close();
-                shader = null;
-            }
-
-            try {
-                shader = new ShaderInstance(
-                        location -> provider.getResource(
-                                ResourceLocation.fromNamespaceAndPath("minecraft", location.getPath()))
-                                .or(() -> provider.getResource(
-                                        ResourceLocation.fromNamespaceAndPath(com.starmao.scannable.Scannable.MOD_ID, location.getPath()))),
-                        name, format);
-            } catch (Exception e) {
-                LOGGER.error("Failed to load shader: {}", name, e);
-            }
-
-            reloadAction.accept(shader);
-        }
     }
 
     private Shaders() {

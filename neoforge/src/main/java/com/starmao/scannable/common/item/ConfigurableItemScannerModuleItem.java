@@ -8,19 +8,22 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+
 import java.util.List;
 
 /**
- * Configurable item scanner module item.
- *
- * <p>Configure target items via GUI or JEI ghost drag. When installed in a scanner,
- * it scans all nearby containers for the configured items and highlights matching
- * containers with item name and quantity labels.
+ * Configurable item scanner module item — 1.21.2 variant with Properties constructor.
  */
 public final class ConfigurableItemScannerModuleItem extends ConfigurableModuleItem<Item> {
     public ConfigurableItemScannerModuleItem() {
         super(ItemScannerModule.INSTANCE,
                 (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand));
+    }
+
+    public ConfigurableItemScannerModuleItem(Item.Properties properties) {
+        super(ItemScannerModule.INSTANCE,
+                (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override

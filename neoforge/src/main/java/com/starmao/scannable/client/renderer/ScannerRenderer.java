@@ -9,7 +9,9 @@ import com.mojang.blaze3d.vertex.*;
 import com.starmao.scannable.client.ScanManager;
 import com.starmao.scannable.client.shader.Shaders;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.CompiledShaderProgram;
+import com.mojang.blaze3d.ProjectionType;
+import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -50,7 +52,7 @@ public enum ScannerRenderer {
     private void grabDepthBuffer() {
         RenderTarget mainRenderTarget = Minecraft.getInstance().getMainRenderTarget();
         if (mainRenderTarget.width != mainCameraDepth.width || mainRenderTarget.height != mainCameraDepth.height) {
-            mainCameraDepth.resize(mainRenderTarget.width, mainRenderTarget.height, Minecraft.ON_OSX);
+            mainCameraDepth.resize(mainRenderTarget.width, mainRenderTarget.height);
         }
         mainCameraDepth = copyBufferSettings(mainRenderTarget, mainCameraDepth);
         mainCameraDepth.copyDepthFrom(mainRenderTarget);
@@ -58,35 +60,14 @@ public enum ScannerRenderer {
     }
 
     private void renderEffect(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
-        ShaderInstance shader = Shaders.getScanEffectShader();
+        ShaderProgram shader = Shaders.getScanEffectShader();
         if (shader == null) return;
 
         RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
-        updateShaderUniforms(shader, viewMatrix, projectionMatrix);
-        blit(target);
+        blit(target, viewMatrix, projectionMatrix);
     }
 
-    private void updateShaderUniforms(ShaderInstance shader, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
-        Matrix4f invertedViewMatrix = new Matrix4f(viewMatrix);
-        invertedViewMatrix.invert();
-
-        Matrix4f invertedProjectionMatrix = new Matrix4f(projectionMatrix);
-        invertedProjectionMatrix.invert();
-
-        Vec3 cameraPosition = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-
-        int adjustedDuration = ScanManager.computeScanGrowthDuration();
-        float radius = ScanManager.computeRadius(currentStart, (float) adjustedDuration);
-
-        shader.setSampler("depthTex", mainCameraDepth.getDepthTextureId());
-        shader.safeGetUniform("center").set(currentCenter.toVector3f());
-        shader.safeGetUniform("invViewMat").set(invertedViewMatrix);
-        shader.safeGetUniform("invProjMat").set(invertedProjectionMatrix);
-        shader.safeGetUniform("pos").set(cameraPosition.toVector3f());
-        shader.safeGetUniform("radius").set(radius);
-    }
-
-    private void blit(RenderTarget target) {
+    private void blit(RenderTarget target, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
         int width = target.width;
         int height = target.height;
 
@@ -94,11 +75,34 @@ public enum ScannerRenderer {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
 
-        ShaderInstance oldShader = RenderSystem.getShader();
-        RenderSystem.setShader(Shaders::getScanEffectShader);
+        ShaderProgram shaderDef = Shaders.getScanEffectShader();
+        if (shaderDef == null) return;
+        CompiledShaderProgram oldShader = RenderSystem.setShader(shaderDef);
+
+        // Compute uniforms now that the shader is active
+        CompiledShaderProgram activeShader = RenderSystem.getShader();
+        if (activeShader != null) {
+            Matrix4f invertedViewMatrix = new Matrix4f(viewMatrix);
+            invertedViewMatrix.invert();
+
+            Matrix4f invertedProjectionMatrix = new Matrix4f(projectionMatrix);
+            invertedProjectionMatrix.invert();
+
+            Vec3 cameraPosition = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+
+            int adjustedDuration = ScanManager.computeScanGrowthDuration();
+            float radiusAmount = ScanManager.computeRadius(currentStart, (float) adjustedDuration);
+
+            activeShader.safeGetUniform("depthTex").set(mainCameraDepth.getDepthTextureId());
+            activeShader.safeGetUniform("center").set(currentCenter.toVector3f());
+            activeShader.safeGetUniform("invViewMat").set(invertedViewMatrix);
+            activeShader.safeGetUniform("invProjMat").set(invertedProjectionMatrix);
+            activeShader.safeGetUniform("pos").set(cameraPosition.toVector3f());
+            activeShader.safeGetUniform("radius").set(radiusAmount);
+        }
 
         RenderSystem.backupProjectionMatrix();
-        RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, width, 0, height, 1, 100), VertexSorting.ORTHOGRAPHIC_Z);
+        RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, width, 0, height, 1, 100), ProjectionType.ORTHOGRAPHIC);
 
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.addVertex(0, 0, -50).setUv(0, 0);
@@ -108,21 +112,21 @@ public enum ScannerRenderer {
         BufferUploader.drawWithShader(buffer.buildOrThrow());
 
         RenderSystem.restoreProjectionMatrix();
-        RenderSystem.setShader(() -> oldShader);
+        RenderSystem.setShader(oldShader);
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
     }
 
+
     public static final class DepthOnlyRenderTarget extends TextureTarget {
         public DepthOnlyRenderTarget(int width, int height) {
-            super(width, height, true, Minecraft.ON_OSX);
+            super(width, height, true);
         }
 
-        @Override
-        public void createBuffers(int width, int height, boolean isOnOSX) {
-            super.createBuffers(width, height, isOnOSX);
+        public void createBuffers(int width, int height) {
+            super.createBuffers(width, height);
             if (colorTextureId > -1) {
                 if (frameBufferId > -1) {
                     glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
@@ -136,14 +140,6 @@ public enum ScannerRenderer {
     }
 
     private static DepthOnlyRenderTarget copyBufferSettings(RenderTarget mainRenderTarget, DepthOnlyRenderTarget depthRenderTarget) {
-        if (mainRenderTarget.isStencilEnabled()) {
-            depthRenderTarget.enableStencil();
-            return depthRenderTarget;
-        } else if (depthRenderTarget.isStencilEnabled()) {
-            depthRenderTarget.destroyBuffers();
-            return new DepthOnlyRenderTarget(depthRenderTarget.width, depthRenderTarget.height);
-        } else {
-            return depthRenderTarget;
-        }
+        return depthRenderTarget;
     }
 }

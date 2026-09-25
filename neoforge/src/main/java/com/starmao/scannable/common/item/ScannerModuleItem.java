@@ -1,6 +1,8 @@
 package com.starmao.scannable.common.item;
 
 import com.starmao.scannable.api.ScannerModule;
+import net.minecraft.world.item.Item;
+
 import com.starmao.scannable.common.config.Strings;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -11,14 +13,19 @@ import java.util.Objects;
 
 /**
  * Item wrapper for a non-configurable scanner module.
- * <p>Each instance holds a reference to its {@link ScannerModule} implementation
- * (e.g. {@link com.starmao.scannable.common.scanning.RangeScannerModule}).
- * The module behaviour is accessed via {@link #getModule()}.
+ * <p>1.21.2 variant — takes explicit {@link Item.Properties} so the
+ * registry name / descriptionId can be set before the Item constructor
+ * runs (vanilla 1.21.2+ requires descriptionId on Properties).
  */
 public class ScannerModuleItem extends ModItem {
     private final ScannerModule module;
 
     public ScannerModuleItem(final ScannerModule module) {
+        this(module, new Item.Properties());
+    }
+
+    public ScannerModuleItem(final ScannerModule module, final Item.Properties properties) {
+        super(properties);
         this.module = Objects.requireNonNull(module);
     }
 

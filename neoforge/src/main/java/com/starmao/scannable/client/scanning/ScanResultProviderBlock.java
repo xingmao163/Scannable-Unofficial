@@ -12,14 +12,14 @@ import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.client.shader.Shaders;
-import com.starmao.scannable.client.renderer.HandDepthRenderer;
 import com.starmao.scannable.common.scanning.filter.IgnoredBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.CompiledShaderProgram;
+import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -68,12 +68,17 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         results.clear();
 
         Map<Integer, List<Predicate<BlockState>>> filterByRadius = new HashMap<>();
+        com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] initialize: {} modules, base radius={}", modules.size(), radius);
         for (ItemStack stack : modules) {
             Optional<ScannerModule> capability = ModuleHelper.getModule(stack);
             capability.ifPresent(module -> {
+                com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] module={} isBlockScanner={}",
+                        module.getClass().getSimpleName(), module instanceof BlockScannerModule);
                 if (module instanceof BlockScannerModule blockModule) {
                     Predicate<BlockState> filter = blockModule.getFilter(stack);
                     int localRadius = (int) Math.ceil(blockModule.adjustLocalRange(this.radius));
+                    com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] filter={}, localRadius={}",
+                            filter.getClass().getSimpleName(), localRadius);
                     filterByRadius.computeIfAbsent(localRadius, r -> new ArrayList<>()).add(filter);
                 }
             });
@@ -84,6 +89,8 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
 
         if (!radii.isEmpty()) {
             this.radius = radii.get(0);
+            com.starmao.scannable.Scannable.LOGGER.info("[BlockProvider] {} filter layers, max radius={}",
+                    radii.size(), this.radius);
             for (int r : radii) {
                 scanFilterLayers.add(new ScanFilterLayer(r, filterByRadius.get(r)));
             }
@@ -220,7 +227,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 DefaultVertexFormat.POSITION_TEX_COLOR,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getScanResultShader))
+                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders.SCAN_RESULT))
                         .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .setCullState(RenderStateShard.NO_CULL)
@@ -228,23 +235,43 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                         .createCompositeState(false));
     }
 
-    @SuppressWarnings("null")
     private void renderBlocks(PoseStack poseStack, Camera renderInfo, float partialTicks, List<ScanResult> results) {
-        ShaderInstance shader = Shaders.getScanResultShader();
-        if (shader == null) return;
-
-        float t = (System.currentTimeMillis() - renderStartTime) / 1000.0f;
-        float ts = ((float) Math.sin(t * 2.5) + 1.0f) * 0.5f;
-        ts = ts * 0.15f + 0.85f;
-        shader.safeGetUniform("time").set(t);
-        shader.safeGetUniform("timeScale").set(ts);
-
         // Re-render hands into depth buffer to avoid rendering overlay on top of player hands.
-        HandDepthRenderer.writeHandDepth(partialTicks);
+        if (Minecraft.getInstance().options.getCameraType().isFirstPerson()
+            && !Minecraft.getInstance().options.hideGui
+            && Minecraft.getInstance().gameMode.getPlayerMode() != net.minecraft.world.level.GameType.SPECTATOR
+            && Minecraft.getInstance().player != null
+            && !(Minecraft.getInstance().getCameraEntity() instanceof net.minecraft.world.entity.LivingEntity living && living.isSleeping())) {
+            RenderSystem.colorMask(false, false, false, false);
+            try {
+                PoseStack viewPose = com.starmao.scannable.client.ScanManager.getWorldViewModelStack();
+                if (viewPose != null) {
+                    org.joml.Matrix4f viewMat = new org.joml.Matrix4f(viewPose.last().pose());
+                    var mvStack = RenderSystem.getModelViewStack();
+                    mvStack.pushMatrix().mul(viewMat);
+                    PoseStack handPose = new PoseStack();
+                    handPose.pushPose();
+                    handPose.mulPose(viewMat.invert(new org.joml.Matrix4f()));
+                    var bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
+                    Minecraft.getInstance().gameRenderer.itemInHandRenderer.renderHandsWithItems(
+                        partialTicks, handPose, bufferSource,
+                        (net.minecraft.client.player.LocalPlayer) Minecraft.getInstance().player,
+                        Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, partialTicks)
+                    );
+                    bufferSource.endBatch();
+                    handPose.popPose();
+                    mvStack.popMatrix();
+                }
+            } catch (final Throwable e) {
+                LOGGER.error("Failed to render hand into depth buffer", e);
+            }
+            RenderSystem.colorMask(true, true, true, true);
+        }
 
 
         RenderType renderType = getBlockScanResultRenderLayer();
         renderType.setupRenderState();
+        CompiledShaderProgram shader = RenderSystem.getShader();
         for (ScanResult result : results) {
             BlockScanResult blockResult = (BlockScanResult) result;
             VertexBuffer vbo = blockResult.vbo;
@@ -272,7 +299,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
                 result -> ModTextures.ICON_INFO,
                 result -> ((BlockScanResult) result).block.getName(),
                 result -> ((BlockScanResult) result).hasVisible(),
-                MAX_ICONS, ICON_CONE_DOT);
+                Integer.MAX_VALUE, 0.98f);
     }
 
     // ---- Clustering ---- //
@@ -288,7 +315,6 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
         return root != null;
     }
 
-    @SuppressWarnings("null")
     @Nullable
     private BlockScanResult tryAddToCluster(Map<BlockPos, BlockScanResult> clusters, BlockPos pos,
                                              BlockPos clusterPos, @Nullable BlockScanResult root) {
@@ -367,13 +393,12 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider {
 
 
 
-        @SuppressWarnings("null")
         private void buildVbo() {
             if (blocks.isEmpty()) return;
             BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             render(buffer, new PoseStack());
             if (vbo == null) {
-                vbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                vbo = new VertexBuffer(com.mojang.blaze3d.buffers.BufferUsage.DYNAMIC_WRITE);
             }
             vbo.bind();
             vbo.upload(buffer.buildOrThrow());

@@ -58,11 +58,13 @@ public final class Scannable {
         // --- Client-only setup ---
         if (FMLEnvironment.dist.isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
-            // Make the Config button clickable in the Mods screen.
-            // Uses ClientRegistrations (method annotated @OnlyIn(Dist.CLIENT))
-            // so RuntimeDistCleaner strips the client-only class references on server.
-            com.starmao.scannable.client.ClientRegistrations.registerConfigScreen(modContainer);
 
+            // Make the Config button clickable in the Mods screen.
+            modContainer.registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mc, screen) ->
+                            new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, screen)
+            );
         }
 
     }
@@ -98,8 +100,7 @@ public final class Scannable {
                 Items.HOSTILE_ENTITY_MODULE.get(),
                 Items.BLOCK_MODULE.get(),
                 Items.FLUID_MODULE.get(),
-                Items.ITEM_MODULE.get(),
-                Items.CHARGER_MODULE.get());
+                Items.ITEM_MODULE.get());
     }
 
     public static ResourceLocation id(String path) {

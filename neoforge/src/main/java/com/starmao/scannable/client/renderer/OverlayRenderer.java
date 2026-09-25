@@ -6,7 +6,8 @@ import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.item.ScannerItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ShaderDefines;
+import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -17,6 +18,12 @@ import net.minecraft.world.item.ItemStack;
 public final class OverlayRenderer {
     private static final ResourceLocation PROGRESS =
             com.starmao.scannable.Scannable.id("textures/gui/overlay/scanner_progress.png");
+
+    private static final ShaderProgram POSITION_TEX_SHADER = new ShaderProgram(
+            ResourceLocation.withDefaultNamespace("position_tex"),
+            DefaultVertexFormat.POSITION_TEX,
+            ShaderDefines.EMPTY
+    );
 
     public static void render(GuiGraphics graphics, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
@@ -36,7 +43,7 @@ public final class OverlayRenderer {
         int screenHeight = mc.getWindow().getGuiScaledHeight();
 
         RenderSystem.enableBlend();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(POSITION_TEX_SHADER);
         RenderSystem.setShaderColor(0.66f, 0.8f, 0.93f, 0.66f);
         RenderSystem.setShaderTexture(0, PROGRESS);
 

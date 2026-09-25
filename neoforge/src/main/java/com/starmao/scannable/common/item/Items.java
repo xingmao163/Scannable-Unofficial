@@ -5,6 +5,7 @@ import com.starmao.scannable.common.scanning.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.world.item.Item;
 
 /**
  * Registration hub for all scanner items.
@@ -15,7 +16,8 @@ public final class Items {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Scannable.MOD_ID);
 
     /** The handheld scanner item — core item of the mod. */
-    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.register("scanner", ScannerItem::new);
+    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.register("scanner",
+            () -> new ScannerItem(new Item.Properties()));
 
     // ---- Scanner Modules ---- //
 
@@ -38,7 +40,8 @@ public final class Items {
     public static final DeferredItem<ConfigurableEntityScannerModuleItem> ENTITY_MODULE = ITEMS.register("entity_module",
             () -> new ConfigurableEntityScannerModuleItem());
     /** Placeholder module item with no scanning function (for recipe purposes). */
-    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.register("blank_module", () -> new ModItem());
+    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.register("blank_module",
+            () -> new ModItem());
     /** Configurable module — detects specific items in containers. */
     public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.register("item_module",
             () -> new ConfigurableItemScannerModuleItem());
@@ -48,7 +51,7 @@ public final class Items {
     /** Detects rare ore blocks (diamond, emerald, netherite, quartz, etc.). */
     public static final DeferredItem<ScannerModuleItem> RARE_ORES_MODULE = ITEMS.register("rare_ores_module",
             () -> new ScannerModuleItem(RareOresBlockScannerModule.INSTANCE));
-    /** Generates energy for the scanner over time when installed. */
+    /** Scanner charging upgrade — charge items inside inventory. */
     public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.register("charger_module",
             () -> new ScannerModuleItem(ChargingScannerModule.INSTANCE));
 

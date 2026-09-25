@@ -7,13 +7,13 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.starmao.scannable.api.ScanResultProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.TriState;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -26,6 +26,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
 /** Abstract base for scan result providers. */
 @OnlyIn(Dist.CLIENT)
 public abstract class AbstractScanResultProvider implements ScanResultProvider {
@@ -140,18 +141,16 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
 
     // ---- Render layers ---- //
 
-    private static final RenderType SCAN_RESULT_LAYER = RenderType.create("scan_result",
-            DefaultVertexFormat.POSITION_COLOR,
-            VertexFormat.Mode.QUADS, 65536, false, false,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                    .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false));
-
     protected static RenderType getRenderLayer() {
-        return SCAN_RESULT_LAYER;
+        return RenderType.create("scan_result",
+                DefaultVertexFormat.POSITION_COLOR,
+                VertexFormat.Mode.QUADS, 65536, false, false,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
+                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
+                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
     }
 
     protected static RenderType getRenderLayer(ResourceLocation textureLocation) {
@@ -159,8 +158,8 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
                 DefaultVertexFormat.POSITION_TEX,
                 VertexFormat.Mode.QUADS, 65536, false, false,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(textureLocation, false, false))
+                        .setShaderState(RenderStateShard.POSITION_TEX_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(textureLocation, TriState.FALSE, false))
                         .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
                         .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)

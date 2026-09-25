@@ -7,6 +7,8 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -28,6 +30,13 @@ public final class ConfigurableEntityScannerModuleItem extends ConfigurableModul
     public ConfigurableEntityScannerModuleItem() {
         super(ConfigurableEntityScannerModule.INSTANCE,
                 (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand));
+    }
+
+    /** 1.21.2+ variant — Properties provided by DeferredRegister.Items. */
+    public ConfigurableEntityScannerModuleItem(Item.Properties properties) {
+        super(ConfigurableEntityScannerModule.INSTANCE,
+                (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override
@@ -61,6 +70,6 @@ public final class ConfigurableEntityScannerModuleItem extends ConfigurableModul
                         Component.translatable("message.scannable_unofficial.scanner.no_free_slots").withStyle(net.minecraft.ChatFormatting.RED), true);
             }
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide());
+        return player.level().isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
     }
 }
