@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.container;
 
 import com.starmao.scannable.common.item.ConfigurableModuleItem;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -52,7 +52,7 @@ public abstract class AbstractModuleContainerMenu extends AbstractContainerMenu 
     }
 
     /** Sets a configured target at the given index on the module item. */
-    public abstract void setItemAt(int index, ResourceLocation value);
+    public abstract void setItemAt(int index, Identifier value);
 
     @Override
     public boolean stillValid(Player player) {

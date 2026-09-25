@@ -6,7 +6,7 @@ import com.starmao.scannable.api.EntityScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.scanning.filter.HostileEntityScanFilter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
@@ -45,7 +45,7 @@ public enum HostileEntityScannerModule implements EntityScannerModule {
      * {@return the warning icon overlay for hostile entity scan results}
      */
     @Override
-    public Optional<ResourceLocation> getIcon(Entity entity) {
+    public Optional<Identifier> getIcon(Entity entity) {
         return Optional.of(ModTextures.ICON_WARNING);
     }
 

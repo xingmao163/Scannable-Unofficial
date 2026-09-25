@@ -4,7 +4,8 @@ import com.starmao.scannable.Scannable;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
@@ -76,27 +77,16 @@ public final class ClientConfig {
 
     static { BUILDER.pop(); }
 
-    static { BUILDER.push("rendering"); }
-
-    public static final ModConfigSpec.BooleanValue HAND_DEPTH_PASS = BUILDER
-            .comment("Re-render the first-person hand into the depth buffer before drawing scan highlights,",
-                    "so the highlights do not bleed over the hand or the held item.",
-                    "Disable this if you see hand / held-item artefacts, or if a mod that takes over",
-                    "first-person hand rendering (e.g. Yes Steve Model) reports render errors.",
-                    "Applies from the next frame, no restart needed.")
-            .define("handDepthPass", true);
-
-    static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
     // ========================================================================
     // Parsed color maps (lazily cached, cleared on config reload)
     // ========================================================================
 
-    private static Map<ResourceLocation, Integer> blockColors;
-    private static Map<ResourceLocation, Integer> blockTagColors;
-    private static Map<ResourceLocation, Integer> fluidColors;
-    private static Map<ResourceLocation, Integer> fluidTagColors;
+    private static Map<Identifier, Integer> blockColors;
+    private static Map<Identifier, Integer> blockTagColors;
+    private static Map<Identifier, Integer> fluidColors;
+    private static Map<Identifier, Integer> fluidTagColors;
 
     public static void clearCache() {
         blockColors = null;
@@ -105,22 +95,22 @@ public final class ClientConfig {
         fluidTagColors = null;
     }
 
-    public static Map<ResourceLocation, Integer> getBlockColors() {
+    public static Map<Identifier, Integer> getBlockColors() {
         if (blockColors == null) blockColors = parseColorList(BLOCK_COLORS.get());
         return blockColors;
     }
 
-    public static Map<ResourceLocation, Integer> getBlockTagColors() {
+    public static Map<Identifier, Integer> getBlockTagColors() {
         if (blockTagColors == null) blockTagColors = parseColorList(BLOCK_TAG_COLORS.get());
         return blockTagColors;
     }
 
-    public static Map<ResourceLocation, Integer> getFluidColors() {
+    public static Map<Identifier, Integer> getFluidColors() {
         if (fluidColors == null) fluidColors = parseColorList(FLUID_COLORS.get());
         return fluidColors;
     }
 
-    public static Map<ResourceLocation, Integer> getFluidTagColors() {
+    public static Map<Identifier, Integer> getFluidTagColors() {
         if (fluidTagColors == null) fluidTagColors = parseColorList(FLUID_TAG_COLORS.get());
         return fluidTagColors;
     }
@@ -129,7 +119,7 @@ public final class ClientConfig {
      * Convenience: look up a block's configured color. Returns {@code null} if no override is set.
      */
     public static Integer getBlockColor(final Block block) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        Identifier id = BuiltInRegistries.BLOCK.getKey(block);
         Integer color = getBlockColors().get(id);
         if (color != null) return color;
         for (var entry : getBlockTagColors().entrySet()) {
@@ -143,7 +133,7 @@ public final class ClientConfig {
      * Convenience: look up a fluid's configured color. Returns {@code null} if no override is set.
      */
     public static Integer getFluidColor(final Fluid fluid) {
-        ResourceLocation id = BuiltInRegistries.FLUID.getKey(fluid);
+        Identifier id = BuiltInRegistries.FLUID.getKey(fluid);
         Integer color = getFluidColors().get(id);
         if (color != null) return color;
         for (var entry : getFluidTagColors().entrySet()) {
@@ -160,9 +150,9 @@ public final class ClientConfig {
     /**
      * Result of parsing a single {@code "namespace:path=0xRRGGBB"} color entry.
      */
-    private record ParseResult(boolean valid, @Nullable ResourceLocation key, @Nullable Integer color, @Nullable String error) {
+    private record ParseResult(boolean valid, @Nullable Identifier key, @Nullable Integer color, @Nullable String error) {
         static final ParseResult INVALID = new ParseResult(false, null, null, null);
-        static ParseResult ok(ResourceLocation key, int color) {
+        static ParseResult ok(Identifier key, int color) {
             return new ParseResult(true, key, color, null);
         }
         static ParseResult fail(String error) {
@@ -190,9 +180,9 @@ public final class ClientConfig {
         String value = entry.substring(eq + 1);
 
         // Validate key
-        ResourceLocation id = ResourceLocation.tryParse(key);
+        Identifier id = Identifier.tryParse(key);
         if (id == null) {
-            return ParseResult.fail("invalid key '" + key + "' — must be a valid ResourceLocation (e.g. \"minecraft:stone\")");
+            return ParseResult.fail("invalid key '" + key + "' — must be a valid Identifier (e.g. \"minecraft:stone\")");
         }
 
         // Validate + parse color value
@@ -225,8 +215,8 @@ public final class ClientConfig {
      * Parse a list of {@code "key=0xRRGGBB"} entries into an immutable color map.
      * <p>Invalid entries are logged with a warning and skipped.
      */
-    private static Map<ResourceLocation, Integer> parseColorList(final List<? extends String> entries) {
-        Map<ResourceLocation, Integer> result = new HashMap<>();
+    private static Map<Identifier, Integer> parseColorList(final List<? extends String> entries) {
+        Map<Identifier, Integer> result = new HashMap<>();
         for (String entry : entries) {
             if (entry == null) {
                 Scannable.LOGGER.warn("[ClientConfig] Skipping null color entry");
@@ -246,25 +236,25 @@ public final class ClientConfig {
      * Default block tag colors matching common ore block textures.
      */
     private static List<String> defaultBlockTagColors() {
-        Object2IntMap<ResourceLocation> map = new Object2IntOpenHashMap<>();
-        map.put(Tags.Blocks.ORES_COAL.location(), MapColor.COLOR_GRAY.col);
-        map.put(Tags.Blocks.ORES_IRON.location(), MapColor.COLOR_BROWN.col);
-        map.put(Tags.Blocks.ORES_GOLD.location(), MapColor.GOLD.col);
-        map.put(Tags.Blocks.ORES_LAPIS.location(), MapColor.LAPIS.col);
-        map.put(Tags.Blocks.ORES_DIAMOND.location(), MapColor.DIAMOND.col);
-        map.put(Tags.Blocks.ORES_REDSTONE.location(), MapColor.COLOR_RED.col);
-        map.put(Tags.Blocks.ORES_EMERALD.location(), MapColor.EMERALD.col);
-        map.put(Tags.Blocks.ORES_QUARTZ.location(), MapColor.QUARTZ.col);
-        map.put(ResourceLocation.parse("c:ores/tin"), MapColor.COLOR_CYAN.col);
-        map.put(ResourceLocation.parse("c:ores/copper"), MapColor.TERRACOTTA_ORANGE.col);
-        map.put(ResourceLocation.parse("c:ores/lead"), MapColor.TERRACOTTA_BLUE.col);
-        map.put(ResourceLocation.parse("c:ores/silver"), MapColor.COLOR_LIGHT_GRAY.col);
-        map.put(ResourceLocation.parse("c:ores/nickel"), MapColor.COLOR_LIGHT_BLUE.col);
-        map.put(ResourceLocation.parse("c:ores/platinum"), MapColor.TERRACOTTA_WHITE.col);
-        map.put(ResourceLocation.parse("c:ores/mithril"), MapColor.COLOR_PURPLE.col);
+        Object2IntMap<Identifier> map = new Object2IntOpenHashMap<>();
+        map.put(BlockTags.COAL_ORES.location(), MapColor.COLOR_GRAY.col);
+        map.put(BlockTags.IRON_ORES.location(), MapColor.COLOR_BROWN.col);
+        map.put(BlockTags.GOLD_ORES.location(), MapColor.GOLD.col);
+        map.put(BlockTags.LAPIS_ORES.location(), MapColor.LAPIS.col);
+        map.put(BlockTags.DIAMOND_ORES.location(), MapColor.DIAMOND.col);
+        map.put(BlockTags.REDSTONE_ORES.location(), MapColor.COLOR_RED.col);
+        map.put(BlockTags.EMERALD_ORES.location(), MapColor.EMERALD.col);
+        map.put(Identifier.parse("c:ores/quartz"), MapColor.QUARTZ.col);
+        map.put(Identifier.parse("c:ores/tin"), MapColor.COLOR_CYAN.col);
+        map.put(Identifier.parse("c:ores/copper"), MapColor.TERRACOTTA_ORANGE.col);
+        map.put(Identifier.parse("c:ores/lead"), MapColor.TERRACOTTA_BLUE.col);
+        map.put(Identifier.parse("c:ores/silver"), MapColor.COLOR_LIGHT_GRAY.col);
+        map.put(Identifier.parse("c:ores/nickel"), MapColor.COLOR_LIGHT_BLUE.col);
+        map.put(Identifier.parse("c:ores/platinum"), MapColor.TERRACOTTA_WHITE.col);
+        map.put(Identifier.parse("c:ores/mithril"), MapColor.COLOR_PURPLE.col);
 
         return map.object2IntEntrySet().stream()
-                .map(e -> e.getKey().toString() + "=0x" + Integer.toHexString(e.getIntValue()))
+                .map(e -> e.getKey().toString() + "=0x" + String.format("%06x", e.getIntValue() & 0xFFFFFF))
                 .toList();
     }
 

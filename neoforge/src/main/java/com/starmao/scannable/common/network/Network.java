@@ -40,12 +40,12 @@ public final class Network {
 
     /** Sends a set-configured-item message to the server. */
     public static void sendToServer(SetConfiguredModuleItemAtMessage msg) {
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(msg);
+        net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(msg);
     }
 
     /** Sends a remove-configured-item message to the server. */
     public static void sendToServer(RemoveConfiguredModuleItemAtMessage msg) {
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(msg);
+        net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(msg);
     }
 
     private Network() {

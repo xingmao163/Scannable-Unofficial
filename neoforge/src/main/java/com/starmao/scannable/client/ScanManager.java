@@ -1,19 +1,16 @@
 package com.starmao.scannable.client;
 
-import com.starmao.scannable.common.config.ServerConfig;
-import com.starmao.scannable.client.scanning.ItemScanResult;
-import com.starmao.scannable.client.scanning.ScanResultProviders;
-import com.starmao.scannable.common.item.ModuleHelper;
-import com.starmao.scannable.common.network.data.ItemScanResultData;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexSorting;
 import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.ScannerModule;
-import com.starmao.scannable.client.renderer.ScanRenderBuffers;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
+import com.starmao.scannable.common.config.ServerConfig;
+import com.starmao.scannable.common.item.ModuleHelper;
+import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -25,39 +22,39 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
-/** Central orchestrator for the client-side scan lifecycle. */
-@OnlyIn(Dist.CLIENT)
+/**
+ * Central orchestrator for the client-side scan lifecycle on 26.1.2.
+ * <p>
+ * Manages scan start, tick-based result reveal, and world/GUI rendering
+ * using the 26.1.2 RenderPipeline / MultiBufferSource / RenderType system.
+ */
 public final class ScanManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScanManager.class);
+
     public static final int SCAN_COMPUTE_DURATION = 40;
     private static final int SCAN_INITIAL_RADIUS = 10;
     private static final int SCAN_TIME_OFFSET = 200;
     private static final int SCAN_GROWTH_DURATION = 2000;
     private static final int REFERENCE_RENDER_DISTANCE = 12;
+
     private static int getScanStayDuration() {
         try {
             return ServerConfig.SCANNER_RESULT_STAY_DURATION.get();
         } catch (IllegalStateException e) {
-            return 10000; // default fallback before config is loaded
+            return 10000;
         }
     }
 
-    /**
-     * Buffer source for scan overlays. Uses {@link ScanRenderBuffers} so that item icons
-     * (GUI labels) can be drawn even when the stack carries enchantment glint — with a
-     * plain {@code MultiBufferSource.immediate(...)} the glint batch would be killed the
-     * moment the item's own render type is requested, throwing "Not building!".
-     */
-    private static final MultiBufferSource.BufferSource RENDER_BUFFER = ScanRenderBuffers.create();
+    private static final ByteBufferBuilder RENDER_BUFFER = new ByteBufferBuilder(256);
 
     private static float computeTargetRadius() {
-        return Minecraft.getInstance().gameRenderer.getRenderDistance();
+        return Minecraft.getInstance().options.getEffectiveRenderDistance();
     }
 
     public static int computeScanGrowthDuration() {
@@ -79,21 +76,12 @@ public final class ScanManager {
 
     private static final Set<ScanResultProvider> collectingProviders = new HashSet<>();
     private static final Map<ScanResultProvider, List<ScanResult>> collectingResults = new HashMap<>();
-    private static final Map<ScanResultProvider, List<ScanResult>> pendingResults = new ConcurrentHashMap<>();
+    private static final Map<ScanResultProvider, List<ScanResult>> pendingResults = new HashMap<>();
     private static final Map<ScanResultProvider, List<ScanResult>> renderingResults = new HashMap<>();
-    private static final List<ScanResult> renderingList = new ArrayList<>();
 
     private static int scanningTicks = -1;
     private static long currentStart = -1;
     @Nullable private static Vec3 lastScanCenter;
-
-    private static PoseStack worldViewModelStack;
-    private static Matrix4f worldProjectionMatrix;
-
-    /** Access for hand depth rendering in ScanResultProviderBlock. */
-    public static PoseStack getWorldViewModelStack() {
-        return worldViewModelStack;
-    }
 
     // ---- Public API ---- //
 
@@ -114,121 +102,78 @@ public final class ScanManager {
             scanRadius = module.adjustGlobalRange(scanRadius);
         }
 
-        if (collectingProviders.isEmpty()) return;
-
         Vec3 center = player.position();
+
         for (ScanResultProvider provider : collectingProviders) {
             provider.initialize(player, stacks, center, scanRadius, SCAN_COMPUTE_DURATION);
         }
 
-
+        scanningTicks = 0;
     }
 
-    /**
-     * Inject server-side item scan results into the rendering pipeline.
-     * Called when the client receives a {@link S2CItemScanResult} packet.
-     * <p>
-     * The results are placed directly into {@code pendingResults} so the
-     * existing tick/render loop handles the expansion animation and display.
-     */
-    public static void setServerItemResults(final Vec3 center, final List<ItemScanResultData> rawResults) {
-        if (center == null || rawResults == null || rawResults.isEmpty()) return;
-
-        // Convert network data to renderable results
-        final List<ScanResult> results = new ArrayList<>(rawResults.size());
-        for (final ItemScanResultData data : rawResults) {
-            final var itemKey = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(data.itemId());
-            if (itemKey.isEmpty()) continue;
-            results.add(new ItemScanResult(data.pos(), itemKey.get().getDefaultInstance(), data.totalCount()));
+    public static void updateScan(Entity entity, boolean finished) {
+        if (!collectingProviders.isEmpty() && entity != null) {
+            for (ScanResultProvider provider : collectingProviders) {
+                provider.computeScanResults();
+            }
         }
-        if (results.isEmpty()) return;
 
-        // Clear previous item scan results so broken/moved containers don't persist.
-        final ScanResultProvider provider = ScanResultProviders.ITEMS.get();
-        pendingResults.remove(provider);
-        synchronized (renderingResults) {
-            final List<ScanResult> old = renderingResults.remove(provider);
-            if (old != null) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!collectingProviders.isEmpty() && mc.level != null) {
+            for (ScanResultProvider provider : collectingProviders) {
+                List<ScanResult> collected = new ArrayList<>();
+                provider.collectScanResults(mc.level, collected::add);
+                if (!collected.isEmpty()) {
+                    collectingResults.put(provider, collected);
+                }
+            }
+        }
+
+        if (finished) {
+            // Complete: move results to rendering
+            for (ScanResultProvider provider : collectingProviders) {
                 provider.reset();
-                old.forEach(ScanResult::close);
             }
-        }
 
-        lastScanCenter = center;
-        currentStart = System.currentTimeMillis();
+            lastScanCenter = entity != null ? entity.position() : null;
+            currentStart = System.currentTimeMillis();
 
-        // Initialize renderStartTime so the shader time uniform has a valid
-        // starting point (collectScanResults is never called for item results).
-        if (provider instanceof com.starmao.scannable.client.scanning.ScanResultProviderItem itemProvider) {
-            itemProvider.markResultsUpdated();
-        }
+            pendingResults.putAll(collectingResults);
+            pendingResults.values().forEach(list ->
+                list.sort(Comparator.comparing(result ->
+                    lastScanCenter != null ? -lastScanCenter.distanceTo(result.getPosition()) : 0)));
 
-        pendingResults.put(provider, results);
-        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get())
-            com.starmao.scannable.Scannable.LOGGER.info("[ScanManager] Injected {} server item scan result(s)", results.size());
-    }
-
-    @SuppressWarnings("null")
-    public static void updateScan(Entity entity, boolean finish) {
-        int remaining = SCAN_COMPUTE_DURATION - scanningTicks;
-
-        if (!finish) {
-            if (remaining <= 0) return;
-            for (ScanResultProvider provider : collectingProviders) {
-                provider.computeScanResults();
+            synchronized (renderingResults) {
+                pendingResults.forEach((provider, results) ->
+                    renderingResults.put(provider, new ArrayList<>(results)));
             }
-            ++scanningTicks;
-            return;
-        }
+            pendingResults.clear();
 
-        // Finish
-        for (int i = 0; i < remaining; i++) {
-            for (ScanResultProvider provider : collectingProviders) {
-                provider.computeScanResults();
+            if (lastScanCenter != null) {
+                ScannerRenderer.INSTANCE.ping(lastScanCenter);
             }
+            cancelScan();
         }
-
-        for (ScanResultProvider provider : collectingProviders) {
-            provider.collectScanResults(entity.level(),
-                    result -> collectingResults.computeIfAbsent(provider, p -> new ArrayList<>()).add(result));
-            provider.reset();
-        }
-
-        clear();
-
-
-        lastScanCenter = Objects.requireNonNull(entity.position());
-        currentStart = System.currentTimeMillis();
-
-        pendingResults.putAll(collectingResults);
-        pendingResults.values().forEach(list ->
-                list.sort(Comparator.comparing(result -> -lastScanCenter.distanceTo(result.getPosition()))));
-
-        ScannerRenderer.INSTANCE.ping(lastScanCenter);
-        cancelScan();
     }
 
     public static void cancelScan() {
         collectingProviders.clear();
         collectingResults.clear();
         scanningTicks = 0;
-
     }
 
-
-    @SuppressWarnings("null")
     public static void tick() {
         if (lastScanCenter == null || currentStart < 0) return;
 
         long elapsed = System.currentTimeMillis() - currentStart;
         if (elapsed > getScanStayDuration()) {
-            // Fade out
             pendingResults.forEach((provider, results) -> results.forEach(ScanResult::close));
             pendingResults.clear();
             synchronized (renderingResults) {
                 if (!renderingResults.isEmpty()) {
-                    for (Iterator<Map.Entry<ScanResultProvider, List<ScanResult>>> it =
-                         renderingResults.entrySet().iterator(); it.hasNext(); ) {
+                    Iterator<Map.Entry<ScanResultProvider, List<ScanResult>>> it =
+                        renderingResults.entrySet().iterator();
+                    while (it.hasNext()) {
                         Map.Entry<ScanResultProvider, List<ScanResult>> entry = it.next();
                         List<ScanResult> list = entry.getValue();
                         for (int i = Mth.ceil(list.size() * 0.5f); i > 0; i--) {
@@ -258,6 +203,7 @@ public final class ScanManager {
             while (!results.isEmpty()) {
                 int index = results.size() - 1;
                 Vec3 position = results.get(index).getPosition();
+                assert lastScanCenter != null;
                 if (lastScanCenter.distanceToSqr(position) <= sqRadius) {
                     ScanResult result = results.remove(index);
                     synchronized (renderingResults) {
@@ -267,96 +213,56 @@ public final class ScanManager {
                     break;
                 }
             }
-
             if (results.isEmpty()) it.remove();
         }
     }
 
-    public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
-        worldViewModelStack = new PoseStack();
-        worldViewModelStack.last().pose().set(viewMatrix);
-        worldProjectionMatrix = projectionMatrix;
-    }
-
-    public static void renderLevel(float partialTick) {
-        synchronized (renderingResults) {
-            if (renderingResults.isEmpty()) return;
-            render(ScanResultRenderContext.WORLD, partialTick, worldViewModelStack, worldProjectionMatrix);
-        }
-    }
-
-    public static void renderGui(float partialTick) {
+    public static void renderLevel(final PoseStack poseStack, final float partialTick) {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
 
-            // Every RenderSystem state change below is unwound in a finally block: this
-            // method runs inside a NeoForge GUI layer, so an exception escaping here (or a
-            // leaked model-view entry) would take down unrelated layers with it.
-            RenderSystem.backupProjectionMatrix();
-            try {
-                RenderSystem.setProjectionMatrix(worldProjectionMatrix, VertexSorting.ORTHOGRAPHIC_Z);
-                RenderSystem.getModelViewStack().pushMatrix();
-                try {
-                    RenderSystem.getModelViewStack().identity();
-                    RenderSystem.applyModelViewMatrix();
+            Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            Vec3 cam = camera.position();
 
-                    render(ScanResultRenderContext.GUI, partialTick, worldViewModelStack, worldProjectionMatrix);
-                } finally {
-                    RenderSystem.getModelViewStack().popMatrix();
-                    RenderSystem.applyModelViewMatrix();
-                }
-            } finally {
-                RenderSystem.restoreProjectionMatrix();
-            }
-        }
-    }
+            poseStack.pushPose();
+            poseStack.translate(-cam.x, -cam.y, -cam.z);
 
-    private static void render(ScanResultRenderContext context, float partialTicks, PoseStack poseStack, Matrix4f projectionMatrix) {
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vec3 pos = camera.getPosition();
-
-        Frustum frustum = new Frustum(poseStack.last().pose(), projectionMatrix);
-        frustum.prepare(pos.x(), pos.y(), pos.z());
-
-        RenderSystem.disableDepthTest();
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-
-        poseStack.pushPose();
-        try {
-            poseStack.translate(-pos.x, -pos.y, -pos.z);
+            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(RENDER_BUFFER);
 
             for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                if (context == ScanResultRenderContext.WORLD) {
-                    // World highlights: pass ALL results so VBO caches are built
-                    // for every position, not just the frustum-visible subset.
-                    // GPU-level frustum culling handles invisible quads efficiently.
-                    if (!entry.getValue().isEmpty()) {
-                        entry.getKey().render(context, RENDER_BUFFER, poseStack, camera, partialTicks, entry.getValue());
-                    }
-                } else {
-                    // GUI text labels: frustum-cull so labels don't render off-screen.
-                    for (ScanResult result : entry.getValue()) {
-                        AABB bounds = result.getRenderBounds();
-                        if (bounds == null || frustum.isVisible(bounds)) {
-                            renderingList.add(result);
-                        }
-                    }
-                    if (!renderingList.isEmpty()) {
-                        entry.getKey().render(context, RENDER_BUFFER, poseStack, camera, partialTicks, renderingList);
-                        renderingList.clear();
-                    }
-                }
+                entry.getKey().render(ScanResultRenderContext.WORLD, bufferSource, poseStack, camera, partialTick, entry.getValue());
             }
-        } finally {
-            // Unwind in reverse order so a failing provider cannot leave the shared
-            // model-view stack, the pose stack, or the GL depth test in a bad state.
-            renderingList.clear();
-            RENDER_BUFFER.endBatch();
+            for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
+                entry.getKey().render(ScanResultRenderContext.GUI, bufferSource, poseStack, camera, partialTick, entry.getValue());
+            }
+            bufferSource.endBatch();
+
             poseStack.popPose();
-            RenderSystem.enableDepthTest();
         }
     }
 
+    public static void renderGui(final float partialTick) {
+        // GUI result overlay: currently unused in 26.1.2 (results render in world via renderLevel)
+    }
+
+    public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
+        // Not needed in 26.1.2 — renderLevel receives PoseStack from the render hook.
+    }
+
+    /**
+     * 26.1.2 桩：服务端物品扫描结果注入。
+     *
+     * <p>主树实现把 {@link ItemScanResultData} 转成 {@code ItemScanResult} 放进
+     * {@code pendingResults} 走原有的 tick/render 展开动画；26.1.2 的结果渲染已改为
+     * {@code SubmitNodeCollector} 管线，该路径尚未接通，所以这里故意留空。
+     * 调用方 {@code S2CItemScanResult} 中同样留有对应 TODO。
+     *
+     * <p>保留此方法是为了让从主树继承下来的 {@code ClientScanHandlerImpl} 能编译通过；
+     * 接通该功能时请与 {@code S2CItemScanResult} 的 TODO 一并处理。
+     */
+    public static void setServerItemResults(final Vec3 center, final List<ItemScanResultData> rawResults) {
+        // 未接通：见上方 @implNote 与 S2CItemScanResult 的 TODO
+    }
 
     @Nullable
     public static Vec3 getLastScanCenter() {
@@ -365,10 +271,8 @@ public final class ScanManager {
 
     public static float computeCurrentRadius() {
         if (currentStart < 0) return 0;
-        return computeRadius(currentStart, (float) computeScanGrowthDuration());
+        return computeRadius(currentStart, computeScanGrowthDuration());
     }
-
-
 
     // ---- Internal ---- //
 
@@ -385,5 +289,5 @@ public final class ScanManager {
         currentStart = -1;
     }
 
-
+    private ScanManager() {}
 }

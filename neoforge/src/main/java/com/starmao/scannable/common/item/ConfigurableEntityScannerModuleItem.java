@@ -1,12 +1,14 @@
 package com.starmao.scannable.common.item;
 
+import net.minecraft.world.item.Item;
+
 import com.starmao.scannable.common.container.EntityModuleContainerMenu;
 import com.starmao.scannable.common.scanning.ConfigurableEntityScannerModule;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -25,13 +27,18 @@ import java.util.List;
  * @see EntityModuleContainerMenu
  */
 public final class ConfigurableEntityScannerModuleItem extends ConfigurableModuleItem<EntityType<?>> {
+    public ConfigurableEntityScannerModuleItem(Item.Properties properties) {
+        super(properties, ConfigurableEntityScannerModule.INSTANCE,
+                (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand));
+    }
+
     public ConfigurableEntityScannerModuleItem() {
         super(ConfigurableEntityScannerModule.INSTANCE,
                 (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand));
     }
 
     @Override
-    protected DataComponentType<List<ResourceLocation>> getComponent() {
+    protected DataComponentType<List<Identifier>> getComponent() {
         return ModDataComponents.ENTITY_TYPES.get();
     }
 
@@ -57,10 +64,10 @@ public final class ConfigurableEntityScannerModuleItem extends ConfigurableModul
             player.getInventory().setChanged();
         } else {
             if (!player.level().isClientSide() && !isLocked(stack)) {
-                player.displayClientMessage(
-                        Component.translatable("message.scannable_unofficial.scanner.no_free_slots").withStyle(net.minecraft.ChatFormatting.RED), true);
+                player.sendSystemMessage(
+                        Component.translatable("message.scannable_unofficial.scanner.no_free_slots").withStyle(net.minecraft.ChatFormatting.RED));
             }
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide());
+        return InteractionResult.SUCCESS;
     }
 }

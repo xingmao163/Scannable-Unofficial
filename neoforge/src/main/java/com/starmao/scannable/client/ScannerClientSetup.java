@@ -1,25 +1,35 @@
 package com.starmao.scannable.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.starmao.scannable.client.ClientScanHandlerImpl;
+import com.starmao.scannable.Scannable;
 import com.starmao.scannable.client.gui.ConfigurableBlockScannerModuleContainerScreen;
 import com.starmao.scannable.client.gui.ConfigurableEntityScannerModuleContainerScreen;
 import com.starmao.scannable.client.gui.ConfigurableItemScannerModuleContainerScreen;
 import com.starmao.scannable.client.gui.ScannerContainerScreen;
 import com.starmao.scannable.client.renderer.OverlayRenderer;
+import com.starmao.scannable.client.renderer.ScanResultRenderType;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
-import com.starmao.scannable.client.shader.Shaders;
+import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.container.Containers;
 import com.starmao.scannable.common.container.ModMenus;
-import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.util.ClientAccessor;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-/** Client-side initialisation for scanner rendering, audio, and GUI. */
+/**
+ * Client-side initialisation for scanner rendering, audio, and GUI on 26.1.2.
+ * <p>
+ * Registers custom {@link net.minecraft.client.renderer.rendertype.RenderType} pipelines,
+ * hooks world and GUI rendering, and wires scan lifecycle events.
+ */
 public final class ScannerClientSetup {
     public static void initialize(IEventBus modEventBus) {
         // Register the client-only scan handler so common ScannerItem can
@@ -29,31 +39,37 @@ public final class ScannerClientSetup {
         modEventBus.addListener(ScannerClientSetup::onClientSetup);
         modEventBus.addListener(ScannerClientSetup::registerScreens);
         modEventBus.addListener(ScannerClientSetup::registerGuiLayers);
+        modEventBus.addListener(ScannerClientSetup::handleRegisterRenderPipelines);
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            Shaders.initialize();
-            // Initialize provider-based scanning system
-            com.starmao.scannable.client.scanning.ScanResultProviders.initialize();
+            // Initialise scan result providers (block, entity, item scanners).
+            ScanResultProviders.initialize();
 
+            // Tick the scan lifecycle every client tick.
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post evt) -> {
                 ScanManager.tick();
             });
 
-            // Scan wave + result boxes: render at AFTER_LEVEL so both appear on top
-            // of all world content. The scan wave is a full-screen shader quad that
-            // samples the depth buffer — it must render after the entire scene is
-            // complete to avoid being overwritten by subsequent rendering passes
-            // (entity outlines, particles, weather) that happen before AFTER_LEVEL.
-            NeoForge.EVENT_BUS.addListener((RenderLevelStageEvent evt) -> {
-                if (evt.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
-                    ScannerRenderer.render(evt.getModelViewMatrix(), evt.getProjectionMatrix());
-                    ScanManager.setMatrices(evt.getModelViewMatrix(), evt.getProjectionMatrix());
-                    ScanManager.renderLevel(evt.getPartialTick().getGameTimeDeltaPartialTick(false));
-                }
+            // Render scan wave + result boxes in the world after the level is complete.
+            // The scan wave is a full-screen shader quad that samples the depth buffer;
+            // it must render after the entire scene is drawn (AFTER_LEVEL) to composite
+            // correctly on top of all world content.
+            NeoForge.EVENT_BUS.addListener((RenderLevelStageEvent.AfterLevel event1) -> {
+                float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+                PoseStack poseStack = new PoseStack();
+                poseStack.last().pose().set(event1.getModelViewMatrix());
+                ScanManager.renderLevel(poseStack, partialTick);
+                ScannerRenderer.INSTANCE.render(event1.getModelViewMatrix());
             });
         });
+    }
+
+    private static void handleRegisterRenderPipelines(final RegisterRenderPipelinesEvent event) {
+        event.registerPipeline(ScanResultRenderType.SCAN_EFFECT_PIPELINE);
+        event.registerPipeline(ScanResultRenderType.RESULT_BOX_PIPELINE);
+        event.registerPipeline(ScanResultRenderType.SHIMMER_PIPELINE);
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
@@ -73,6 +89,5 @@ public final class ScannerClientSetup {
                 });
     }
 
-    private ScannerClientSetup() {
-    }
+    private ScannerClientSetup() {}
 }

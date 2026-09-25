@@ -1,45 +1,28 @@
 package com.starmao.scannable.common.energy;
 
+import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.capabilities.Capabilities;
-
 import java.util.Optional;
 
-/**
- * Implementation of {@link ItemEnergyStorage} that delegates to the NeoForge
- * {@link net.neoforged.neoforge.energy.IEnergyStorage} capability.
- * <p>Adapts the capability's int-based API to long-based for consistency.
- */
 public final class ItemEnergyStorageImpl {
-    /**
-     * Wraps the NeoForge energy capability of the given stack in an
-     * {@link ItemEnergyStorage} interface, if available.
-     */
+    private ItemEnergyStorageImpl() {}
+
     public static Optional<ItemEnergyStorage> of(ItemStack container) {
-        return Optional.ofNullable(container.getCapability(Capabilities.EnergyStorage.ITEM))
-                .map(capability -> new ItemEnergyStorage() {
-                    @Override
-                    public long receiveEnergy(long amount, boolean simulate) {
-                        return capability.receiveEnergy((int) Math.min(amount, Integer.MAX_VALUE), simulate);
-                    }
-
-                    @Override
-                    public long extractEnergy(long amount, boolean simulate) {
-                        return capability.extractEnergy((int) Math.min(amount, Integer.MAX_VALUE), simulate);
-                    }
-
-                    @Override
-                    public long getEnergyStored() {
-                        return capability.getEnergyStored();
-                    }
-
-                    @Override
-                    public long getMaxEnergyStored() {
-                        return capability.getMaxEnergyStored();
-                    }
-                });
-    }
-
-    private ItemEnergyStorageImpl() {
+        return Optional.of(new ItemEnergyStorage() {
+            @Override public long getEnergyStored() { return container.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0); }
+            @Override public long getMaxEnergyStored() { return com.starmao.scannable.common.config.ServerConfig.SCANNER_ENERGY_CAPACITY.get(); }
+            @Override public long receiveEnergy(long amount, boolean simulate) {
+                long current = getEnergyStored();
+                long accepted = Math.min(amount, getMaxEnergyStored() - current);
+                if (!simulate && accepted > 0) container.set(ModDataComponents.SCANNER_ENERGY.get(), (int)(current + accepted));
+                return accepted;
+            }
+            @Override public long extractEnergy(long amount, boolean simulate) {
+                long current = getEnergyStored();
+                long extracted = Math.min(amount, current);
+                if (!simulate && extracted > 0) container.set(ModDataComponents.SCANNER_ENERGY.get(), (int)(current - extracted));
+                return extracted;
+            }
+        });
     }
 }

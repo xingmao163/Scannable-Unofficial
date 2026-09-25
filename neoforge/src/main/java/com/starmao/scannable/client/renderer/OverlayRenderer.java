@@ -1,111 +1,101 @@
 package com.starmao.scannable.client.renderer;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.item.ScannerItem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-/** Renders a scan progress indicator overlay. */
+/**
+ * Scan progress indicator. Draws a textured circular sector matching the
+ * 1.21.1 visual: a clock-wipe fan with the scanner_progress texture mapped
+ * to the ring area. Each segment is a thin slice of the texture (1 px wide)
+ * rotated around the screen centre.
+ *
+ * <p>Uses {@link GuiGraphicsExtractor#blit(RenderPipeline, Identifier, int, int, float, float, int, int, int, int, int, int, int)}
+ * where the int params are (x, y, outputW, outputH, regionW, regionH, texW, texH, color)
+ * and the float params are (uMin, vMin) in pixels.</p>
+ */
 public final class OverlayRenderer {
-    private static final ResourceLocation PROGRESS =
-            com.starmao.scannable.Scannable.id("textures/gui/overlay/scanner_progress.png");
+    private static final Identifier PROGRESS =
+            Scannable.id("textures/gui/overlay/scanner_progress.png");
+    private static final int SIZE = 64;
+    private static final int INNER_R = 10;
+    private static final int OUTER_R = 32;
+    private static final int SEGMENTS = 60;
+    private static final float SEG_ANGLE = (float) (Math.PI * 2 / SEGMENTS);
+    private static final int FILL_COLOR = 0xA8A8CCED;
+    private static final int BG_COLOR = 0x66000000;
 
-    public static void render(GuiGraphics graphics, float partialTick) {
-        Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
+    public static void render(final GuiGraphicsExtractor graphics, final float partialTick) {
+        final Minecraft mc = Minecraft.getInstance();
+        final Player player = mc.player;
         if (player == null) return;
 
-        ItemStack stack = player.getUseItem();
-        if (stack.isEmpty()) return;
+        final ItemStack stack = player.getUseItem();
+        if (stack.isEmpty() || !ScannerItem.isScanner(stack)) return;
 
-        if (!ScannerItem.isScanner(stack)) return;
+        final int total = stack.getUseDuration(player);
+        if (total <= 0) return;
+        final int remaining = player.getUseItemRemainingTicks();
+        final float progress = Mth.clamp(1 - (remaining - partialTick) / (float) total, 0, 1);
+        if (progress <= 0) return;
 
-        int total = stack.getUseDuration(player);
-        int remaining = player.getUseItemRemainingTicks();
-        float progress = Mth.clamp(1 - (remaining - partialTick) / (float) total, 0, 1);
+        final int cx = graphics.guiWidth() / 2;
+        final int cy = graphics.guiHeight() / 2;
+        final int segW = OUTER_R - INNER_R;
 
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        final var pose = graphics.pose();
 
-        RenderSystem.enableBlend();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(0.66f, 0.8f, 0.93f, 0.66f);
-        RenderSystem.setShaderTexture(0, PROGRESS);
-
-        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX);
-
-        int size = 64;
-        int midX = screenWidth / 2;
-        int midY = screenHeight / 2;
-        int left = midX - size / 2;
-        int right = midX + size / 2;
-        int top = midY - size / 2;
-        int bottom = midY + size / 2;
-
-        float angle = (float) (progress * Math.PI * 2);
-        float tx = Mth.sin(angle);
-        float ty = Mth.cos(angle);
-
-        buffer.addVertex(midX, top, 0).setUv(0.5f, 1);
-        if (progress < 0.125) { // Top right
-            buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-            float x = tx / ty * 0.5f;
-            buffer.addVertex(midX + x * size, top, 0).setUv(0.5f + x, 1);
-        } else {
-            buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-            buffer.addVertex(right, top, 0).setUv(1, 1);
-            buffer.addVertex(right, top, 0).setUv(1, 1);
-            if (progress < 0.375) { // Right
-                buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                float y = Math.abs(ty / tx - 1) * 0.5f;
-                buffer.addVertex(right, top + y * size, 0).setUv(1, 1 - y);
-            } else {
-                buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                buffer.addVertex(right, bottom, 0).setUv(1, 0);
-                buffer.addVertex(right, bottom, 0).setUv(1, 0);
-                if (progress < 0.625) { // Bottom
-                    buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                    float x = Math.abs(tx / ty - 1) * 0.5f;
-                    buffer.addVertex(left + x * size, bottom, 0).setUv(x, 0);
-                } else {
-                    buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                    buffer.addVertex(left, bottom, 0).setUv(0, 0);
-                    buffer.addVertex(left, bottom, 0).setUv(0, 0);
-                    if (progress < 0.875) { // Left
-                        buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                        float y = (ty / tx + 1) * 0.5f;
-                        buffer.addVertex(left, top + y * size, 0).setUv(0, 1 - y);
-                    } else {
-                        buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                        buffer.addVertex(left, top, 0).setUv(0, 1);
-                        buffer.addVertex(left, top, 0).setUv(0, 1);
-                        if (progress < 1) { // Top left
-                            buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                            float x = Math.abs(tx / ty) * 0.5f;
-                            buffer.addVertex(midX - x * size, top, 0).setUv(0.5f - x, 1);
-                        } else {
-                            buffer.addVertex(midX, midY, 0).setUv(0.5f, 0.5f);
-                            buffer.addVertex(midX, top, 0).setUv(0.5f, 1);
-                        }
-                    }
-                }
-            }
+        // -- Background ring: solid dark fill --
+        // Each segment is a rotated rectangle using fill(x0, y0, x1, y1, color).
+        // fill() sorts the coordinates so (x0,y0)-(x1,y1) can be any order.
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        for (int i = 0; i < SEGMENTS; i++) {
+            final float angle = i * SEG_ANGLE - (float) Math.PI / 2;
+            pose.pushMatrix();
+            pose.rotate(angle);
+            graphics.fill(INNER_R, -1, OUTER_R, 1, BG_COLOR);
+            pose.popMatrix();
         }
+        pose.popMatrix();
 
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
+        // -- Filled sector: textured wedges --
+        // Uses the 13-param blit(pipeline, id, x, y, uMin, vMin,
+        //                        outW, outH, regW, regH, texW, texH, color)
+        // where uMin/vMin are in PIXEL coordinates (0..63).
+        // Each segment maps a 1×64 pixel vertical strip of the texture
+        // to a segW×2 rectangle, rotated around (cx,cy).
+        final int filled = (int) (SEGMENTS * progress);
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        for (int i = 0; i < filled; i++) {
+            final float angle = i * SEG_ANGLE - (float) Math.PI / 2;
+            pose.pushMatrix();
+            pose.rotate(angle);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, PROGRESS,
+                    INNER_R, -1,            // x, y (output position)
+                    (float) i, 0f,          // uMin, vMin (texture pixel origin)
+                    segW, 2,                // output width, output height
+                    1, SIZE,               // texture region width, height (1 × 64)
+                    SIZE, SIZE,            // texture dimensions (64 × 64)
+                    FILL_COLOR);            // tint colour (0xA8A8CCED)
+            pose.popMatrix();
+        }
+        pose.popMatrix();
 
-        Component label = Strings.progress(Mth.floor(progress * 100));
-        graphics.drawString(mc.font, label, right + 12, midY - mc.font.lineHeight / 2, 0xCCAACCEE, true);
+        // -- Percentage label --
+        final Component label = Strings.progress(Mth.floor(progress * 100));
+        graphics.text(mc.font, label, cx + OUTER_R + 12, cy - mc.font.lineHeight / 2, 0xCCAACCEE, true);
     }
 
-    private OverlayRenderer() {
-    }
+    private OverlayRenderer() {}
 }

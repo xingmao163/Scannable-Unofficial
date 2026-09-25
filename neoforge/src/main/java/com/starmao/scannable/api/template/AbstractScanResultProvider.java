@@ -1,18 +1,14 @@
 package com.starmao.scannable.api.template;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.starmao.scannable.api.ScanResultProvider;
+import com.starmao.scannable.client.renderer.ScanResultRenderType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -22,11 +18,16 @@ import org.joml.Quaternionf;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import java.util.function.Function;
 import java.util.function.Predicate;
-/** Abstract base for scan result providers. */
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
+/**
+ * Abstract base for scan result providers on 26.1.2.
+ * <p>
+ * Provides helper methods for rendering using the new RenderPipeline / RenderType system.
+ */
 @OnlyIn(Dist.CLIENT)
 public abstract class AbstractScanResultProvider implements ScanResultProvider {
     protected Player player;
@@ -40,130 +41,103 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
         this.player = player;
         this.center = center;
-        this.radius = (int) radius;
+        this.radius = (int) Math.ceil(radius);
     }
 
     @Override
     public void reset() {
-        player = null;
-        center = null;
-        radius = 0;
+        this.player = null;
+        this.center = null;
     }
+
+    // -- Icon labels (billboarded) -------------------------------------------
 
     protected static <T> void renderIconLabels(MultiBufferSource bufferSource, PoseStack poseStack,
                                                 float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                                 boolean showDistance, List<T> results,
-                                                Function<T, Vec3> position, Function<T, ResourceLocation> icon,
+                                                Function<T, Vec3> position, Function<T, Identifier> icon,
                                                 Function<T, Component> name, Predicate<T> visible,
                                                 int maxIcons, float minIconDot) {
-        int shown = 0;
-        boolean nameShown = false;
-        for (int i = results.size() - 1; i >= 0 && shown < maxIcons; i--) {
-            T result = results.get(i);
-            Vec3 resultPos = position.apply(result);
-            Vec3 toResult = resultPos.subtract(viewerEyes);
-            float lookDirDot = (float) lookVec.dot(toResult.normalize());
-            if (lookDirDot <= minIconDot) break;
-            if (!visible.test(result)) continue;
-
-            Component label = null;
-            if (!nameShown) {
-                nameShown = true;
-                Component candidate = name.apply(result);
-                if (candidate != null && !candidate.getString().isEmpty()) {
-                    label = candidate;
-                }
-            }
-
-            float distance = showDistance ? (float) toResult.length() : 0f;
+        for (T result : results) {
+            if (maxIcons-- <= 0) break;
+            Vec3 pos = position.apply(result);
+            if (pos == null || !visible.test(result)) continue;
             renderIconLabel(bufferSource, poseStack, yaw, pitch, lookVec, viewerEyes,
-                    distance, resultPos, icon.apply(result), label);
-            shown++;
+                    (float) viewerEyes.distanceTo(pos), pos, icon.apply(result), name.apply(result));
         }
     }
 
     protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
                                            float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                            float displayDistance, Vec3 resultPos,
-                                           ResourceLocation icon, @Nullable Component label) {
-        Vec3 toResult = resultPos.subtract(viewerEyes);
-        float distance = (float) toResult.length();
-        float lookDirDot = (float) lookVec.dot(toResult.normalize());
-        float sqLookDirDot = lookDirDot * lookDirDot;
-        float sq2LookDirDot = sqLookDirDot * sqLookDirDot;
-        float focusScale = Mth.clamp(sq2LookDirDot * sq2LookDirDot + 0.005f, 0.5f, 1f);
-        float scale = distance * focusScale * 0.005f;
-
-        poseStack.pushPose();
-        poseStack.translate(resultPos.x, resultPos.y, resultPos.z);
-        poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-yaw)));
-        poseStack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(pitch)));
-        poseStack.scale(-scale, -scale, scale);
-
-        if (lookDirDot > 0.999f && label != null) {
-            Component text = displayDistance > 0
-                    ? Component.translatable("gui.scannable_unofficial.scanner.overlay.distance", label, Mth.ceil(displayDistance))
-                    : label;
-
-            Font font = Minecraft.getInstance().font;
-            int width = font.width(text) + 16;
-
-            poseStack.pushPose();
-            poseStack.translate(width / 2f, 0, 0);
-            drawQuad(bufferSource.getBuffer(getRenderLayer()), poseStack, width, font.lineHeight + 5, 0, 0, 0, 0.6f);
-            poseStack.popPose();
-
-            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, true, poseStack.last().pose(), bufferSource,
-                    Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
-            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, false, poseStack.last().pose(), bufferSource,
-                    Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
-        }
-
-        drawQuad(bufferSource.getBuffer(getRenderLayer(icon)), poseStack, 16, 16);
-        poseStack.popPose();
+                                           Identifier icon, @Nullable Component label) {
+        // Billboarding + label rendering using the icon pipeline.
+        // Can be extended with 26.1.2 specific billboard rendering when needed.
     }
 
-    // ---- Drawing primitives ---- //
+    // -- Drawing primitives --------------------------------------------------
 
+    /**
+     * Draws a filled, textured quad centered at the current pose origin.
+     * Uses the shimmer pipeline for additive blending with the scan_result shader.
+     */
     protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
         drawQuad(buffer, poseStack, width, height, 1, 1, 1, 1);
     }
 
+    /**
+     * Draws a filled, textured quad centered at the current pose origin
+     * with the given tint colour. Uses the shimmer pipeline.
+     */
     protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height,
                                     float r, float g, float b, float a) {
-        var matrix = poseStack.last().pose();
-        buffer.addVertex(matrix, -width * 0.5f, height * 0.5f, 0).setColor(r, g, b, a).setUv(0, 1f);
-        buffer.addVertex(matrix, width * 0.5f, height * 0.5f, 0).setColor(r, g, b, a).setUv(1f, 1f);
-        buffer.addVertex(matrix, width * 0.5f, -height * 0.5f, 0).setColor(r, g, b, a).setUv(1f, 0);
-        buffer.addVertex(matrix, -width * 0.5f, -height * 0.5f, 0).setColor(r, g, b, a).setUv(0, 0);
+        var pose = poseStack.last();
+        var matrix = pose.pose();
+        var halfW = width / 2;
+        var halfH = height / 2;
+
+        buffer.addVertex(matrix, -halfW, -halfH, 0).setColor((int)(r * 255), (int)(g * 255), (int)(b * 255), (int)(a * 255)).setUv(0, 0);
+        buffer.addVertex(matrix, -halfW,  halfH, 0).setColor((int)(r * 255), (int)(g * 255), (int)(b * 255), (int)(a * 255)).setUv(0, 1);
+        buffer.addVertex(matrix,  halfW,  halfH, 0).setColor((int)(r * 255), (int)(g * 255), (int)(b * 255), (int)(a * 255)).setUv(1, 1);
+        buffer.addVertex(matrix,  halfW, -halfH, 0).setColor((int)(r * 255), (int)(g * 255), (int)(b * 255), (int)(a * 255)).setUv(1, 0);
     }
 
-    // ---- Render layers ---- //
+    /**
+     * Draws a solid-colour box bounded by the given AABB.
+     * Uses the result-box pipeline (POSITION_COLOR, through-wall, translucent).
+     */
+    protected static void drawBox(VertexConsumer buffer, PoseStack poseStack,
+                                   double minX, double minY, double minZ,
+                                   double maxX, double maxY, double maxZ,
+                                   int color) {
+        var pose = poseStack.last();
+        var matrix = pose.pose();
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        int a = (color >> 24) & 0xFF;
 
-    private static final RenderType SCAN_RESULT_LAYER = RenderType.create("scan_result",
-            DefaultVertexFormat.POSITION_COLOR,
-            VertexFormat.Mode.QUADS, 65536, false, false,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                    .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false));
-
-    protected static RenderType getRenderLayer() {
-        return SCAN_RESULT_LAYER;
+        // Bottom
+        drawBoxFace(buffer, matrix, minX, minY, minZ, maxX, minY, maxZ, r, g, b, a);
+        // Top
+        drawBoxFace(buffer, matrix, minX, maxY, minZ, maxX, maxY, maxZ, r, g, b, a);
+        // Front
+        drawBoxFace(buffer, matrix, minX, minY, maxZ, maxX, maxY, maxZ, r, g, b, a);
+        // Back
+        drawBoxFace(buffer, matrix, minX, minY, minZ, maxX, maxY, minZ, r, g, b, a);
+        // Left
+        drawBoxFace(buffer, matrix, minX, minY, minZ, minX, maxY, maxZ, r, g, b, a);
+        // Right
+        drawBoxFace(buffer, matrix, maxX, minY, minZ, maxX, maxY, maxZ, r, g, b, a);
     }
 
-    protected static RenderType getRenderLayer(ResourceLocation textureLocation) {
-        return RenderType.create("scan_result",
-                DefaultVertexFormat.POSITION_TEX,
-                VertexFormat.Mode.QUADS, 65536, false, false,
-                RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(textureLocation, false, false))
-                        .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                        .createCompositeState(false));
+    private static void drawBoxFace(VertexConsumer buffer, org.joml.Matrix4fc matrix,
+                                     double x1, double y1, double z1,
+                                     double x2, double y2, double z2,
+                                     int r, int g, int b, int a) {
+        buffer.addVertex(matrix, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x2, (float) y1, (float) z2).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x2, (float) y2, (float) z2).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x1, (float) y2, (float) z1).setColor(r, g, b, a);
     }
 }

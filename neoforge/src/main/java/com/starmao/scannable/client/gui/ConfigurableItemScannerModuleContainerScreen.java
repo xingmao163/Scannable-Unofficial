@@ -4,7 +4,7 @@ import com.starmao.scannable.common.container.ItemModuleContainerMenu;
 import com.starmao.scannable.common.item.ConfigurableItemScannerModuleItem;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -37,15 +37,15 @@ public class ConfigurableItemScannerModuleContainerScreen
     }
 
     @Override
-    protected void renderConfiguredItem(GuiGraphics graphics, Item item, int x, int y) {
-        graphics.renderFakeItem(new ItemStack(item), x, y);
+    protected void renderConfiguredItem(GuiGraphicsExtractor graphics, Item item, int x, int y) {
+        graphics.fakeItem(new ItemStack(item), x, y);
     }
 
     @Override
     protected void configureItemAt(ItemStack stack, int slot, ItemStack value) {
         if (!value.isEmpty()) {
             BuiltInRegistries.ITEM.getResourceKey(value.getItem()).ifPresent(key ->
-                    Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.location())));
+                    Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.identifier())));
         }
     }
 }

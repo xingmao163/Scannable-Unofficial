@@ -29,8 +29,9 @@ public final class BlockCacheScanFilter implements Predicate<BlockState> {
         for (Predicate<BlockState> filter : filters) {
             // Fast path: resolve tag filter directly without registry scan
             if (filter instanceof BlockTagScanFilter tagFilter) {
-                BuiltInRegistries.BLOCK.getTag(tagFilter.tag()).ifPresent(holders ->
-                        holders.forEach(holder -> cache.add(holder.value())));
+            for (var holder : BuiltInRegistries.BLOCK.getTagOrEmpty(tagFilter.tag())) {
+                cache.add(holder.value());
+            }
                 continue;
             }
             // Fast path: single-block filter

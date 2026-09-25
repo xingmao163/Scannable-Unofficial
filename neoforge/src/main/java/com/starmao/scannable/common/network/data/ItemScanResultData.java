@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.network.data;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Network-serializable scan result data for the item scanner module.
@@ -14,5 +14,5 @@ import net.minecraft.resources.ResourceLocation;
  * @param itemId     Registry name of the matched item (e.g. {@code minecraft:diamond})
  * @param totalCount Total count of the matched item across all slots
  */
-public record ItemScanResultData(BlockPos pos, ResourceLocation itemId, int totalCount) {
+public record ItemScanResultData(BlockPos pos, Identifier itemId, int totalCount) {
 }

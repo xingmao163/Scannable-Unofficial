@@ -3,7 +3,7 @@ package com.starmao.scannable.common.container;
 import com.starmao.scannable.common.item.ConfigurableEntityScannerModuleItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
@@ -26,7 +26,7 @@ public class EntityModuleContainerMenu extends AbstractModuleContainerMenu {
 
 
     @Override
-    public void setItemAt(int index, ResourceLocation name) {
+    public void setItemAt(int index, Identifier name) {
         ItemStack stack = getPlayer().getItemInHand(getHand());
         BuiltInRegistries.ENTITY_TYPE.getOptional(name).ifPresent(type -> {
             if (stack.getItem() instanceof ConfigurableEntityScannerModuleItem item) {

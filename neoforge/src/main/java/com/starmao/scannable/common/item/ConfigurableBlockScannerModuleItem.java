@@ -1,12 +1,14 @@
 package com.starmao.scannable.common.item;
 
+import net.minecraft.world.item.Item;
+
 import com.starmao.scannable.common.container.BlockModuleContainerMenu;
 import com.starmao.scannable.common.scanning.ConfigurableBlockScannerModule;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.UseOnContext;
@@ -26,13 +28,18 @@ import java.util.List;
  * @see BlockModuleContainerMenu
  */
 public final class ConfigurableBlockScannerModuleItem extends ConfigurableModuleItem<Block> {
+    public ConfigurableBlockScannerModuleItem(Item.Properties properties) {
+        super(properties, ConfigurableBlockScannerModule.INSTANCE,
+                (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand));
+    }
+
     public ConfigurableBlockScannerModuleItem() {
         super(ConfigurableBlockScannerModule.INSTANCE,
                 (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand));
     }
 
     @Override
-    protected DataComponentType<List<ResourceLocation>> getComponent() {
+    protected DataComponentType<List<Identifier>> getComponent() {
         return ModDataComponents.BLOCKS.get();
     }
 
@@ -65,6 +72,6 @@ public final class ConfigurableBlockScannerModuleItem extends ConfigurableModule
             player.swing(context.getHand());
             player.getInventory().setChanged();
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 }

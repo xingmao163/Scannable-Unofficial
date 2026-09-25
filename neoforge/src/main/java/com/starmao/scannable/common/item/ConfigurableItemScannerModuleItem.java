@@ -6,7 +6,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import java.util.List;
 
@@ -18,13 +18,18 @@ import java.util.List;
  * containers with item name and quantity labels.
  */
 public final class ConfigurableItemScannerModuleItem extends ConfigurableModuleItem<Item> {
+    public ConfigurableItemScannerModuleItem(Item.Properties properties) {
+        super(properties, ItemScannerModule.INSTANCE,
+                (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand));
+    }
+
     public ConfigurableItemScannerModuleItem() {
         super(ItemScannerModule.INSTANCE,
                 (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand));
     }
 
     @Override
-    protected DataComponentType<List<ResourceLocation>> getComponent() {
+    protected DataComponentType<List<Identifier>> getComponent() {
         return ModDataComponents.SCAN_ITEMS.get();
     }
 

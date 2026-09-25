@@ -2,7 +2,7 @@ package com.starmao.scannable.common.config;
 
 import com.starmao.scannable.Scannable;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  * Reusable parsers for {@link ModConfigSpec} {@code List<String>} values that
  * represent registry names, tags, or block/fluid IDs.
  *
- * <p>ModConfigSpec flattens complex types ({@code Set<ResourceLocation>},
+ * <p>ModConfigSpec flattens complex types ({@code Set<Identifier>},
  * {@code Set<TagKey>}) into {@code List<String>}. These methods centralise
  * the {@code tryParse → lookup → warn} pattern so callers don't repeat it.
  */
@@ -30,7 +30,7 @@ public final class ConfigParsers {
     public static List<Block> parseBlocks(final List<? extends String> entries) {
         final List<Block> blocks = new ArrayList<>();
         for (final String entry : entries) {
-            final ResourceLocation loc = ResourceLocation.tryParse(entry);
+            final Identifier loc = Identifier.tryParse(entry);
             if (loc == null) {
                 Scannable.LOGGER.warn("Invalid block registry name in config: {}", entry);
                 continue;
@@ -48,7 +48,7 @@ public final class ConfigParsers {
     public static Set<TagKey<Block>> parseBlockTags(final List<? extends String> entries) {
         final Set<TagKey<Block>> tags = new HashSet<>();
         for (final String entry : entries) {
-            final ResourceLocation loc = ResourceLocation.tryParse(entry);
+            final Identifier loc = Identifier.tryParse(entry);
             if (loc == null) {
                 Scannable.LOGGER.warn("Invalid block tag name in config: {}", entry);
                 continue;
@@ -65,7 +65,7 @@ public final class ConfigParsers {
     public static Set<TagKey<Fluid>> parseFluidTags(final List<? extends String> entries) {
         final Set<TagKey<Fluid>> tags = new HashSet<>();
         for (final String entry : entries) {
-            final ResourceLocation loc = ResourceLocation.tryParse(entry);
+            final Identifier loc = Identifier.tryParse(entry);
             if (loc == null) {
                 Scannable.LOGGER.warn("Invalid fluid tag name in config: {}", entry);
                 continue;
@@ -81,7 +81,7 @@ public final class ConfigParsers {
      */
     public static TagKey<Block> parseBlockTag(final String entry) {
         if (entry == null || entry.isBlank()) return null;
-        final ResourceLocation loc = ResourceLocation.tryParse(entry);
+        final Identifier loc = Identifier.tryParse(entry);
         if (loc == null) {
             Scannable.LOGGER.warn("Invalid block tag in config: {}", entry);
             return null;
@@ -91,12 +91,12 @@ public final class ConfigParsers {
 
     /**
      * Iterate over a string list, calling {@code consumer} for each entry that
-     * parses as a valid {@link ResourceLocation}.
+     * parses as a valid {@link Identifier}.
      */
     public static void forEachLocation(final List<? extends String> entries,
-                                       final Consumer<ResourceLocation> consumer) {
+                                       final Consumer<Identifier> consumer) {
         for (final String entry : entries) {
-            final ResourceLocation loc = ResourceLocation.tryParse(entry);
+            final Identifier loc = Identifier.tryParse(entry);
             if (loc == null) {
                 Scannable.LOGGER.warn("Invalid resource location in config: {}", entry);
                 continue;

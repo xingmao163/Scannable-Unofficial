@@ -1,6 +1,6 @@
 package com.starmao.scannable.api;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
@@ -32,10 +32,10 @@ public interface EntityScannerModule extends ScannerModule {
      * rendering on the client. Override only in modules that run client-side.
      *
      * @param entity the detected entity
-     * @return an {@link Optional} containing a {@link net.minecraft.resources.ResourceLocation}
+     * @return an {@link Optional} containing a {@link net.minecraft.resources.Identifier}
      *         texture path, or empty to use the default icon
      */
-    default Optional<ResourceLocation> getIcon(Entity entity) {
+    default Optional<Identifier> getIcon(Entity entity) {
         return Optional.empty();
     }
 

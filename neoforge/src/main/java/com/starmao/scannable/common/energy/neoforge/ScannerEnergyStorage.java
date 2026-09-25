@@ -1,51 +1,53 @@
 package com.starmao.scannable.common.energy.neoforge;
 
-import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 /**
- * NeoForge {@link EnergyStorage} implementation for the scanner item.
- * <p>Persists energy changes to the item's {@link ModDataComponents#SCANNER_ENERGY}
- * data component so energy survives item serialisation.
- * Capacity is read from {@link ServerConfig#SCANNER_ENERGY_CAPACITY}.
+ * Energy handler implementation for the scanner item using NeoForge's transfer API.
+ * Stores FE energy in a data component on the item stack.
  */
-public final class ScannerEnergyStorage extends EnergyStorage {
+public final class ScannerEnergyStorage implements EnergyHandler {
     private final ItemStack container;
 
-    public ScannerEnergyStorage(ItemStack container) {
-        super(ServerConfig.SCANNER_ENERGY_CAPACITY.get());
+    private ScannerEnergyStorage(ItemStack container) {
         this.container = container;
-        this.energy = Math.max(0, Math.min(capacity, container.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0)));
     }
 
-    /** Creates a ScannerEnergyStorage for the given item stack. */
-    public static ScannerEnergyStorage of(ItemStack container) {
-        return new ScannerEnergyStorage(container);
-    }
-
-    @Override
-    public int receiveEnergy(int maxReceive, boolean simulate) {
-        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
-        // When chargeOnlyByModule is enabled, block external charging.
-        // The charger module bypasses this by writing directly to the DataComponent.
-        if (ServerConfig.SCANNER_CHARGE_ONLY_BY_MODULE.get()) return 0;
-        int energyReceived = super.receiveEnergy(maxReceive, simulate);
-        if (!simulate && energyReceived != 0) {
-            container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
-        }
-        return energyReceived;
+    public static EnergyHandler of(ItemStack stack) {
+        return new ScannerEnergyStorage(stack);
     }
 
     @Override
-    public int extractEnergy(int maxExtract, boolean simulate) {
-        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
-        int energyExtracted = super.extractEnergy(maxExtract, simulate);
-        if (!simulate && energyExtracted != 0) {
-            container.set(ModDataComponents.SCANNER_ENERGY.get(), this.energy);
-        }
-        return energyExtracted;
+    public long getAmountAsLong() {
+        return container.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
     }
 
+    @Override
+    public long getCapacityAsLong() {
+        return com.starmao.scannable.common.config.ServerConfig.SCANNER_ENERGY_CAPACITY.get();
+    }
+
+    @Override
+    public int insert(int amount, TransactionContext transaction) {
+        int current = (int) getAmountAsLong();
+        int capacity = (int) getCapacityAsLong();
+        int accepted = Math.min(amount, capacity - current);
+        if (accepted > 0) {
+            container.set(ModDataComponents.SCANNER_ENERGY.get(), current + accepted);
+        }
+        return accepted;
+    }
+
+    @Override
+    public int extract(int amount, TransactionContext transaction) {
+        int current = (int) getAmountAsLong();
+        int extracted = Math.min(amount, current);
+        if (extracted > 0) {
+            container.set(ModDataComponents.SCANNER_ENERGY.get(), current - extracted);
+        }
+        return extracted;
+    }
 }

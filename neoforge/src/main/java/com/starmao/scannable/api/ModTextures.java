@@ -1,6 +1,6 @@
 package com.starmao.scannable.api;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Central registry of texture paths used by the scanner GUI and overlay rendering.
@@ -11,11 +11,11 @@ public final class ModTextures {
     private static final String MOD_ID = "scannable_unofficial";
 
     /** Icon displayed for informational scan results. */
-    public static final ResourceLocation ICON_INFO = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/info.png");
+    public static final Identifier ICON_INFO = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/info.png");
     /** Icon displayed for warning-level scan results. */
-    public static final ResourceLocation ICON_WARNING = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/warning.png");
+    public static final Identifier ICON_WARNING = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/warning.png");
     /** Texture used to render the scanner charge / progress indicator overlay. */
-    public static final ResourceLocation SCANNER_PROGRESS = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/scanner_progress.png");
+    public static final Identifier SCANNER_PROGRESS = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/overlay/scanner_progress.png");
 
     private ModTextures() {
     }

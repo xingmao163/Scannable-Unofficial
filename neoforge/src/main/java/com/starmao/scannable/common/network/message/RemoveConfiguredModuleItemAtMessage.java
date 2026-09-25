@@ -5,7 +5,7 @@ import com.starmao.scannable.common.container.AbstractModuleContainerMenu;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
  * {@link AbstractModuleContainerMenu} before modifying the item.
  */
 public record RemoveConfiguredModuleItemAtMessage(int windowId, int index) implements CustomPacketPayload {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "remove_module_item");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(Scannable.MOD_ID, "remove_module_item");
     public static final Type<RemoveConfiguredModuleItemAtMessage> TYPE = new Type<>(ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RemoveConfiguredModuleItemAtMessage> STREAM_CODEC =

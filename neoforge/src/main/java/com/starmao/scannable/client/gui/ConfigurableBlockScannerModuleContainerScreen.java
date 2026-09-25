@@ -4,7 +4,7 @@ import com.starmao.scannable.common.container.BlockModuleContainerMenu;
 import com.starmao.scannable.common.item.ConfigurableBlockScannerModuleItem;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -38,8 +38,8 @@ public class ConfigurableBlockScannerModuleContainerScreen
     }
 
     @Override
-    protected void renderConfiguredItem(GuiGraphics graphics, Block block, int x, int y) {
-        graphics.renderFakeItem(new ItemStack(block.asItem()), x, y);
+    protected void renderConfiguredItem(GuiGraphicsExtractor graphics, Block block, int x, int y) {
+        graphics.fakeItem(new ItemStack(block.asItem()), x, y);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class ConfigurableBlockScannerModuleContainerScreen
         Block block = Block.byItem(value.getItem());
         if (block != Blocks.AIR) {
             BuiltInRegistries.BLOCK.getResourceKey(block).ifPresent(key ->
-                Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.location())));
+                Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.identifier())));
         }
     }
 }

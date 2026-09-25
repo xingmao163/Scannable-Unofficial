@@ -1,32 +1,23 @@
 package com.starmao.scannable.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.starmao.scannable.common.container.EntityModuleContainerMenu;
 import com.starmao.scannable.common.item.ConfigurableEntityScannerModuleItem;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
-import org.joml.Quaternionf;
+import net.minecraft.core.Holder;
 
-import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /** Screen for configuring an entity scanner module. */
 public class ConfigurableEntityScannerModuleContainerScreen
         extends AbstractConfigurableScannerModuleContainerScreen<EntityModuleContainerMenu, EntityType<?>> {
-
-    private static final Map<EntityType<?>, Entity> RENDER_ENTITIES = new HashMap<>();
 
     public ConfigurableEntityScannerModuleContainerScreen(EntityModuleContainerMenu container,
                                                            Inventory inventory, Component title) {
@@ -53,8 +44,9 @@ public class ConfigurableEntityScannerModuleContainerScreen
     }
 
     @Override
-    protected void renderConfiguredItem(GuiGraphics graphics, EntityType<?> entityType, int x, int y) {
-        renderEntity(graphics, x + 8, y + 13, entityType);
+    protected void renderConfiguredItem(GuiGraphicsExtractor graphics, EntityType<?> entityType, int x, int y) {
+        ItemStack eggStack = SpawnEggItem.byId(entityType).map(Holder::value).map(ItemStack::new).orElse(ItemStack.EMPTY);
+        graphics.fakeItem(eggStack, x, y);
     }
 
     @Override
@@ -62,39 +54,7 @@ public class ConfigurableEntityScannerModuleContainerScreen
         if (value.getItem() instanceof SpawnEggItem egg) {
             EntityType<?> entityType = egg.getType(value);
             BuiltInRegistries.ENTITY_TYPE.getResourceKey(entityType).ifPresent(key ->
-                Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.location())));
+                Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.identifier())));
         }
-    }
-
-    private void renderEntity(GuiGraphics graphics, int x, int y, EntityType<?> entityType) {
-        Entity entity = getRenderEntity(entityType);
-        if (entity == null) return;
-
-        EntityDimensions bounds = entityType.getDimensions();
-        float size = Math.max(bounds.width(), bounds.height());
-        float scale = 11.0f / size;
-
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        poseStack.translate(x, y, 100);
-        poseStack.scale(scale, scale, scale);
-
-        var quaternion = new Quaternionf().rotationZ((float) Math.toRadians(180));
-        quaternion.mul(new Quaternionf().rotationX((float) Math.toRadians(20)));
-        quaternion.mul(new Quaternionf().rotationY((float) Math.toRadians(30)));
-        poseStack.mulPose(quaternion);
-
-        var renderManager = Minecraft.getInstance().getEntityRenderDispatcher();
-        quaternion.conjugate();
-        renderManager.overrideCameraOrientation(quaternion);
-        renderManager.setRenderShadow(false);
-        renderManager.render(entity, 0, 0, 0, 0, 1, poseStack, graphics.bufferSource(), 0xf000f0);
-        renderManager.setRenderShadow(true);
-        poseStack.popPose();
-    }
-
-    @Nullable
-    private Entity getRenderEntity(EntityType<?> entityType) {
-        return RENDER_ENTITIES.computeIfAbsent(entityType, t -> t.create(menu.getPlayer().level()));
     }
 }

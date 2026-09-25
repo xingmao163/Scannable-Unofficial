@@ -5,7 +5,7 @@ import com.starmao.scannable.Scannable;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -25,6 +25,7 @@ import java.util.List;
  *   <li>{@link #SCANNER_MODULES} — module inventory contents</li>
  *   <li>{@link #ENTITY_TYPES} / {@link #BLOCKS} / {@link #SCAN_ITEMS} — configured target lists</li>
  *   <li>{@link #LOCKED} — whether a configurable module's target list is locked</li>
+ *   <li>{@link #LAST_CHARGE_TICK} — the game tick when the scanner was last charged</li>
  * </ul>
  */
 public final class ModDataComponents {
@@ -46,24 +47,24 @@ public final class ModDataComponents {
                     .build());
 
     /** Configured entity type registry names for entity scanner modules. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<ResourceLocation>>> ENTITY_TYPES =
-            REGISTER.register("entities", () -> DataComponentType.<List<ResourceLocation>>builder()
-                    .persistent(ResourceLocation.CODEC.listOf())
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()))
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<Identifier>>> ENTITY_TYPES =
+            REGISTER.register("entities", () -> DataComponentType.<List<Identifier>>builder()
+                    .persistent(Identifier.CODEC.listOf())
+                    .networkSynchronized(Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
     /** Configured block registry names for block scanner modules. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<ResourceLocation>>> BLOCKS =
-            REGISTER.register("blocks", () -> DataComponentType.<List<ResourceLocation>>builder()
-                    .persistent(ResourceLocation.CODEC.listOf())
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()))
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<Identifier>>> BLOCKS =
+            REGISTER.register("blocks", () -> DataComponentType.<List<Identifier>>builder()
+                    .persistent(Identifier.CODEC.listOf())
+                    .networkSynchronized(Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
     /** Configured item registry names for item scanner modules. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<ResourceLocation>>> SCAN_ITEMS =
-            REGISTER.register("scan_items", () -> DataComponentType.<List<ResourceLocation>>builder()
-                    .persistent(ResourceLocation.CODEC.listOf())
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()))
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<Identifier>>> SCAN_ITEMS =
+            REGISTER.register("scan_items", () -> DataComponentType.<List<Identifier>>builder()
+                    .persistent(Identifier.CODEC.listOf())
+                    .networkSynchronized(Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
     /** Whether a configurable module's target list is locked (prevents further changes). */
@@ -73,7 +74,7 @@ public final class ModDataComponents {
                     .networkSynchronized(ByteBufCodecs.BOOL)
                     .build());
 
-    /** Last game tick when the charger module added energy. */
+    /** The game tick when the scanner was last charged (0 if never). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LAST_CHARGE_TICK =
             REGISTER.register("last_charge_tick", () -> DataComponentType.<Long>builder()
                     .persistent(Codec.LONG)

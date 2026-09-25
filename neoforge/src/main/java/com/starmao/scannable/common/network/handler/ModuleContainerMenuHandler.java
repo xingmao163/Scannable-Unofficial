@@ -1,7 +1,7 @@
 package com.starmao.scannable.common.network.handler;
 
 import com.starmao.scannable.common.container.AbstractModuleContainerMenu;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -49,7 +49,7 @@ public final class ModuleContainerMenuHandler {
     /**
      * Handles a "set item at index" operation with full validation.
      */
-    public static void handleSet(final int windowId, final int index, final ResourceLocation value, final IPayloadContext ctx) {
+    public static void handleSet(final int windowId, final int index, final Identifier value, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             final AbstractModuleContainerMenu menu = findMenu(ctx, windowId);
             if (menu != null) {

@@ -1,5 +1,7 @@
 package com.starmao.scannable.common.scanning;
 
+import net.minecraft.tags.TagKey;
+
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.api.BlockScannerModule;
 import com.starmao.scannable.api.ScanResultProvider;
@@ -9,6 +11,7 @@ import com.starmao.scannable.common.scanning.filter.FluidTagScanFilter;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -82,7 +85,8 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
 
         List<Predicate<BlockState>> filters = new ArrayList<>();
         List<? extends String> ignoredTags = ServerConfig.IGNORED_FLUID_TAGS.get();
-        BuiltInRegistries.FLUID.getTagNames().forEach(tag -> {
+        BuiltInRegistries.FLUID.getTags().forEach(named -> {
+            TagKey<Fluid> tag = named.key();
             if (!ignoredTags.contains(tag.location().toString())) {
                 filters.add(new FluidTagScanFilter(tag));
             }

@@ -8,7 +8,7 @@ import com.starmao.scannable.common.scanning.filter.EntityListScanFilter;
 import com.starmao.scannable.common.scanning.filter.EntityTypeScanFilter;
 import com.starmao.scannable.common.item.ConfigurableEntityScannerModuleItem;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
@@ -57,7 +57,7 @@ public enum ConfigurableEntityScannerModule implements EntityScannerModule {
     @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<Entity> getFilter(ItemStack module) {
-        List<ResourceLocation> ids = List.of();
+        List<Identifier> ids = List.of();
         if (module.getItem() instanceof ConfigurableEntityScannerModuleItem item) {
             ids = item.getIds(module);
         }

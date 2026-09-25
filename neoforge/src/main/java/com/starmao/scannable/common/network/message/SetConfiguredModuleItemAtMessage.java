@@ -5,7 +5,7 @@ import com.starmao.scannable.common.container.AbstractModuleContainerMenu;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -13,8 +13,8 @@ import net.minecraft.server.level.ServerPlayer;
  * <p>Sent when the player clicks an empty slot (or uses JEI ghost-drag) in
  * the config GUI. The server resolves the registry name and updates the item.
  */
-public record SetConfiguredModuleItemAtMessage(int windowId, int index, ResourceLocation value) implements CustomPacketPayload {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "set_module_item");
+public record SetConfiguredModuleItemAtMessage(int windowId, int index, Identifier value) implements CustomPacketPayload {
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(Scannable.MOD_ID, "set_module_item");
     public static final Type<SetConfiguredModuleItemAtMessage> TYPE = new Type<>(ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetConfiguredModuleItemAtMessage> STREAM_CODEC =
@@ -22,12 +22,12 @@ public record SetConfiguredModuleItemAtMessage(int windowId, int index, Resource
                     (msg, buf) -> {
                         buf.writeVarInt(msg.windowId);
                         buf.writeVarInt(msg.index);
-                        buf.writeResourceLocation(msg.value);
+                        buf.writeIdentifier(msg.value);
                     },
                     buf -> new SetConfiguredModuleItemAtMessage(
                             buf.readVarInt(),
                             buf.readVarInt(),
-                            buf.readResourceLocation()
+                            buf.readIdentifier()
                     )
             );
 

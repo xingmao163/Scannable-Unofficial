@@ -3,13 +3,11 @@ package com.starmao.scannable.common.network.message;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
-import com.starmao.scannable.api.ClientScanHandler;
-import com.starmao.scannable.common.util.ClientAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -24,7 +22,7 @@ import java.util.List;
  * for rendering.
  */
 public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) implements CustomPacketPayload {
-    static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Scannable.MOD_ID, "s2c_item_scan");
+    static final Identifier ID = Identifier.fromNamespaceAndPath(Scannable.MOD_ID, "s2c_item_scan");
     public static final Type<S2CItemScanResult> TYPE = new Type<>(ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CItemScanResult> STREAM_CODEC =
@@ -36,7 +34,7 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
                         buf.writeVarInt(msg.results.size());
                         for (final ItemScanResultData r : msg.results) {
                             buf.writeBlockPos(r.pos());
-                            buf.writeResourceLocation(r.itemId());
+                            buf.writeIdentifier(r.itemId());
                             buf.writeVarInt(r.totalCount());
                         }
                     },
@@ -46,7 +44,7 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
                         final List<ItemScanResultData> results = new ArrayList<>(count);
                         for (int i = 0; i < count; i++) {
                             final BlockPos pos = buf.readBlockPos();
-                            final ResourceLocation itemId = buf.readResourceLocation();
+                            final Identifier itemId = buf.readIdentifier();
                             final int totalCount = buf.readVarInt();
                             results.add(new ItemScanResultData(pos, itemId, totalCount));
                         }
@@ -67,10 +65,7 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
             if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
             }
-            final ClientScanHandler h = ClientAccessor.getHandler();
-            if (h != null) {
-                h.setServerItemResults(msg.center, msg.results);
-            }
+            // TODO: ScanManager.setServerItemResults for 26.1.2
         });
     }
 }

@@ -1,17 +1,19 @@
 package com.starmao.scannable.common.item;
 
+import net.minecraft.world.item.Item;
+
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.common.config.Constants;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -24,12 +26,14 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.Optional;
 
 /**
  * Generic base for configurable scanner module items (block and entity).
  *
- * <p>Handles the common pattern of storing a list of {@link ResourceLocation} IDs
+ * <p>Handles the common pattern of storing a list of {@link Identifier} IDs
  * in a data component, with a lock flag, tooltip display, and a config GUI.
  *
  * @param <T> the registry type (e.g. {@link net.minecraft.world.level.block.Block})
@@ -42,6 +46,12 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
 
     private final MenuFactory menuFactory;
 
+    protected ConfigurableModuleItem(final Item.Properties properties, final ScannerModule module,
+                                     final MenuFactory menuFactory) {
+        super(properties, module);
+        this.menuFactory = menuFactory;
+    }
+
     protected ConfigurableModuleItem(final ScannerModule module,
                                      final MenuFactory menuFactory) {
         super(module);
@@ -51,7 +61,7 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
     // ---- Abstract ---- //
 
     /** The data component key that stores the resource location list. */
-    protected abstract DataComponentType<List<ResourceLocation>> getComponent();
+    protected abstract DataComponentType<List<Identifier>> getComponent();
 
     /** The registry used to look up items (e.g. {@link BuiltInRegistries#BLOCK}). */
     protected abstract Registry<T> getRegistry();
@@ -70,17 +80,17 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
 
     // ---- List management ---- //
 
-    public List<ResourceLocation> getIds(final ItemStack stack) {
-        final List<ResourceLocation> ids = stack.get(getComponent());
+    public List<Identifier> getIds(final ItemStack stack) {
+        final List<Identifier> ids = stack.get(getComponent());
         return ids != null ? ids : Collections.emptyList();
     }
 
     public List<T> getValues(final ItemStack stack) {
-        final List<ResourceLocation> ids = getIds(stack);
+        final List<Identifier> ids = getIds(stack);
         if (ids.isEmpty()) return Collections.emptyList();
         final List<T> result = new ArrayList<>();
         final Registry<T> registry = getRegistry();
-        for (final ResourceLocation id : ids) {
+        for (final Identifier id : ids) {
             registry.getOptional(id).ifPresent(result::add);
         }
         return result;
@@ -91,8 +101,8 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
         if (key.isEmpty()) return false;
         if (isLocked(stack)) return false;
 
-        final ResourceLocation id = key.get().location();
-        final List<ResourceLocation> list = new ArrayList<>(getIds(stack));
+        final Identifier id = key.get().identifier();
+        final List<Identifier> list = new ArrayList<>(getIds(stack));
         if (list.contains(id)) return true;
         if (list.size() >= Constants.CONFIGURABLE_MODULE_SLOTS) return false;
 
@@ -107,8 +117,8 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
         if (key.isEmpty()) return;
         if (isLocked(stack)) return;
 
-        final ResourceLocation id = key.get().location();
-        final List<ResourceLocation> list = new ArrayList<>(getIds(stack));
+        final Identifier id = key.get().identifier();
+        final List<Identifier> list = new ArrayList<>(getIds(stack));
         if (index < list.size() && id.equals(list.get(index))) return;
 
         // Remove any existing occurrence so the value moves (not duplicates).
@@ -125,7 +135,7 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
         if (index < 0 || index >= Constants.CONFIGURABLE_MODULE_SLOTS) return;
         if (isLocked(stack)) return;
 
-        final List<ResourceLocation> list = new ArrayList<>(getIds(stack));
+        final List<Identifier> list = new ArrayList<>(getIds(stack));
         if (index < list.size()) {
             list.remove(index);
             stack.set(getComponent(), List.copyOf(list));
@@ -135,22 +145,22 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
     // ---- Item overrides ---- //
 
     @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context, final List<Component> tooltip, final TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
+    public void appendHoverText(final ItemStack stack, final TooltipContext context, final TooltipDisplay display, final Consumer<Component> tooltip, final TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
         final List<T> values = getValues(stack);
         if (!values.isEmpty()) {
-            tooltip.add(getListCaption());
+            tooltip.accept(getListCaption());
             for (final T value : values) {
-                tooltip.add(Component.literal(" - ").append(getDisplayName(value)).withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+                tooltip.accept(Component.literal(" - ").append(getDisplayName(value)).withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
             }
         }
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(final Level level, final Player player, final InteractionHand hand) {
+    public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
         final ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide() && player instanceof final ServerPlayer serverPlayer) {
             serverPlayer.openMenu(new MenuProvider() {
@@ -165,7 +175,7 @@ public abstract class ConfigurableModuleItem<T> extends ScannerModuleItem {
                 }
             }, buf -> buf.writeEnum(hand));
         }
-        return InteractionResultHolder.success(stack);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
