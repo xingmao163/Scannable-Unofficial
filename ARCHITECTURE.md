@@ -63,8 +63,8 @@
 顶层不应出现 `bin/`、`net/`、`assets/`、`META-INF/` 这类目录：它们是本地 IDE 输出或
 反编译参考副本，已在 `.gitignore` 中按**根目录锚定**（`/bin/`、`/net/`、`/assets/`、
 `/META-INF/`、`/.mcsrc1211/`）排除。**这些规则必须带前导斜杠** —— 无斜杠的 `assets/`
-会匹配任意层级，曾把 `versions/26.1.2/.../resources/assets/` 整棵树（12 个
-`items/*.json` + 2 个 `shaders/*.fsh`）静默排除在版本控制之外。
+会匹配任意层级，曾把 `src/main/resources/assets/` 下的真实资源静默排除在版本控制之外
+（12 个 `items/*.json` + 2 个 `shaders/*.fsh` 因此长期未入库）。
 
 ## 3. 版本配置约定（重要）
 
