@@ -1,27 +1,17 @@
-name: Build Mod
+name: Build
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, '1.21.2', '1.21.4', '26.1.2']
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.gitignore'
+      - '.gitattributes'
       - 'docs/**'
   pull_request:
-    branches: [ main ]
+    branches: [main, '1.21.2', '1.21.4', '26.1.2']
   workflow_dispatch:
-    inputs:
-      target_version:
-        description: '目标版本（留空则构建全部）'
-        required: false
-        type: choice
-        options:
-          - ''
-          - 1.21.1
-          - 1.21.2
-          - 1.21.3
-          - 1.21.4
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,30 +20,23 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      matrix:
-        target: [1.21.1, 1.21.2, 1.21.3, 1.21.4]
-        include:
-          - target: 1.21.1
-            java: 21
-          - target: 1.21.2
-            java: 21
-          - target: 1.21.3
-            java: 21
-          - target: 1.21.4
-            java: 21
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
+      # 每个版本分支只构建自己那一个版本，版本信息来自本分支的 gradle.properties，
+      # 因此不需要版本矩阵。本文件在各分支上只有 java-version 一项不同，
+      # 必须与 gradle.properties 的 21sion 一致（26.x 用 25，1.21.x 用 21）。
       - uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
-          distribution: ${{ matrix.java == 25 && 'oracle' || 'temurin' }}
-          cache: 'gradle'
+          java-version: '21'
+          distribution: temurin
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -62,17 +45,14 @@ jobs:
 
       - uses: gradle/actions/wrapper-validation@v4
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Build Mod (${{ matrix.target }})
-        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.target_version == '' || matrix.target == inputs.target_version)) || (github.event_name != 'workflow_dispatch' && matrix.target == '1.21.1') }}
-        run: ./gradlew build --stacktrace -x test -PtargetVersion=${{ matrix.target }}
+      # 每个版本分支的关键防线：该版本坏掉会在这里立刻暴露，
+      # 而不再依赖"主分支能编过"这种无法覆盖其它版本的间接证据。
+      - name: Build
+        run: ./gradlew build --stacktrace --console=plain
 
       - uses: actions/upload-artifact@v4
-        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.target_version == '' || matrix.target == inputs.target_version)) || (github.event_name != 'workflow_dispatch' && matrix.target == '1.21.1') }}
         with:
-          name: Scannable-Unofficial-${{ matrix.target }}-${{ github.sha }}
+          name: Scannable-Unofficial-${{ github.ref_name }}-${{ github.sha }}
           path: build/libs/*.jar
           retention-days: 14
           compression-level: 9
