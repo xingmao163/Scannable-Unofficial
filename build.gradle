@@ -34,6 +34,9 @@ sourceSets.main.resources {
     exclude('**/*.bbmodel')
 }
 
+// DataGen 输出目录：默认不纳入版本控制（见 e3f9cc2「移除自动生成的资源与数据生成代码」，
+// 那批 recipe/advancement/tag 已改为手工维护、放在 src/main/resources/data/ 下）。
+// 首次运行 data/serverData/clientData 时该目录会自动创建。
 def dataGenArgs = ['--mod', project.mod_id, '--all',
                     '--output', file('src/generated/resources/').getAbsolutePath(),
                     '--existing', file('src/main/resources/').getAbsolutePath()]
