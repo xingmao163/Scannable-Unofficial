@@ -16,7 +16,7 @@
 > git 的引用存储不允许同名路径既是文件又是目录：只要 `refs/heads/1.21.2` 存在，
 > `refs/heads/1.21.2/3` 就会以 `cannot lock ref` 失败，两者无法共存。
 
-**每个分支都是自包含的**：`neoforge/src/main/` 里就是该版本的完整源码树，
+**每个分支都是自包含的**：`src/main/` 里就是该版本的完整源码树，
 不含任何针对其它版本的覆盖层，也不依赖别的分支才能编译。
 
 ### 为什么不再用"单分支 + 版本覆盖层"
@@ -48,7 +48,7 @@
 │   ├── versions.gradle       仅 sharedRepositories（Maven 仓库列表）
 │   ├── libs.versions.toml    版本目录（目前只有 moddev 插件版本）
 │   └── wrapper/              Gradle Wrapper
-├── neoforge/src/main/
+├── src/main/
 │   ├── java/                 该版本的完整实现源码
 │   ├── resources/            assets / data（配方、标签、进度、着色器）
 │   ├── templates/            neoforge.mods.toml 模板（占位符替换后生成）
