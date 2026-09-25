@@ -19,8 +19,6 @@ run/
 repo/
 !**/src/**/repo/
 **/src/generated/**/.cache/
-neoforge/run/
-neoforge/.eclipse/
 
 /net/
 /assets/
