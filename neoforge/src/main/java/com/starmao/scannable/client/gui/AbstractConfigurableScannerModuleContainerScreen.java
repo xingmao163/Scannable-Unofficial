@@ -9,11 +9,13 @@
  */
 package com.starmao.scannable.client.gui;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.starmao.scannable.common.container.AbstractModuleContainerMenu;
 import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.RemoveConfiguredModuleItemAtMessage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -83,7 +85,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
             int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
             int y = SLOTS_ORIGIN_Y;
             if (isHovering(x, y, 16, 16, mouseX, mouseY)) {
-                renderSlotHighlight(graphics, x, y, 400);
+                // renderSlotHighlight(graphics, x, y, SLOT_SIZE, 400);
             }
             if (slot < items.size()) {
                 renderConfiguredItem(graphics, items.get(slot), x, y);
@@ -95,7 +97,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
-        graphics.blit(BACKGROUND, x, y, 0, 0, imageWidth, imageHeight);
+        graphics.blit(RenderType::guiTextured, BACKGROUND, x, y, 0, 0, imageWidth, imageHeight, 256, 256);
     }
 
     @Override
@@ -116,7 +118,6 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @SuppressWarnings("null")
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
         if (slot != null) {

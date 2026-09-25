@@ -7,10 +7,13 @@ import com.starmao.scannable.common.network.Network;
 import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -60,7 +63,8 @@ public class ConfigurableEntityScannerModuleContainerScreen
     @Override
     protected void configureItemAt(ItemStack stack, int slot, ItemStack value) {
         if (value.getItem() instanceof SpawnEggItem egg) {
-            EntityType<?> entityType = egg.getType(value);
+            var provider = menu.getPlayer().level().registryAccess();
+            EntityType<?> entityType = egg.getType(provider, value);
             BuiltInRegistries.ENTITY_TYPE.getResourceKey(entityType).ifPresent(key ->
                 Network.sendToServer(new SetConfiguredModuleItemAtMessage(menu.containerId, slot, key.location())));
         }
@@ -88,13 +92,13 @@ public class ConfigurableEntityScannerModuleContainerScreen
         quaternion.conjugate();
         renderManager.overrideCameraOrientation(quaternion);
         renderManager.setRenderShadow(false);
-        renderManager.render(entity, 0, 0, 0, 0, 1, poseStack, graphics.bufferSource(), 0xf000f0);
+        renderManager.render(entity, 0, 0, 0, 1, poseStack, Minecraft.getInstance().renderBuffers().bufferSource(), 0xf000f0);
         renderManager.setRenderShadow(true);
         poseStack.popPose();
     }
 
     @Nullable
     private Entity getRenderEntity(EntityType<?> entityType) {
-        return RENDER_ENTITIES.computeIfAbsent(entityType, t -> t.create(menu.getPlayer().level()));
+        return RENDER_ENTITIES.computeIfAbsent(entityType, t -> t.create(menu.getPlayer().level(), EntitySpawnReason.NATURAL));
     }
 }

@@ -1,16 +1,16 @@
 package com.starmao.scannable.common.item;
 
-import com.starmao.scannable.api.ClientScanHandler;
-import com.starmao.scannable.common.util.ClientAccessor;
+import com.starmao.scannable.client.ScanManager;
+import com.starmao.scannable.client.audio.SoundManager;
 import com.starmao.scannable.common.config.Constants;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.config.Strings;
 import com.starmao.scannable.common.container.ScannerContainerMenu;
 import com.starmao.scannable.common.inventory.ScannerContainer;
-import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.energy.ItemEnergyStorage;
 import com.starmao.scannable.common.network.message.S2CItemScanResult;
-import com.starmao.scannable.common.scanning.ItemScannerService;
 import com.starmao.scannable.common.scanning.ChargingScannerModule;
+import com.starmao.scannable.common.scanning.ItemScannerService;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.ChatFormatting;
@@ -21,7 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,22 +42,23 @@ public final class ScannerItem extends ModItem {
         return stack.getItem() instanceof ScannerItem;
     }
 
+    public ScannerItem(Item.Properties properties) {
+        super(properties);
+    }
+
     public ScannerItem() {
-        super(new Item.Properties().stacksTo(1));
+        super(new Item.Properties());
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
 
-        // Energy bar info
         ItemEnergyStorage.of(stack).ifPresent(energy ->
                 tooltip.add(Strings.energyStorage(energy.getEnergyStored(), energy.getMaxEnergyStored())));
 
-        // — Installed modules overview —
         ScannerContainer container = ScannerContainer.of(stack);
 
-        // Active modules list
         Container activeModules = container.getActiveModules();
         boolean hasActive = false;
         for (int i = 0; i < activeModules.getContainerSize(); i++) {
@@ -82,7 +83,6 @@ public final class ScannerItem extends ModItem {
             }
         }
 
-        // Inactive (stored) modules list
         Container inactiveModules = container.getInactiveModules();
         boolean hasInactive = false;
         for (int i = 0; i < inactiveModules.getContainerSize(); i++) {
@@ -98,7 +98,6 @@ public final class ScannerItem extends ModItem {
                     .append(module.getHoverName().copy().withStyle(ChatFormatting.DARK_GRAY)));
         }
 
-        // Total cost per scan summary
         if (hasActive) {
             int totalCost = 0;
             for (int i = 0; i < activeModules.getContainerSize(); i++) {
@@ -130,7 +129,7 @@ public final class ScannerItem extends ModItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
             if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
@@ -152,39 +151,34 @@ public final class ScannerItem extends ModItem {
                 if (!level.isClientSide()) {
                     player.displayClientMessage(Strings.MESSAGE_NO_SCAN_MODULES, true);
                 }
-                player.getCooldowns().addCooldown(this, 10);
-                return InteractionResultHolder.fail(stack);
+                player.getCooldowns().addCooldown(stack, 10);
+                return InteractionResult.FAIL;
             }
 
             if (!tryConsumeEnergy(player, stack, modules, true)) {
                 if (!level.isClientSide()) {
                     player.displayClientMessage(Strings.MESSAGE_NOT_ENOUGH_ENERGY, true);
                 }
-                player.getCooldowns().addCooldown(this, 10);
-                return InteractionResultHolder.fail(stack);
+                player.getCooldowns().addCooldown(stack, 10);
+                return InteractionResult.FAIL;
             }
 
             player.startUsingItem(hand);
             if (level.isClientSide()) {
-                // Client-side: only scan with non-item modules (range, entity, block, etc.)
-                // Item scanner results arrive from the server after the scan completes.
                 final List<ItemStack> nonItemModules = new ArrayList<>();
                 for (final ItemStack m : modules) {
                     if (!(m.getItem() instanceof ConfigurableItemScannerModuleItem)) {
                         nonItemModules.add(m);
                     }
                 }
-                final ClientScanHandler h = ClientAccessor.getHandler();
-                if (h != null) {
-                    if (!nonItemModules.isEmpty()) {
-                        h.beginScan(player, nonItemModules);
-                    }
-                    h.playChargingSound();
+                if (!nonItemModules.isEmpty()) {
+                    ScanManager.beginScan(player, nonItemModules);
                 }
+                SoundManager.playChargingSound();
             }
         }
 
-        return InteractionResultHolder.success(stack);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -196,24 +190,19 @@ public final class ScannerItem extends ModItem {
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int count) {
         super.onUseTick(level, entity, stack, count);
         if (entity.level().isClientSide()) {
-            final ClientScanHandler h = ClientAccessor.getHandler();
-            if (h != null) {
-                h.updateScan(entity, false);
-            }
+            ScanManager.updateScan(entity, false);
         }
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (level.isClientSide()) {
-            final ClientScanHandler h = ClientAccessor.getHandler();
-            if (h != null) {
-                h.cancelScan();
-            }
+            ScanManager.cancelScan();
+            SoundManager.stopChargingSound();
         }
-        super.releaseUsing(stack, level, entity, timeLeft);
+        return super.releaseUsing(stack, level, entity, timeLeft);
     }
-    
+
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (!(entity instanceof Player player)) {
@@ -233,41 +222,32 @@ public final class ScannerItem extends ModItem {
             finishScanServer(serverPlayer, stack, level);
         }
 
-        player.getCooldowns().addCooldown(this, Constants.SCAN_COOLDOWN_TICKS);
+        player.getCooldowns().addCooldown(stack, Constants.SCAN_COOLDOWN_TICKS);
         return stack;
     }
 
-    /**
-     * Client-side scan finalisation: plays sounds and updates the scan renderer.
-     */
     private static void finishScanClient(final LivingEntity entity, final ItemStack stack,
                                          final List<ItemStack> modules, final boolean hasEnergy) {
-        final ClientScanHandler h = ClientAccessor.getHandler();
-        if (h == null) return;
-        h.stopChargingSound();
+        SoundManager.stopChargingSound();
         if (hasEnergy) {
-            h.updateScan(entity, true);
-            h.playActivateSound();
+            ScanManager.updateScan(entity, true);
+            SoundManager.playActivateSound();
         } else {
-            h.cancelScan();
+            ScanManager.cancelScan();
         }
     }
 
-    /**
-     * Server-side scan finalisation: reads the item scanner module configuration,
-     * executes the scan via {@link ItemScannerService}, and sends results back
-     * to the requesting client.
-     */
     private static void finishScanServer(final ServerPlayer player, final ItemStack stack, final Level level) {
         final ScannerContainer scannerContainer = ScannerContainer.of(stack);
         final var activeModules = scannerContainer.getActiveModules();
 
-        java.util.Set<ResourceLocation> targetItemIds = new java.util.HashSet<>();
+        List<ResourceLocation> targetItemIds = List.of();
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             final ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
             if (module.getItem() instanceof ConfigurableItemScannerModuleItem moduleItem) {
-                targetItemIds.addAll(moduleItem.getIds(module));
+                targetItemIds = moduleItem.getIds(module);
+                break;
             }
         }
 
@@ -286,9 +266,11 @@ public final class ScannerItem extends ModItem {
             }
 
             final List<ItemScanResultData> results = ItemScannerService.scan(
-                    level, center, (int) Math.ceil(scanRadius), new java.util.ArrayList<>(targetItemIds));
-            if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get())
+                    level, center, (int) Math.ceil(scanRadius), targetItemIds);
+
+            if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());
+            }
 
             if (!results.isEmpty()) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
@@ -296,8 +278,6 @@ public final class ScannerItem extends ModItem {
             }
         }
     }
-
-    // ---- Energy ---- //
 
     private static float getRelativeEnergy(ItemStack stack) {
         return ItemEnergyStorage.of(stack)
@@ -321,8 +301,6 @@ public final class ScannerItem extends ModItem {
         return extracted >= totalCost;
     }
 
-    // ---- Module collection ---- //
-
     private static boolean collectModules(ItemStack scanner, List<ItemStack> modules) {
         ScannerContainer container = ScannerContainer.of(scanner);
         Container activeModules = container.getActiveModules();
@@ -335,21 +313,19 @@ public final class ScannerItem extends ModItem {
             hasProviderModules |= ModuleHelper.hasResultProvider(module);
             hasItemModule |= module.getItem() instanceof ConfigurableItemScannerModuleItem;
         }
-        // ItemScannerModule.hasResultProvider() returns false (server-driven),
-        // so separate check is needed to allow item-only scans to start.
         return hasProviderModules || hasItemModule;
     }
 
-    // ---- Charger module (periodic energy generation) ---- //
+    // ---- Charging module tick ---- //
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
         if (level.isClientSide()) return;
-        if (!(entity instanceof Player)) return;
+        if (!(entity instanceof Player player)) return;
         if (!ServerConfig.SCANNER_USE_ENERGY.get()) return;
 
-        var container = ScannerContainer.of(stack);
+        ScannerContainer container = ScannerContainer.of(stack);
         var activeModules = container.getActiveModules();
         int chargerCount = 0;
         for (int i = 0; i < activeModules.getContainerSize(); i++) {
@@ -361,20 +337,20 @@ public final class ScannerItem extends ModItem {
                 chargerCount++;
             }
         }
+        // Stacking: more charging modules = faster charging
         if (chargerCount == 0) return;
 
         long lastTick = stack.getOrDefault(ModDataComponents.LAST_CHARGE_TICK.get(), 0L);
         long currentTick = level.getGameTime();
         int interval = ServerConfig.CHARGER_MODULE_INTERVAL.get();
-        if (currentTick - lastTick < interval) return;
-
-        // Direct DataComponent write bypasses the chargeOnlyByModule guard in ScannerEnergyStorage.
+        // Recharge directly — bypass external charging gate so the module
+        // works even when allowExternalCharging is false.
         int amount = ServerConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
         int capacity = ServerConfig.SCANNER_ENERGY_CAPACITY.get();
         int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
-        int newEnergy = (int) Math.min(capacity, Math.min((long) current + amount, Integer.MAX_VALUE));
+        int newEnergy = Math.min(capacity, current + amount);
         stack.set(ModDataComponents.SCANNER_ENERGY.get(), newEnergy);
         stack.set(ModDataComponents.LAST_CHARGE_TICK.get(), currentTick);
     }
-}
 
+}

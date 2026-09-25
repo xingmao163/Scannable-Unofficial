@@ -25,19 +25,12 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Unofficial NeoForge port of Scannable — a handheld scanner mod with swappable modules.
- *
- * <p>Original Scannable mod by Florian "Sangar" Nucke (MightyPirates), MIT licensed.
- * See LICENSE in the project root for full terms. Textures/localizations are CC0.
- */
 @Mod(Scannable.MOD_ID)
 public final class Scannable {
     public static final String MOD_ID = "scannable_unofficial";
     public static final Logger LOGGER = LoggerFactory.getLogger(Scannable.class);
 
     public Scannable(IEventBus modEventBus, ModContainer modContainer) {
-        // --- Registration ---
         ModDataComponents.register(modEventBus);
         Items.register(modEventBus);
         ModMenus.register(modEventBus);
@@ -46,23 +39,20 @@ public final class Scannable {
 
         ItemTags.initialize();
 
-        // --- Capabilities ---
         modEventBus.addListener(Scannable::registerCapabilities);
         Network.register(modEventBus);
-
         modContainer.registerConfig(Type.SERVER, ServerConfig.SPEC);
         modContainer.registerConfig(Type.CLIENT, ClientConfig.SPEC);
 
         modEventBus.addListener(Scannable::onModConfigEvent);
 
-        // --- Client-only setup ---
         if (FMLEnvironment.dist.isClient()) {
             com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
-            // Make the Config button clickable in the Mods screen.
-            // Uses ClientRegistrations (method annotated @OnlyIn(Dist.CLIENT))
-            // so RuntimeDistCleaner strips the client-only class references on server.
-            com.starmao.scannable.client.ClientRegistrations.registerConfigScreen(modContainer);
-
+            modContainer.registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mc, screen) ->
+                            new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, screen)
+            );
         }
 
     }
@@ -78,19 +68,14 @@ public final class Scannable {
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        // Energy storage — enables FE charge/discharge on the scanner item
         event.registerItem(Capabilities.EnergyStorage.ITEM,
                 (stack, ctx) -> com.starmao.scannable.common.energy.neoforge.ScannerEnergyStorage.of(stack),
                 Items.SCANNER.get());
 
-        // Item handler — exposes the scanner's internal module inventory
-        // to hoppers, other mods, etc.
         event.registerItem(Capabilities.ItemHandler.ITEM,
                 (stack, ctx) -> new ScannerItemHandler(ScannerContainer.of(stack)),
                 Items.SCANNER.get());
 
-        // ScannerModule capability — uniform access to scanning behaviour
-        // across all module item types without instanceof checks.
         ScannerModuleCapability.register(event,
                 Items.RANGE_MODULE.get(),
                 Items.ENTITY_MODULE.get(),
@@ -98,8 +83,7 @@ public final class Scannable {
                 Items.HOSTILE_ENTITY_MODULE.get(),
                 Items.BLOCK_MODULE.get(),
                 Items.FLUID_MODULE.get(),
-                Items.ITEM_MODULE.get(),
-                Items.CHARGER_MODULE.get());
+                Items.ITEM_MODULE.get());
     }
 
     public static ResourceLocation id(String path) {

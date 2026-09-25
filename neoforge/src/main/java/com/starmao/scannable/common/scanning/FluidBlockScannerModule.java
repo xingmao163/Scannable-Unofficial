@@ -6,14 +6,17 @@ import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultProviderRegistry;
 import com.starmao.scannable.common.scanning.filter.BlockCacheScanFilter;
 import com.starmao.scannable.common.scanning.filter.FluidTagScanFilter;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -53,7 +56,7 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
     @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
-        return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
+        return ScanResultProviderRegistry.get("blocks");
     }
 
     /**
@@ -82,7 +85,8 @@ public enum FluidBlockScannerModule implements BlockScannerModule {
 
         List<Predicate<BlockState>> filters = new ArrayList<>();
         List<? extends String> ignoredTags = ServerConfig.IGNORED_FLUID_TAGS.get();
-        BuiltInRegistries.FLUID.getTagNames().forEach(tag -> {
+        BuiltInRegistries.FLUID.getTags().forEach(named -> {
+            TagKey<Fluid> tag = named.key();
             if (!ignoredTags.contains(tag.location().toString())) {
                 filters.add(new FluidTagScanFilter(tag));
             }

@@ -132,6 +132,6 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider {
         public Vec3 getPosition() { return entity.position(); }
 
         @Override
-        public AABB getRenderBounds() { return entity.getBoundingBoxForCulling(); }
+        public AABB getRenderBounds() { return entity.getBoundingBox(); }
     }
 }

@@ -61,6 +61,6 @@ public final class ConfigurableEntityScannerModuleItem extends ConfigurableModul
                         Component.translatable("message.scannable_unofficial.scanner.no_free_slots").withStyle(net.minecraft.ChatFormatting.RED), true);
             }
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide());
+        return player.level().isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
     }
 }

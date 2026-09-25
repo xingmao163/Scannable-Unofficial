@@ -65,6 +65,6 @@ public final class ConfigurableBlockScannerModuleItem extends ConfigurableModule
             player.swing(context.getHand());
             player.getInventory().setChanged();
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
     }
 }
