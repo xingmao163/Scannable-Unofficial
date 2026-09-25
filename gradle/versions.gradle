@@ -1,64 +1,9 @@
+// 各版本分支共享的 Maven 仓库列表。
+//
+// 注意：这里不再有版本表。多版本源码覆盖（原来的 supportedVersions +
+// build.gradle 里的 mergeNeoforgeSources/mergeNeoforgeResources）已废弃 ——
+// 每个 Minecraft 版本现在是独立分支，版本配置在各自分支的 gradle.properties。
 ext {
-    supportedVersions = [
-        [
-            name                    : '1.21.1',
-            minecraft_version       : '1.21.1',
-            minecraft_version_range : '[1.21.1]',
-            neo_version             : '21.1.236',
-            neo_version_range       : '[21.1,22)',
-            parchment_minecraft     : '1.21.1',
-            parchment_mappings      : '2024.11.17',
-            jei_version             : '19.27.0.340',
-            emi_version             : '1.1.24+1.21.1+neoforge',
-            mod_version             : '1.3.1',
-        ],
-        [
-            name                    : '1.21.2',
-            minecraft_version       : '1.21.2',
-            minecraft_version_range : '[1.21.2]',
-            neo_version             : '21.2.1-beta',
-            neo_version_range       : '[21.2,22)',
-            parchment_minecraft     : '1.21.1',
-            parchment_mappings      : '2024.11.17',
-            jei_version             : '',
-            mod_version             : '1.2.0',
-        ],
-        [
-            name                    : '1.21.3',
-            minecraft_version       : '1.21.3',
-            minecraft_version_range : '[1.21.3]',
-            neo_version             : '21.3.96',
-            neo_version_range       : '[21.3,22)',
-            parchment_minecraft     : '1.21.3',
-            parchment_mappings      : '2024.12.07',
-            jei_version             : '',
-            mod_version             : '1.2.0',
-        ],
-        [
-            name                    : '1.21.4',
-            minecraft_version       : '1.21.4',
-            minecraft_version_range : '[1.21.4]',
-            neo_version             : '21.4.157',
-            neo_version_range       : '[21.4,22)',
-            parchment_minecraft     : '1.21.4',
-            parchment_mappings      : '2025.03.23',
-            jei_version             : '20.0.0.4',
-            mod_version             : '1.2.0',
-        ],
-        [
-            name                    : '26.1.2',
-            minecraft_version       : '26.1.2',
-            minecraft_version_range : '[26.1.2]',
-            neo_version             : '26.1.2.84',
-            neo_version_range       : '[26.1.2,27)',
-            parchment_minecraft     : '',
-            parchment_mappings      : '',
-            jei_version             : '',
-            emi_version             : '',
-            mod_version             : '1.0.0',
-        ],
-    ]
-
     sharedRepositories = [
         [name: 'Maven Central', url: 'https://repo.maven.apache.org/maven2'],
         [name: 'NeoForged', url: 'https://maven.neoforged.net/releases'],

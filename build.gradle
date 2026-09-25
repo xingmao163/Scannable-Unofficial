@@ -7,115 +7,36 @@ plugins {
 
 apply from: 'gradle/versions.gradle'
 
-def targetVersion = findProperty('targetVersion') ?: '1.21.1'
-def vcfg = supportedVersions.find { it.name == targetVersion }
-if (vcfg == null) throw new GradleException("Unsupported version: $targetVersion")
+// 版本配置全部来自本分支的 gradle.properties。
+// 各版本分支的 build.gradle 必须保持逐字节一致，否则分支间无法无冲突合并。
+ext.minecraft_version       = findProperty('minecraft_version')
+ext.minecraft_version_range = findProperty('minecraft_version_range')
+ext.neo_version             = findProperty('neo_version')
+ext.neo_version_range       = findProperty('neo_version_range') ?: "[${neo_version},)"
+ext.parchment_minecraft_version = findProperty('parchment_minecraft_version')
+ext.parchment_mappings_version  = findProperty('parchment_mappings_version')
+ext.jei_version             = findProperty('jei_version')
+ext.emi_version             = findProperty('emi_version') ?: ''
+ext.java_version            = (findProperty('java_version') ?: '21') as int
 
-def javaVersion = (targetVersion == '26.1' || targetVersion == '26.1.2') ? 25 : 21
-java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
 
-def versionParts = targetVersion.tokenize('.')
-def majorVer = versionParts[0].toInteger()
-def minorVer = versionParts.size() > 1 ? versionParts[1].toInteger() : 0
-def patchVer = versionParts.size() > 2 ? versionParts[2].toInteger() : 0
-
-def shouldExcludeShaders = majorVer == 1 && (minorVer > 25 || (minorVer >= 21 && minorVer <= 25 && patchVer >= 6))
-def isOldDataGenFormat = majorVer == 1 && minorVer == 21 && patchVer <= 3
-def isNewDataGenFormat = (majorVer == 1 && minorVer == 21 && patchVer >= 4) || majorVer == 26
-ext.minecraft_version     = vcfg.minecraft_version
-ext.minecraft_version_range = vcfg.minecraft_version_range
-ext.neo_version           = vcfg.neo_version
-ext.neo_version_range     = vcfg.neo_version_range ?: "[${vcfg.neo_version},)"
-ext.parchment_minecraft_version = vcfg.parchment_minecraft
-ext.parchment_mappings_version  = vcfg.parchment_mappings
-ext.jei_version           = vcfg.jei_version
-ext.emi_version           = vcfg.emi_version ?: ''
-
-version = vcfg.mod_version ?: mod_version
+version = mod_version
 group = mod_group_id
 
 base {
     archivesName = "Scannable_Unofficial-Neo${minecraft_version}"
 }
 
-def versionOverrideJava = file("versions/${targetVersion}/neoforge/src/main/java")
-def sharedOverrideJava = file("versions/shared/neoforge/src/main/java")
-def versionOverrideResources = file("versions/${targetVersion}/neoforge/src/main/resources")
-def sharedOverrideResources = file("versions/shared/neoforge/src/main/resources")
-
-def versionAliases = ['1.21.3': '1.21.2']
-def resolvedVersion = versionAliases[targetVersion] ?: targetVersion
-def resolvedOverrideJava = file("versions/${resolvedVersion}/neoforge/src/main/java")
-def resolvedOverrideResources = file("versions/${resolvedVersion}/neoforge/src/main/resources")
-
-def hasVersionOverride = resolvedOverrideJava.exists()
-def hasSharedOverride = sharedOverrideJava.exists() && targetVersion != '1.21.1'
-def hasSharedResources = sharedOverrideResources.exists() && targetVersion != '1.21.1'
-
-if (hasVersionOverride || hasSharedOverride) {
-    def mergedJava = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/java")
-    tasks.register('mergeNeoforgeSources', Sync) {
-        from 'neoforge/src/main/java'
-        if (hasSharedOverride) {
-            from sharedOverrideJava
-        }
-        if (hasVersionOverride) {
-            from resolvedOverrideJava
-        }
-        into mergedJava
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
-    sourceSets.main.java.srcDirs = [mergedJava]
-    tasks.named('compileJava').configure { dependsOn 'mergeNeoforgeSources' }
-} else {
-    sourceSets.main.java.srcDirs = [file('neoforge/src/main/java')]
-}
-
-if (hasVersionOverride || hasSharedResources) {
-    def mergedResources = layout.buildDirectory.dir("mergedSrc/${targetVersion}/neoforge/resources")
-    tasks.register('mergeNeoforgeResources', Sync) {
-        from 'neoforge/src/main/resources'
-        if (hasSharedResources) {
-            from sharedOverrideResources
-        }
-        if (hasVersionOverride) {
-            from resolvedOverrideResources
-        }
-        into mergedResources
-        exclude('**/*.bbmodel')
-
-        if (shouldExcludeShaders) {
-            exclude('**/shaders/core/scan_effect.json')
-            exclude('**/shaders/core/scan_result.json')
-            exclude('**/shaders/core/scan_item_result.json')
-        }
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
-    sourceSets.main.resources.srcDirs = [mergedResources]
-    tasks.named('processResources').configure { dependsOn 'mergeNeoforgeResources' }
-    tasks.named('processResources').configure { mustRunAfter 'mergeNeoforgeResources' }
-    // Ensure NeoGradle artifact generation runs after resource merge:
-    tasks.matching { it.name.startsWith('create') && it.name.contains('Artifacts') }.configureEach {
-        mustRunAfter 'mergeNeoforgeResources'
-    }
-} else {
-    sourceSets.main.resources {
-        srcDir('neoforge/src/main/resources')
-        exclude('**/*.bbmodel')
-        if (shouldExcludeShaders) {
-            exclude('**/shaders/core/scan_effect.json')
-            exclude('**/shaders/core/scan_result.json')
-            exclude('**/shaders/core/scan_item_result.json')
-        }
-    }
+sourceSets.main.java.srcDirs = [file('neoforge/src/main/java')]
+sourceSets.main.resources {
+    srcDir('neoforge/src/main/resources')
+    exclude('**/*.bbmodel')
 }
 
 def dataGenArgs = ['--mod', project.mod_id, '--all',
                     '--output', file('neoforge/src/generated/resources/').getAbsolutePath(),
                     '--existing', file('neoforge/src/main/resources/').getAbsolutePath()]
-if (versionOverrideResources.exists()) {
-    dataGenArgs.addAll('--existing', versionOverrideResources.absolutePath)
-}
 
 neoForge {
     version = project.neo_version
@@ -141,28 +62,20 @@ neoForge {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-        if (isOldDataGenFormat) {
-            data {
-                data()
-                programArguments.addAll dataGenArgs
-            }
+        // DataGen 入口随版本而异：1.21.1~1.21.3 用 `data`，
+        // 1.21.4+ 拆成 `serverData` + `clientData`，26.1.2 只用 `clientData`。
+        // 版本不适用的 run 在本分支直接删除即可 —— 其余内容请与本项目其它版本分支保持一致。
+        data {
+            data()
+            programArguments.addAll dataGenArgs
         }
-        if (isNewDataGenFormat) {
-            if (targetVersion == '26.1.2') {
-                data {
-                    clientData()
-                    programArguments.addAll dataGenArgs
-                }
-            } else {
-                serverData {
-                    serverData()
-                    programArguments.addAll dataGenArgs
-                }
-                clientData {
-                    clientData()
-                    programArguments.addAll dataGenArgs
-                }
-            }
+        serverData {
+            serverData()
+            programArguments.addAll dataGenArgs
+        }
+        clientData {
+            clientData()
+            programArguments.addAll dataGenArgs
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
@@ -226,7 +139,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
-            mod_version            : vcfg.mod_version ?: mod_version,
+            mod_version            : mod_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties

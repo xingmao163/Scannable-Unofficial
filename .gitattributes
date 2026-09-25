@@ -1,0 +1,25 @@
+# 行尾符策略：索引统一存 LF，工作区按平台转换。
+#
+# 本项目为多版本分支维护（main=1.21.1 / 1.21.2 / 1.21.4 / 26.1.2），
+# 各分支之间靠 cherry-pick 与 merge 同步共享代码，因此行尾符必须规范化，
+# 否则同一个文件在不同分支会被判定为"全文件改动"，合并时产生整篇冲突。
+* text=auto
+
+# 文本文件显式声明
+*.java   text diff=java
+*.gradle text
+*.properties text
+*.json   text
+*.toml   text
+*.md     text
+*.yml    text
+*.cfg    text
+*.fsh    text
+
+# 二进制文件禁止行尾转换与 diff
+*.jar    binary
+*.png    binary
+*.ogg    binary
+*.bbmodel binary
+*.mca    binary
+*.dat    binary

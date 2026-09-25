@@ -187,6 +187,8 @@ public final class ScannerItem extends ModItem {
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return Constants.SCAN_DURATION_TICKS;
+    }
+
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int count) {
         super.onUseTick(level, entity, stack, count);

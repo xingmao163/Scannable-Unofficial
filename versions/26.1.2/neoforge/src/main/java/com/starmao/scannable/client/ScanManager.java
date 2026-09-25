@@ -10,6 +10,7 @@ import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
+import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -246,6 +247,21 @@ public final class ScanManager {
 
     public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
         // Not needed in 26.1.2 — renderLevel receives PoseStack from the render hook.
+    }
+
+    /**
+     * 26.1.2 桩：服务端物品扫描结果注入。
+     *
+     * <p>主树实现把 {@link ItemScanResultData} 转成 {@code ItemScanResult} 放进
+     * {@code pendingResults} 走原有的 tick/render 展开动画；26.1.2 的结果渲染已改为
+     * {@code SubmitNodeCollector} 管线，该路径尚未接通，所以这里故意留空。
+     * 调用方 {@code S2CItemScanResult} 中同样留有对应 TODO。
+     *
+     * <p>保留此方法是为了让从主树继承下来的 {@code ClientScanHandlerImpl} 能编译通过；
+     * 接通该功能时请与 {@code S2CItemScanResult} 的 TODO 一并处理。
+     */
+    public static void setServerItemResults(final Vec3 center, final List<ItemScanResultData> rawResults) {
+        // 未接通：见上方 @implNote 与 S2CItemScanResult 的 TODO
     }
 
     @Nullable

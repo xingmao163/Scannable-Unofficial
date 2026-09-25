@@ -1,0 +1,33 @@
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+### IDEs ###
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.claude/
+**/bin/
+
+### Minecraft runs ###
+run/
+!**/src/**/run/
+repo/
+!**/src/**/repo/
+**/src/generated/**/.cache/
+neoforge/run/
+neoforge/.eclipse/
+
+/net/
+/assets/
+/META-INF/
+/.mcsrc1211/
+
+### OS ###
+.gitignore
+CLAUDE.md
+ARCHITECTURE.md
