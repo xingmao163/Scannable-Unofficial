@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main, '1.21.2', '1.21.4', '26.1.2']
+    branches: [main, '1.21.2-1.21.3', '1.21.4', '26.1.2']
     paths-ignore:
       - '**.md'
       - 'LICENSE'
@@ -10,7 +10,7 @@ on:
       - '.gitattributes'
       - 'docs/**'
   pull_request:
-    branches: [main, '1.21.2', '1.21.4', '26.1.2']
+    branches: [main, '1.21.2-1.21.3', '1.21.4', '26.1.2']
   workflow_dispatch:
 
 concurrency:
