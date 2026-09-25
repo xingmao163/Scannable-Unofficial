@@ -28,9 +28,12 @@ public final class BlockCacheScanFilter implements Predicate<BlockState> {
         Set<Block> cache = new HashSet<>();
         for (Predicate<BlockState> filter : filters) {
             // Fast path: resolve tag filter directly without registry scan
+            // 1.21.4 移除了 Registry#getTag(TagKey)（原返回 Optional<HolderSet.Named>），
+            // 替代品 getTagOrEmpty(TagKey) 直接返回 Iterable<Holder>：tag 不存在时
+            // 空迭代，与原先 ifPresent(...) 的语义等价。
             if (filter instanceof BlockTagScanFilter tagFilter) {
-                BuiltInRegistries.BLOCK.getTag(tagFilter.tag()).ifPresent(holders ->
-                        holders.forEach(holder -> cache.add(holder.value())));
+                BuiltInRegistries.BLOCK.getTagOrEmpty(tagFilter.tag())
+                        .forEach(holder -> cache.add(holder.value()));
                 continue;
             }
             // Fast path: single-block filter
