@@ -76,6 +76,17 @@ public final class ClientConfig {
 
     static { BUILDER.pop(); }
 
+    static { BUILDER.push("rendering"); }
+
+    public static final ModConfigSpec.BooleanValue HAND_DEPTH_PASS = BUILDER
+            .comment("Re-render the first-person hand into the depth buffer before drawing scan highlights,",
+                    "so the highlights do not bleed over the hand or the held item.",
+                    "Disable this if you see hand / held-item artefacts, or if a mod that takes over",
+                    "first-person hand rendering (e.g. Yes Steve Model) reports render errors.",
+                    "Applies from the next frame, no restart needed.")
+            .define("handDepthPass", true);
+
+    static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
     // ========================================================================

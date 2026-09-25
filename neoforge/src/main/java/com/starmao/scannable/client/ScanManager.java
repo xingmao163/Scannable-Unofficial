@@ -6,13 +6,13 @@ import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.ScannerModule;
+import com.starmao.scannable.client.renderer.ScanRenderBuffers;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -48,7 +48,13 @@ public final class ScanManager {
         }
     }
 
-    private static final ByteBufferBuilder RENDER_BUFFER = new ByteBufferBuilder(256);
+    /**
+     * Buffer source for scan overlays. Uses {@link ScanRenderBuffers} so that item icons
+     * (GUI labels) can be drawn even when the stack carries enchantment glint — with a
+     * plain {@code MultiBufferSource.immediate(...)} the glint batch would be killed the
+     * moment the item's own render type is requested, throwing "Not building!".
+     */
+    private static final MultiBufferSource.BufferSource RENDER_BUFFER = ScanRenderBuffers.create();
 
     private static float computeTargetRadius() {
         return Minecraft.getInstance().gameRenderer.getRenderDistance();
@@ -283,17 +289,25 @@ public final class ScanManager {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
 
+            // Every RenderSystem state change below is unwound in a finally block: this
+            // method runs inside a NeoForge GUI layer, so an exception escaping here (or a
+            // leaked model-view entry) would take down unrelated layers with it.
             RenderSystem.backupProjectionMatrix();
-            RenderSystem.setProjectionMatrix(worldProjectionMatrix, VertexSorting.ORTHOGRAPHIC_Z);
-            RenderSystem.getModelViewStack().pushMatrix();
-            RenderSystem.getModelViewStack().identity();
-            RenderSystem.applyModelViewMatrix();
+            try {
+                RenderSystem.setProjectionMatrix(worldProjectionMatrix, VertexSorting.ORTHOGRAPHIC_Z);
+                RenderSystem.getModelViewStack().pushMatrix();
+                try {
+                    RenderSystem.getModelViewStack().identity();
+                    RenderSystem.applyModelViewMatrix();
 
-            render(ScanResultRenderContext.GUI, partialTick, worldViewModelStack, worldProjectionMatrix);
-
-            RenderSystem.getModelViewStack().popMatrix();
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.restoreProjectionMatrix();
+                    render(ScanResultRenderContext.GUI, partialTick, worldViewModelStack, worldProjectionMatrix);
+                } finally {
+                    RenderSystem.getModelViewStack().popMatrix();
+                    RenderSystem.applyModelViewMatrix();
+                }
+            } finally {
+                RenderSystem.restoreProjectionMatrix();
+            }
         }
     }
 
@@ -308,17 +322,16 @@ public final class ScanManager {
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         poseStack.pushPose();
-        poseStack.translate(-pos.x, -pos.y, -pos.z);
-
-        MultiBufferSource.BufferSource renderTypeBuffer = MultiBufferSource.immediate(RENDER_BUFFER);
         try {
+            poseStack.translate(-pos.x, -pos.y, -pos.z);
+
             for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
                 if (context == ScanResultRenderContext.WORLD) {
                     // World highlights: pass ALL results so VBO caches are built
                     // for every position, not just the frustum-visible subset.
                     // GPU-level frustum culling handles invisible quads efficiently.
                     if (!entry.getValue().isEmpty()) {
-                        entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, entry.getValue());
+                        entry.getKey().render(context, RENDER_BUFFER, poseStack, camera, partialTicks, entry.getValue());
                     }
                 } else {
                     // GUI text labels: frustum-cull so labels don't render off-screen.
@@ -329,19 +342,19 @@ public final class ScanManager {
                         }
                     }
                     if (!renderingList.isEmpty()) {
-                        entry.getKey().render(context, renderTypeBuffer, poseStack, camera, partialTicks, renderingList);
+                        entry.getKey().render(context, RENDER_BUFFER, poseStack, camera, partialTicks, renderingList);
                         renderingList.clear();
                     }
                 }
             }
         } finally {
+            // Unwind in reverse order so a failing provider cannot leave the shared
+            // model-view stack, the pose stack, or the GL depth test in a bad state.
             renderingList.clear();
+            RENDER_BUFFER.endBatch();
+            poseStack.popPose();
+            RenderSystem.enableDepthTest();
         }
-
-        renderTypeBuffer.endBatch();
-        poseStack.popPose();
-
-        RenderSystem.enableDepthTest();
     }
 
 
