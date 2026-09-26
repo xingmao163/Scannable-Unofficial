@@ -112,13 +112,26 @@ public final class ScanResultRenderType {
 
     /**
      * Textured, translucent, two-sided, through-wall pipeline for the billboarded result icons.
-     * Derived from the GUI textured snippet (core/position_tex_color / Sampler0 / NO_DEPTH_TEST).
+     * <p>
+     * Mirrors vanilla's {@code GUI_TEXTURED_SNIPPET}
+     * ({@code RenderPipelines.GUI_TEXTURED_SNIPPET}) — same shaders, sampler, blend and vertex
+     * format — plus the NO_DEPTH_TEST state so icons show through walls.
+     * <p>
+     * <b>The {@code DynamicTransforms} and {@code Projection} uniforms are mandatory.</b>
+     * {@code core/position_tex_color} reads {@code ModelViewMat}/{@code ProjMat} and multiplies
+     * the sampled texel by {@code ColorModulator}, all of which live in those two UBOs. Declaring
+     * the sampler without them leaves {@code ColorModulator} at its zero default, so
+     * {@code texture(...) * vertexColor * ColorModulator} evaluates to fully transparent and the
+     * icon silently disappears — with no error, only the build-time warning
+     * "Found unknown and unsupported uniform DynamicTransforms in ...:pipeline/scan_icon".
      */
     public static final RenderPipeline ICON_PIPELINE = RenderPipeline.builder()
             .withLocation(Scannable.id("pipeline/scan_icon"))
             .withVertexShader("core/position_tex_color")
             .withFragmentShader("core/position_tex_color")
             .withSampler("Sampler0")
+            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
@@ -129,8 +142,21 @@ public final class ScanResultRenderType {
 
     /**
      * Returns a RenderType bound to the given icon texture, cached per-texture.
+     *
+     * <p><b>Never pass {@code null}.</b> A null texture becomes a null resource
+     * location in the {@link RenderSetup}, and flushing that batch throws
+     * {@code NullPointerException: Uploading texture} from
+     * {@code ReloadableTexture.doLoad} — deep inside {@code endBatch()}, far from
+     * the offending call. Callers that may not have an icon (e.g. the block
+     * provider, which renders a text-only label) must skip the icon quad
+     * entirely instead of asking for a type here.
      */
     public static RenderType icon(final Identifier texture) {
+        if (texture == null) {
+            throw new IllegalArgumentException(
+                    "ScanResultRenderType.icon() requires a non-null texture; "
+                            + "skip drawing the icon instead of passing null");
+        }
         return ICON_TYPES.computeIfAbsent(texture, tex -> RenderType.create(
                 Scannable.MOD_ID + ":scan_icon/" + tex,
                 RenderSetup.builder(ICON_PIPELINE).withTexture("Sampler0", tex).createRenderSetup()));

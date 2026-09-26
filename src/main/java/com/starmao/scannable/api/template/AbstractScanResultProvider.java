@@ -66,11 +66,18 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
 
     /**
      * Renders a billboarded label that is only shown when the result is looked at.
+     *
+     * <p>The icon is drawn as a billboarded quad above the text. Callers are
+     * expected to pass a real texture — in practice every provider uses
+     * {@code ModTextures.ICON_INFO} or a module-supplied icon. The {@code null}
+     * guard is defensive only: it skips the icon quad rather than forwarding the
+     * value to {@link ScanResultRenderType#icon}, which would bind a null texture
+     * and crash later, in {@code endBatch()}, far from the offending call.
      */
     protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
                                            float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                            float displayDistance, Vec3 resultPos,
-                                           Identifier icon, @Nullable Component label) {
+                                           @Nullable Identifier icon, @Nullable Component label) {
         final Vec3 toResult = resultPos.subtract(viewerEyes);
         final float distance = (float) toResult.length();
         final float lookDirDot = (float) lookVec.dot(toResult.normalize());
@@ -99,7 +106,9 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
             font.drawInBatch(text, 12, -4, 0xFFFFFFFF, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
         }
 
-        drawTexturedQuad(bufferSource.getBuffer(ScanResultRenderType.icon(icon)), poseStack, 16, 16);
+        if (icon != null) {
+            drawTexturedQuad(bufferSource.getBuffer(ScanResultRenderType.icon(icon)), poseStack, 16, 16);
+        }
 
         poseStack.popPose();
     }

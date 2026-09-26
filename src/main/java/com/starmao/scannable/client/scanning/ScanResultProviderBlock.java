@@ -1,6 +1,7 @@
 package com.starmao.scannable.client.scanning;
 
 import com.starmao.scannable.api.BlockScannerModule;
+import com.starmao.scannable.api.ModTextures;
 import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
@@ -263,7 +264,8 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
             if (dot > 0.98f) {
                 Component label = br.label != null ? br.label : br.block.getName();
                 float distance = showDistance ? (float) pos.subtract(viewerEyes).length() : 0f;
-                renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, pos, null, label);
+                renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, pos,
+                        ModTextures.ICON_INFO, label);
             }
         }
     }

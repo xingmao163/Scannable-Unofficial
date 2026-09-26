@@ -1,6 +1,7 @@
 package com.starmao.scannable.client.scanning;
 
 import com.starmao.scannable.api.EntityScannerModule;
+import com.starmao.scannable.api.ModTextures;
 import com.starmao.scannable.api.ScanResult;
 import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
@@ -66,7 +67,7 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
                 continue;
             }
             if (center.distanceToSqr(entity.position()) < (double) radius * radius) {
-                Identifier icon = null;
+                Identifier icon = ModTextures.ICON_INFO;
                 boolean hasMatch = false;
                 for (Predicate<Entity> filter : filters) {
                     if (filter.test(entity)) {
@@ -121,7 +122,7 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
                 Component label = er.entity.getName();
                 float distance = showDistance ? (float) eyePos.subtract(viewerEyes).length() : 0f;
                 renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, eyePos,
-                        er.icon != null ? er.icon : Identifier.parse("scannable_unofficial:info"), label);
+                        er.icon, label);
             }
         }
     }
@@ -140,9 +141,9 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
 
     private static final class EntityScanResult implements ScanResult {
         private final Entity entity;
-        @Nullable private final Identifier icon;
+        private final Identifier icon;
 
-        EntityScanResult(Entity entity, @Nullable Identifier icon) {
+        EntityScanResult(Entity entity, Identifier icon) {
             this.entity = entity;
             this.icon = icon;
         }
