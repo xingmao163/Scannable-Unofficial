@@ -1,18 +1,12 @@
 name: Build
 
+# 仅手动触发：Actions → Build → Run workflow → 从下拉框选目标分支。
+# workflow_dispatch 的按钮要求本文件存在于默认分支(main)上；按钮出现后可选任意分支运行，
+# 届时用的是该分支自己这份文件。
 on:
-  push:
-    branches: [main, '1.21.2-1.21.3', '1.21.4', '26.1.2']
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE'
-      - '.gitignore'
-      - '.gitattributes'
-      - 'docs/**'
-  pull_request:
-    branches: [main, '1.21.2-1.21.3', '1.21.4', '26.1.2']
   workflow_dispatch:
 
+# 同一分支连点两次时，取消上一次仍在排队/运行的构建，不白占 runner。
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -23,18 +17,18 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # 只取当前提交即可，checkout 的 fetch-depth 默认就是 1，无需显式声明。
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      # 每个版本分支只构建自己那一个版本，版本信息来自本分支的 gradle.properties，
-      # 因此不需要版本矩阵。本文件在各分支上只有 java-version 一项不同，
-      # 必须与 gradle.properties 的 25sion 一致（26.x 用 25，1.21.x 用 21）。
+      # 本文件在四个分支上唯一不同的一行：26.1.2 用 '25'，其余分支用 '21'。
+      # 必须与本分支 gradle.properties 的 java_version 一致 —— build.gradle 用它设置
+      # java.toolchain.languageVersion，而 build.gradle 必须跨分支逐字节一致。
       - uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: temurin
 
+      # gradlew 在 git 里是 100644（没有可执行位），Linux runner 上不做这步会 Permission denied。
       - name: Make gradlew executable
         run: chmod +x gradlew
 
@@ -45,8 +39,6 @@ jobs:
 
       - uses: gradle/actions/wrapper-validation@v4
 
-      # 每个版本分支的关键防线：该版本坏掉会在这里立刻暴露，
-      # 而不再依赖"主分支能编过"这种无法覆盖其它版本的间接证据。
       - name: Build
         run: ./gradlew build --stacktrace --console=plain
 
@@ -56,4 +48,4 @@ jobs:
           path: build/libs/*.jar
           retention-days: 14
           compression-level: 9
-          if-no-files-found: warn
+          if-no-files-found: error
