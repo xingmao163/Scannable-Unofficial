@@ -70,6 +70,7 @@ public final class ScannerClientSetup {
         event.registerPipeline(ScanResultRenderType.SCAN_EFFECT_PIPELINE);
         event.registerPipeline(ScanResultRenderType.RESULT_BOX_PIPELINE);
         event.registerPipeline(ScanResultRenderType.SHIMMER_PIPELINE);
+        event.registerPipeline(ScanResultRenderType.SCAN_PROGRESS_PIPELINE);
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

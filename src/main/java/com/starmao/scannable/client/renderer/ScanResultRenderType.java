@@ -9,6 +9,7 @@ import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.starmao.scannable.Scannable;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
@@ -139,6 +140,24 @@ public final class ScanResultRenderType {
             .build();
 
     private static final Map<Identifier, RenderType> ICON_TYPES = new HashMap<>();
+
+    /**
+     * HUD scan-progress ring: a textured clock-wipe pie, drawn as a triangle fan.
+     *
+     * <p>Triangles rather than quads because the fan's wedges are genuine triangles — a quad
+     * pipeline would need half of every wedge emitted as degenerate quads. {@code withCull(false)}
+     * is required because the fan's winding is mixed as it sweeps past the square's corners.
+     *
+     * <p>Built from {@link RenderPipelines#GUI_TEXTURED_SNIPPET} so it inherits the
+     * {@code DynamicTransforms}/{@code Projection} uniforms that {@code core/position_tex_color}
+     * reads; declaring only the sampler would leave {@code ColorModulator} at zero and the whole
+     * ring would render fully transparent.
+     */
+    public static final RenderPipeline SCAN_PROGRESS_PIPELINE = RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+            .withLocation(Scannable.id("pipeline/scan_progress"))
+            .withCull(false)
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.TRIANGLES)
+            .build();
 
     /**
      * Returns a RenderType bound to the given icon texture, cached per-texture.
