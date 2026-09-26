@@ -6,6 +6,11 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+
+import javax.annotation.Nullable;
 
 /** The main scanner inventory screen. */
 public class ScannerContainerScreen extends AbstractContainerScreen<ScannerContainerMenu> {
@@ -33,5 +38,25 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
         graphics.text(font, title, titleLabelX, titleLabelY, 0x404040, false);
         graphics.text(font, ACTIVE_TEXT, 8, 23, 0x404040, false);
         graphics.text(font, INACTIVE_TEXT, 8, 49, 0x404040, false);
+    }
+
+    /**
+     * 阻止玩家把手持的 scanner 本体拖进它自己的槽位（否则会造成物品自吞）。
+     *
+     * <p>{@code slot.getItem() == scannerItemStack} 用引用比较即足够：同一格物品在
+     * 同一 tick 内是同一个 {@link ItemStack} 实例。SWAP（数字键换位）要额外检查目标
+     * 快捷栏格是否正好持有 scanner。
+     */
+    @Override
+    protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ContainerInput type) {
+        if (slot != null) {
+            final ItemStack scannerItemStack = menu.getPlayer().getItemInHand(menu.getHand());
+            if (slot.getItem() == scannerItemStack) return;
+            if (type == ContainerInput.SWAP
+                    && menu.getPlayer().getInventory().getItem(mouseButton) == scannerItemStack) {
+                return;
+            }
+        }
+        super.slotClicked(slot, slotId, mouseButton, type);
     }
 }

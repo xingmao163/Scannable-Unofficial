@@ -355,12 +355,14 @@ public final class ScannerItem extends ModItem {
         long lastTick = stack.getOrDefault(ModDataComponents.LAST_CHARGE_TICK.get(), 0L);
         long currentTick = level.getGameTime();
         int interval = ServerConfig.CHARGER_MODULE_INTERVAL.get();
+        if (currentTick - lastTick < interval) return;
+
         // Recharge directly — bypass external charging gate so the module
         // works even when allowExternalCharging is false.
         int amount = ServerConfig.CHARGER_MODULE_ENERGY_PER_PULSE.get() * chargerCount;
         int capacity = ServerConfig.SCANNER_ENERGY_CAPACITY.get();
         int current = stack.getOrDefault(ModDataComponents.SCANNER_ENERGY.get(), 0);
-        int newEnergy = Math.min(capacity, current + amount);
+        int newEnergy = (int) Math.min(capacity, Math.min((long) current + amount, Integer.MAX_VALUE));
         stack.set(ModDataComponents.SCANNER_ENERGY.get(), newEnergy);
         stack.set(ModDataComponents.LAST_CHARGE_TICK.get(), currentTick);
     }
