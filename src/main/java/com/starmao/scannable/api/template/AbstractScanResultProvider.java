@@ -29,6 +29,15 @@ import com.starmao.scannable.util.UnitConversion;
  * Provides helper methods for rendering using the new RenderPipeline / RenderType system.
  */
 public abstract class AbstractScanResultProvider implements ScanResultProvider {
+    /**
+     * Cap on simultaneously drawn result icons.
+     *
+     * <p>Icons are no longer gated on the look direction (see {@link #renderIconLabel}), so a scan
+     * that finds many results would otherwise plaster one icon per result over the screen. The cap
+     * keeps the display readable and gives the limited slots to the best-aimed results.
+     */
+    protected static final int MAX_ICONS = 4;
+
     protected Player player;
     protected Vec3 center;
     protected int radius;
@@ -65,14 +74,19 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
     }
 
     /**
-     * Renders a billboarded label that is only shown when the result is looked at.
+     * Renders a billboarded icon, plus the name label once the result is being looked at.
      *
-     * <p>The icon is drawn as a billboarded quad above the text. Callers are
-     * expected to pass a real texture — in practice every provider uses
-     * {@code ModTextures.ICON_INFO} or a module-supplied icon. The {@code null}
-     * guard is defensive only: it skips the icon quad rather than forwarding the
-     * value to {@link ScanResultRenderType#icon}, which would bind a null texture
-     * and crash later, in {@code endBatch()}, far from the offending call.
+     * <p>The two are gated differently, matching the 1.21.1 overlay: the icon is drawn for every
+     * result the caller hands over, while the text label only appears when the crosshair is aimed
+     * at the result ({@code lookDirDot > 0.999f}). Callers are responsible for any wider
+     * visibility filtering; the icon must not be gated on the look direction here, or scanning
+     * would appear to produce no results until the player aims at each one.
+     *
+     * <p>Callers are expected to pass a real icon texture — in practice every provider uses
+     * {@code ModTextures.ICON_INFO} or a module-supplied icon. The {@code null} guard is defensive
+     * only: it skips the icon quad rather than forwarding the value to
+     * {@link ScanResultRenderType#icon}, which would bind a null texture and crash later, in
+     * {@code endBatch()}, far from the offending call.
      */
     protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
                                            float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
@@ -184,13 +198,21 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
                                      double x1, double y1, double z1,
                                      double x2, double y2, double z2,
                                      int r, int g, int b, int a) {
-        buffer.addVertex(matrix, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
-        buffer.addVertex(matrix, (float) x2, (float) y1, (float) z2).setColor(r, g, b, a);
-        buffer.addVertex(matrix, (float) x2, (float) y2, (float) z2).setColor(r, g, b, a);
-        buffer.addVertex(matrix, (float) x1, (float) y2, (float) z1).setColor(r, g, b, a);
+        // UVs are required, not decorative: the highlight is drawn with a POSITION_TEX_COLOR
+        // pipeline, and BufferBuilder validates every vertex against that format on submit. A
+        // vertex missing its UV aborts the frame with
+        // "IllegalStateException: Missing elements in vertex: UV0" rather than rendering wrong.
+        // One 0..1 span per face is enough — the shader uses the UV only as a geometric
+        // coordinate for its edge glow, never to sample a texture.
+        buffer.addVertex(matrix, (float) x1, (float) y1, (float) z1).setUv(0, 0).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x2, (float) y1, (float) z2).setUv(1, 0).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x2, (float) y2, (float) z2).setUv(1, 1).setColor(r, g, b, a);
+        buffer.addVertex(matrix, (float) x1, (float) y2, (float) z1).setUv(0, 1).setColor(r, g, b, a);
     }
 
     private static Component withDistance(Component caption, float distance) {
-        return Component.translatable("gui.scannable.overlay.distance", caption, Mth.ceil(distance));
+        // Key must match the one defined in the lang files. It was previously missing the
+        // "_unofficial.scanner" segment, so the raw key was drawn on screen instead of "%s (%sm)".
+        return Component.translatable("gui.scannable_unofficial.scanner.overlay.distance", caption, Mth.ceil(distance));
     }
 }

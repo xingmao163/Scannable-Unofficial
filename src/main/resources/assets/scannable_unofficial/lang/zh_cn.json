@@ -52,6 +52,7 @@
   "gui.scannable_unofficial.scanner.inactive_modules": "未激活",
   "gui.scannable_unofficial.scanner.progress": "%s%%",
   "gui.scannable_unofficial.scanner.overlay.distance": "%s（%sm）",
+  "gui.scannable_unofficial.overlay.spawner": "%s刷怪笼",
   "gui.scannable_unofficial.scanner.block_module.list": "方块",
   "gui.scannable_unofficial.scanner.entity_module.list": "实体",
   "gui.scannable_unofficial.scanner.item_module.list": "物品",

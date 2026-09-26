@@ -21,9 +21,23 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
     private static final Identifier BACKGROUND =
             com.starmao.scannable.Scannable.id("textures/gui/container/configurable_module.png");
+    /** Side length of the source PNG canvas; the artwork occupies its top-left {@code imageWidth x imageHeight} pixels. */
+    private static final int TEXTURE_SIZE = 256;
     public static final int SLOTS_ORIGIN_X = 62;
     public static final int SLOTS_ORIGIN_Y = 20;
+    /** Pitch between adjacent slot frames, and the width/height of one frame. */
     public static final int SLOT_SIZE = 18;
+    /**
+     * Distance from a slot frame's origin to its item area.
+     *
+     * <p>{@code SLOTS_ORIGIN_*} locates the inner item area, while the drawn frame (border) starts
+     * one pixel up and left of it. Used to convert between the two when drawing.
+     */
+    private static final int SLOT_BORDER_INSET = 1;
+    /** Hover target for a slot, matching the drawn frame so the highlight cannot outrun the cursor. */
+    private static final int SLOT_HIT_SIZE = 16;
+    /** Translucent white slot outline. */
+    private static final int SLOT_HIGHLIGHT_COLOR = 0x80FFFFFF;
 
     private final Component listCaption;
     private final Inventory inventory;
@@ -53,7 +67,17 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.blit(BACKGROUND, leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0.0f, 1.0f, 0.0f, 1.0f);
+        // Sample only the top-left imageWidth x imageHeight pixels of the texture, which is where
+        // the artwork actually lives; the source PNG is a 256x256 canvas. UVs are normalized, so
+        // the region is divided by the texture size, and the destination is given in pixels via
+        // the inclusive x0/y0/x1/y1 overload.
+        //
+        // Passing 0.0f..1.0f for both axes instead would stretch the whole canvas — mostly empty
+        // margin — into this box, shrinking the drawn panel to about 176/256 of its intended size.
+        final float u1 = (float) imageWidth / TEXTURE_SIZE;
+        final float v1 = (float) imageHeight / TEXTURE_SIZE;
+        graphics.blit(BACKGROUND, leftPos, topPos, leftPos + imageWidth, topPos + imageHeight,
+                0.0f, u1, 0.0f, v1);
     }
 
     private void renderSlotHighlights(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -62,8 +86,12 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         for (int slot = 0; slot < Math.min(items.size(), 5); slot++) {
             int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
             int y = SLOTS_ORIGIN_Y;
-            if (isHovering(x, y, 16, 16, mouseX, mouseY)) {
-                graphics.outline(x, y, 16, 16, 0x80FFFFFF);
+            if (isHovering(x, y, SLOT_HIT_SIZE, SLOT_HIT_SIZE, mouseX, mouseY)) {
+                // outline() draws a 1px border inside the box it is given, so the box must be the
+                // full slot frame, not the item area. SLOTS_ORIGIN_* points at the item area
+                // (texture cells begin one pixel up and to the left of it), hence the -1 shift.
+                graphics.outline(x - SLOT_BORDER_INSET, y - SLOT_BORDER_INSET,
+                        SLOT_SIZE, SLOT_SIZE, SLOT_HIGHLIGHT_COLOR);
             }
         }
     }

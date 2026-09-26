@@ -249,24 +249,32 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
         Player player = Minecraft.getInstance().player;
         boolean showDistance = player != null && player.isShiftKeyDown();
 
+        // Sort ascending by how closely each result is aimed at, so the best-aimed results sit at
+        // the END of the list — the loop below walks backwards from there.
         results.sort(Comparator.comparing((ScanResult result) -> {
             Vec3 pos = result.getPosition();
             return lookVec.dot(pos.subtract(viewerEyes).normalize());
         }));
 
-        for (ScanResult result : results) {
-            BlockScanResult br = (BlockScanResult) result;
+        // Walk from the best-aimed result backwards, drawing at most MAX_ICONS of them. This
+        // mirrors renderIconLabels: it caps how many icons can pile up on screen and gives the
+        // limited slots to whatever the player is most likely looking at.
+        int shown = 0;
+        for (int i = results.size() - 1; i >= 0 && shown < MAX_ICONS; i--) {
+            BlockScanResult br = (BlockScanResult) results.get(i);
             if (!hasVisibleCells(br)) {
                 continue;
             }
-            Vec3 pos = result.getPosition();
-            float dot = (float) lookVec.dot(pos.subtract(viewerEyes).normalize());
-            if (dot > 0.98f) {
-                Component label = br.label != null ? br.label : br.block.getName();
-                float distance = showDistance ? (float) pos.subtract(viewerEyes).length() : 0f;
-                renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, pos,
-                        ModTextures.ICON_INFO, label);
-            }
+            // No look-direction gate here: renderIconLabel draws the icon for every visible
+            // result and gates only the text label on the crosshair, matching the 1.21.1 overlay.
+            // Filtering on the look vector at this level would hide the icons too, making a scan
+            // appear to have found nothing until the player aims at each result.
+            Vec3 pos = br.getPosition();
+            Component label = br.label != null ? br.label : br.block.getName();
+            float distance = showDistance ? (float) pos.subtract(viewerEyes).length() : 0f;
+            renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, pos,
+                    ModTextures.ICON_INFO, label);
+            shown++;
         }
     }
 

@@ -16,6 +16,8 @@ import javax.annotation.Nullable;
 public class ScannerContainerScreen extends AbstractContainerScreen<ScannerContainerMenu> {
     private static final Identifier BACKGROUND =
             com.starmao.scannable.Scannable.id("textures/gui/container/scanner.png");
+    /** Side length of the source PNG canvas; the artwork occupies its top-left {@code imageWidth x imageHeight} pixels. */
+    private static final int TEXTURE_SIZE = 256;
     private static final Component ACTIVE_TEXT = Component.translatable("gui.scannable_unofficial.scanner.active_modules");
     private static final Component INACTIVE_TEXT = Component.translatable("gui.scannable_unofficial.scanner.inactive_modules");
 
@@ -30,7 +32,17 @@ public class ScannerContainerScreen extends AbstractContainerScreen<ScannerConta
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.blit(BACKGROUND, leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0.0f, 1.0f, 0.0f, 1.0f);
+        // Sample only the top-left imageWidth x imageHeight pixels of the texture, which is where
+        // the artwork actually lives; the source PNG is a 256x256 canvas. UVs are normalized, so
+        // the region is divided by the texture size, and the destination is given in pixels via
+        // the inclusive x0/y0/x1/y1 overload.
+        //
+        // Passing 0.0f..1.0f for both axes instead would stretch the whole canvas — mostly empty
+        // margin — into this box, shrinking the drawn panel to about 176/256 of its intended size.
+        final float u1 = (float) imageWidth / TEXTURE_SIZE;
+        final float v1 = (float) imageHeight / TEXTURE_SIZE;
+        graphics.blit(BACKGROUND, leftPos, topPos, leftPos + imageWidth, topPos + imageHeight,
+                0.0f, u1, 0.0f, v1);
     }
 
     @Override

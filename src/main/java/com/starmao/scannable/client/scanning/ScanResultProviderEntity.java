@@ -108,22 +108,30 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
         boolean showDistance = Minecraft.getInstance().player != null
                 && Minecraft.getInstance().player.isShiftKeyDown();
 
+        // Sort ascending by how closely each entity is aimed at, so the best-aimed ones sit at the
+        // END of the list — the loop below walks backwards from there.
         results.sort(Comparator.comparing(result -> {
             EntityScanResult er = (EntityScanResult) result;
             Vec3 eyePos = er.entity.getEyePosition(pt);
             return lookVec.dot(eyePos.subtract(viewerEyes).normalize());
         }));
 
-        for (ScanResult result : results) {
-            EntityScanResult er = (EntityScanResult) result;
+        // Walk from the best-aimed entity backwards, drawing at most MAX_ICONS of them, mirroring
+        // renderIconLabels: the cap keeps icons from piling up and favours what the player is most
+        // likely looking at.
+        int shown = 0;
+        for (int i = results.size() - 1; i >= 0 && shown < MAX_ICONS; i--) {
+            EntityScanResult er = (EntityScanResult) results.get(i);
+            // No look-direction gate here: renderIconLabel draws the icon for every result and
+            // gates only the text label on the crosshair, matching the 1.21.1 overlay. Filtering
+            // on the look vector at this level would hide the icons too, making a scan appear to
+            // have found nothing until the player aims at each entity.
             Vec3 eyePos = er.entity.getEyePosition(pt);
-            float dot = (float) lookVec.dot(eyePos.subtract(viewerEyes).normalize());
-            if (dot > 0.98f) {
-                Component label = er.entity.getName();
-                float distance = showDistance ? (float) eyePos.subtract(viewerEyes).length() : 0f;
-                renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, eyePos,
-                        er.icon, label);
-            }
+            Component label = er.entity.getName();
+            float distance = showDistance ? (float) eyePos.subtract(viewerEyes).length() : 0f;
+            renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, eyePos,
+                    er.icon, label);
+            shown++;
         }
     }
 

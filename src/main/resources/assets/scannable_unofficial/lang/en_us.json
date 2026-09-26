@@ -40,6 +40,7 @@
   "gui.scannable_unofficial.scanner.inactive_modules": "Inactive",
   "gui.scannable_unofficial.scanner.progress": "%s%%",
   "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sm)",
+  "gui.scannable_unofficial.overlay.spawner": "%s Spawner",
   "gui.scannable_unofficial.scanner.block_module.list": "Blocks",
   "gui.scannable_unofficial.scanner.entity_module.list": "Entities",
   "gui.scannable_unofficial.scanner.item_module.list": "Items",

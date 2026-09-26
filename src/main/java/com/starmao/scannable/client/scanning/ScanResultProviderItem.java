@@ -40,15 +40,13 @@ import java.util.function.Consumer;
  */
 public class ScanResultProviderItem extends AbstractScanResultProvider implements ScanResultProvider {
 
-    /** Cap on simultaneously drawn labels, matching the block provider. */
-    private static final int MAX_ICONS = 4;
     /**
      * Kept for the {@code renderIconLabels} signature only.
      *
-     * <p>Not a visibility control: the base class hard-codes its own look-at
-     * threshold ({@code AbstractScanResultProvider} line 88) and ignores this
-     * argument, so changing it has no effect. Named here so the dead parameter
-     * is obvious rather than looking like a tunable.
+     * <p>Not a visibility control: {@code renderIconLabels} never reads its {@code minIconDot}
+     * argument (it passes every result straight to {@code renderIconLabel}, which gates only the
+     * text label on the crosshair), so changing this value has no effect. Named here so the dead
+     * parameter is obvious rather than looking like a tunable.
      */
     private static final float UNUSED_ICON_CONE_DOT = 0.999f;
 

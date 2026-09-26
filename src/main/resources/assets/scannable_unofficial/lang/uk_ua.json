@@ -35,6 +35,7 @@
   "gui.scannable_unofficial.scanner.inactive_modules": "Неактивні",
   "gui.scannable_unofficial.scanner.progress": "%s%%",
   "gui.scannable_unofficial.scanner.overlay.distance": "%s (%sм)",
+  "gui.scannable_unofficial.overlay.spawner": "Спавнер: %s",
   "gui.scannable_unofficial.scanner.block_module.list": "Блоки",
   "gui.scannable_unofficial.scanner.entity_module.list": "Сутності",
   "gui.scannable_unofficial.scanner.item_module.list": "Предмети",

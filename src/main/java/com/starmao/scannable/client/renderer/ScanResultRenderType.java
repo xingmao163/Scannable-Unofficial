@@ -51,16 +51,16 @@ public final class ScanResultRenderType {
 
     /**
      * Filled, translucent, two-sided, through-wall box for result highlights.
-     * Uses position_color shaders (POSITION_COLOR / QUADS / translucent blend).
+     *
+     * <p>Built from {@link RenderPipelines#DEBUG_FILLED_SNIPPET} for the same reason as
+     * {@link #TYPE_PIPELINE}: {@code core/position_color} reads {@code ColorModulator} out of the
+     * {@code DynamicTransforms} UBO, so the snippet's {@code MATRICES_PROJECTION_SNIPPET} must be
+     * present or the boxes render fully transparent.
      */
-    public static final RenderPipeline RESULT_BOX_PIPELINE = RenderPipeline.builder()
+    public static final RenderPipeline RESULT_BOX_PIPELINE = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(Scannable.id("pipeline/scan_result"))
-            .withVertexShader("core/position_color")
-            .withFragmentShader("core/position_color")
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
-            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
     public static final RenderType RESULT_BOX_TYPE = RenderType.create(
@@ -94,17 +94,27 @@ public final class ScanResultRenderType {
     // -- Label background + icon ------------------------------------------------
 
     /**
-     * Translucent, no-depth quad for label backgrounds (e.g. the dark bar behind
-     * a result's name label). Built on vanilla's translucent POSITION_COLOR snippet.
+     * Translucent, no-depth quad for label backgrounds (e.g. the dark bar behind a result's name
+     * label).
+     *
+     * <p>Built from {@link RenderPipelines#DEBUG_FILLED_SNIPPET}, vanilla's own
+     * {@code core/position_color} + {@code POSITION_COLOR} snippet, so it inherits the
+     * {@code DynamicTransforms} and {@code Projection} uniforms that shader reads.
+     *
+     * <p><b>Those uniforms are mandatory.</b> {@code core/position_color}'s fragment stage ends in
+     * {@code fragColor = color * ColorModulator}, and {@code ColorModulator} lives in the
+     * {@code DynamicTransforms} UBO. Building the pipeline from only the shader names leaves that
+     * UBO unbound, so {@code ColorModulator} stays at its zero default and every label background
+     * renders fully transparent — with no error, only the runtime warning "Found unknown and
+     * unsupported uniform DynamicTransforms in ...:pipeline/scan_label".
+     *
+     * <p>Depth test always passes and depth writes are off, so label backgrounds are drawn through
+     * terrain, matching the icons they sit behind.
      */
-    public static final RenderPipeline TYPE_PIPELINE = RenderPipeline.builder()
+    public static final RenderPipeline TYPE_PIPELINE = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(Scannable.id("pipeline/scan_label"))
-            .withVertexShader("core/position_color")
-            .withFragmentShader("core/position_color")
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
-            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
     public static final RenderType TYPE = RenderType.create(
@@ -114,29 +124,21 @@ public final class ScanResultRenderType {
     /**
      * Textured, translucent, two-sided, through-wall pipeline for the billboarded result icons.
      * <p>
-     * Mirrors vanilla's {@code GUI_TEXTURED_SNIPPET}
-     * ({@code RenderPipelines.GUI_TEXTURED_SNIPPET}) — same shaders, sampler, blend and vertex
-     * format — plus the NO_DEPTH_TEST state so icons show through walls.
+     * Built from {@link RenderPipelines#GUI_TEXTURED_SNIPPET} — vanilla's own textured GUI quad —
+     * plus NO_DEPTH_TEST so icons show through walls.
      * <p>
-     * <b>The {@code DynamicTransforms} and {@code Projection} uniforms are mandatory.</b>
-     * {@code core/position_tex_color} reads {@code ModelViewMat}/{@code ProjMat} and multiplies
-     * the sampled texel by {@code ColorModulator}, all of which live in those two UBOs. Declaring
-     * the sampler without them leaves {@code ColorModulator} at its zero default, so
-     * {@code texture(...) * vertexColor * ColorModulator} evaluates to fully transparent and the
-     * icon silently disappears — with no error, only the build-time warning
-     * "Found unknown and unsupported uniform DynamicTransforms in ...:pipeline/scan_icon".
+     * <b>Building this from the shader names alone does not work.</b>
+     * {@code core/position_tex_color} multiplies the sampled texel by {@code ColorModulator} and
+     * reads {@code ModelViewMat}/{@code ProjMat}, all of which live in the {@code DynamicTransforms}
+     * and {@code Projection} UBOs that the snippet supplies. Without them {@code ColorModulator}
+     * stays at its zero default, so the whole icon evaluates to fully transparent and disappears —
+     * with no error, only the runtime warning "Found unknown and unsupported uniform
+     * DynamicTransforms in ...:pipeline/scan_icon".
      */
-    public static final RenderPipeline ICON_PIPELINE = RenderPipeline.builder()
+    public static final RenderPipeline ICON_PIPELINE = RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
             .withLocation(Scannable.id("pipeline/scan_icon"))
-            .withVertexShader("core/position_tex_color")
-            .withFragmentShader("core/position_tex_color")
-            .withSampler("Sampler0")
-            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
-            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
-            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
     private static final Map<Identifier, RenderType> ICON_TYPES = new HashMap<>();
