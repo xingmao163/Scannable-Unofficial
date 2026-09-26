@@ -12,6 +12,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -25,9 +26,10 @@ import java.util.List;
  * @see EntityModuleContainerMenu
  */
 public final class ConfigurableEntityScannerModuleItem extends ConfigurableModuleItem<EntityType<?>> {
-    public ConfigurableEntityScannerModuleItem() {
+    public ConfigurableEntityScannerModuleItem(final Item.Properties properties) {
         super(ConfigurableEntityScannerModule.INSTANCE,
-                (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand));
+                (id, inv, hand) -> new EntityModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override

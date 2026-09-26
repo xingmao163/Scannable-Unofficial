@@ -3,6 +3,7 @@ package com.starmao.scannable.common.item;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.common.config.Strings;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
@@ -18,7 +19,12 @@ import java.util.Objects;
 public class ScannerModuleItem extends ModItem {
     private final ScannerModule module;
 
-    public ScannerModuleItem(final ScannerModule module) {
+    /**
+     * @param module     the scanner module implementation attached to this item
+     * @param properties the item properties supplied by {@code DeferredRegister.Items#registerItem}
+     */
+    public ScannerModuleItem(final ScannerModule module, final Item.Properties properties) {
+        super(properties);
         this.module = Objects.requireNonNull(module);
     }
 

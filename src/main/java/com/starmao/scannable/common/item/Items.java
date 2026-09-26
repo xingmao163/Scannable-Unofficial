@@ -5,53 +5,57 @@ import com.starmao.scannable.common.scanning.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.minecraft.world.item.Item;
 
 /**
  * Registration hub for all scanner items.
  * <p>Defines every item in the mod via NeoForge's {@link DeferredRegister} system.
  * Items are registered with the mod event bus via {@link #register(IEventBus)}.
+ *
+ * <p>All entries go through {@link DeferredRegister.Items#registerItem}, which sets the
+ * item's registry id on the {@link net.minecraft.world.item.Item.Properties} before
+ * construction. Since 1.21.4 that id is mandatory: constructing an item from bare
+ * properties fails with {@code NullPointerException: Item id not set}.
  */
 public final class Items {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Scannable.MOD_ID);
 
     /** The handheld scanner item — core item of the mod. */
-    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.register("scanner", unused -> new ScannerItem(new Item.Properties()));
+    public static final DeferredItem<ScannerItem> SCANNER = ITEMS.registerItem("scanner", ScannerItem::new);
 
     // ---- Scanner Modules ---- //
 
     /** Increases scan radius by a configurable percentage. */
-    public static final DeferredItem<ScannerModuleItem> RANGE_MODULE = ITEMS.register("range_module",
-            () -> new ScannerModuleItem(RangeScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> RANGE_MODULE = ITEMS.registerItem("range_module",
+            props -> new ScannerModuleItem(RangeScannerModule.INSTANCE, props));
     /** Detects fluid blocks (water, lava, etc.). */
-    public static final DeferredItem<ScannerModuleItem> FLUID_MODULE = ITEMS.register("fluid_module",
-            () -> new ScannerModuleItem(FluidBlockScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> FLUID_MODULE = ITEMS.registerItem("fluid_module",
+            props -> new ScannerModuleItem(FluidBlockScannerModule.INSTANCE, props));
     /** Detects friendly entities (animals, villagers). */
-    public static final DeferredItem<ScannerModuleItem> FRIENDLY_ENTITY_MODULE = ITEMS.register("friendly_entity_module",
-            () -> new ScannerModuleItem(FriendlyEntityScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> FRIENDLY_ENTITY_MODULE = ITEMS.registerItem("friendly_entity_module",
+            props -> new ScannerModuleItem(FriendlyEntityScannerModule.INSTANCE, props));
     /** Detects hostile entities (monsters). */
-    public static final DeferredItem<ScannerModuleItem> HOSTILE_ENTITY_MODULE = ITEMS.register("hostile_entity_module",
-            () -> new ScannerModuleItem(HostileEntityScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> HOSTILE_ENTITY_MODULE = ITEMS.registerItem("hostile_entity_module",
+            props -> new ScannerModuleItem(HostileEntityScannerModule.INSTANCE, props));
     /** Configurable module — detects specific blocks configured by the player. */
-    public static final DeferredItem<ConfigurableBlockScannerModuleItem> BLOCK_MODULE = ITEMS.register("block_module",
-            () -> new ConfigurableBlockScannerModuleItem());
+    public static final DeferredItem<ConfigurableBlockScannerModuleItem> BLOCK_MODULE = ITEMS.registerItem("block_module",
+            ConfigurableBlockScannerModuleItem::new);
     /** Configurable module — detects specific entity types configured by the player. */
-    public static final DeferredItem<ConfigurableEntityScannerModuleItem> ENTITY_MODULE = ITEMS.register("entity_module",
-            () -> new ConfigurableEntityScannerModuleItem());
+    public static final DeferredItem<ConfigurableEntityScannerModuleItem> ENTITY_MODULE = ITEMS.registerItem("entity_module",
+            ConfigurableEntityScannerModuleItem::new);
     /** Placeholder module item with no scanning function (for recipe purposes). */
-    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.register("blank_module", () -> new ModItem());
+    public static final DeferredItem<ModItem> BLANK_MODULE = ITEMS.registerItem("blank_module", ModItem::new);
     /** Configurable module — detects specific items in containers. */
-    public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.register("item_module",
-            () -> new ConfigurableItemScannerModuleItem());
+    public static final DeferredItem<ConfigurableItemScannerModuleItem> ITEM_MODULE = ITEMS.registerItem("item_module",
+            ConfigurableItemScannerModuleItem::new);
     /** Detects common ore blocks (coal, iron, copper, gold, lapis, redstone). */
-    public static final DeferredItem<ScannerModuleItem> COMMON_ORES_MODULE = ITEMS.register("common_ores_module",
-            () -> new ScannerModuleItem(CommonOresBlockScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> COMMON_ORES_MODULE = ITEMS.registerItem("common_ores_module",
+            props -> new ScannerModuleItem(CommonOresBlockScannerModule.INSTANCE, props));
     /** Detects rare ore blocks (diamond, emerald, netherite, quartz, etc.). */
-    public static final DeferredItem<ScannerModuleItem> RARE_ORES_MODULE = ITEMS.register("rare_ores_module",
-            () -> new ScannerModuleItem(RareOresBlockScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> RARE_ORES_MODULE = ITEMS.registerItem("rare_ores_module",
+            props -> new ScannerModuleItem(RareOresBlockScannerModule.INSTANCE, props));
     /** Recharges scanners placed in the charging slot. */
-    public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.register("charger_module",
-            () -> new ScannerModuleItem(ChargingScannerModule.INSTANCE));
+    public static final DeferredItem<ScannerModuleItem> CHARGER_MODULE = ITEMS.registerItem("charger_module",
+            props -> new ScannerModuleItem(ChargingScannerModule.INSTANCE, props));
 
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);

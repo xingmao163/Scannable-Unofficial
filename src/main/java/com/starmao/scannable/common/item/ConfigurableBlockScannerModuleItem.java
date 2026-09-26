@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -26,9 +27,10 @@ import java.util.List;
  * @see BlockModuleContainerMenu
  */
 public final class ConfigurableBlockScannerModuleItem extends ConfigurableModuleItem<Block> {
-    public ConfigurableBlockScannerModuleItem() {
+    public ConfigurableBlockScannerModuleItem(final Item.Properties properties) {
         super(ConfigurableBlockScannerModule.INSTANCE,
-                (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand));
+                (id, inv, hand) -> new BlockModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override

@@ -18,9 +18,10 @@ import java.util.List;
  * containers with item name and quantity labels.
  */
 public final class ConfigurableItemScannerModuleItem extends ConfigurableModuleItem<Item> {
-    public ConfigurableItemScannerModuleItem() {
+    public ConfigurableItemScannerModuleItem(final Item.Properties properties) {
         super(ItemScannerModule.INSTANCE,
-                (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand));
+                (id, inv, hand) -> new ItemModuleContainerMenu(id, inv, hand),
+                properties);
     }
 
     @Override
