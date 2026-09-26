@@ -1,20 +1,127 @@
 package com.starmao.scannable.common.scanning;
 
+import com.starmao.scannable.Scannable;
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+/**
+ * Stateless server-side scanner for the item scanner module.
+ *
+ * <p>Scans all loaded chunks within the given radius for block entities that
+ * expose an item {@link ResourceHandler}, then checks their contents against
+ * the configured target items.
+ *
+ * <p>This runs on the server thread where container inventory data is fully
+ * available (unlike the client, where unopened containers have empty
+ * inventories).
+ *
+ * <p>Container discovery iterates {@link BlockEntity}s rather than every block
+ * position: a block without a block entity can never expose an item handler,
+ * so the block-by-block scan would only waste time. The result set is
+ * identical.
+ */
 public final class ItemScannerService {
-    public static List<ItemScanResultData> scan(Level level, Vec3 center, int radius, List<Identifier> targetItemIds) {
-        // TODO: Reimplement item scanning for 26.1.2 using ResourceHandler API
-        return List.of();
+
+    /**
+     * Execute a scan for the given items within a radius around the centre position.
+     *
+     * @param level         The level to scan in (server-side)
+     * @param center        The centre position of the scan
+     * @param radius        The scan radius in blocks
+     * @param targetItemIds Registry names of items to search for
+     * @return Scan results; one entry per (container, matched item) pair
+     */
+    public static List<ItemScanResultData> scan(
+            final Level level,
+            final Vec3 center,
+            final int radius,
+            final List<Identifier> targetItemIds) {
+
+        final List<ItemScanResultData> results = new ArrayList<>();
+        if (targetItemIds == null || targetItemIds.isEmpty()) return results;
+
+        // Resolve target items from registry names.
+        final Set<Item> targetItems = new HashSet<>();
+        for (final Identifier id : targetItemIds) {
+            BuiltInRegistries.ITEM.getOptional(id).ifPresent(targetItems::add);
+        }
+        if (targetItems.isEmpty()) return results;
+
+        final double sqRadius = (double) radius * radius;
+
+        final int minCX = (int) Math.floor((center.x - radius) / 16.0);
+        final int maxCX = (int) Math.ceil((center.x + radius) / 16.0);
+        final int minCZ = (int) Math.floor((center.z - radius) / 16.0);
+        final int maxCZ = (int) Math.ceil((center.z + radius) / 16.0);
+
+        int chunksChecked = 0;
+        int containersFound = 0;
+
+        for (int cx = minCX; cx <= maxCX; cx++) {
+            for (int cz = minCZ; cz <= maxCZ; cz++) {
+                if (!level.hasChunk(cx, cz)) continue;
+                chunksChecked++;
+
+                final var chunk = level.getChunk(cx, cz);
+                for (final BlockEntity be : chunk.getBlockEntities().values()) {
+                    final BlockPos pos = be.getBlockPos();
+
+                    final double dx = pos.getX() + 0.5 - center.x;
+                    final double dy = pos.getY() + 0.5 - center.y;
+                    final double dz = pos.getZ() + 0.5 - center.z;
+                    if (dx * dx + dy * dy + dz * dz > sqRadius) continue;
+
+                    // Query the unsided handler (context == null gives a merged view
+                    // across all faces). Per-direction queries return separate wrappers
+                    // with independent slot numbering and would double-count.
+                    final ResourceHandler<ItemResource> handler =
+                            level.getCapability(Capabilities.Item.BLOCK, pos, null);
+                    if (handler == null) continue;
+                    containersFound++;
+
+                    final Map<Item, Integer> perItem = new HashMap<>();
+                    for (int slot = 0; slot < handler.size(); slot++) {
+                        final ItemResource resource = handler.getResource(slot);
+                        if (resource.isEmpty()) continue;
+                        final Item item = resource.getItem();
+                        if (!targetItems.contains(item)) continue;
+                        perItem.merge(item, handler.getAmountAsInt(slot), Integer::sum);
+                    }
+
+                    for (final Map.Entry<Item, Integer> entry : perItem.entrySet()) {
+                        results.add(new ItemScanResultData(
+                                pos,
+                                BuiltInRegistries.ITEM.getKey(entry.getKey()),
+                                entry.getValue()));
+                    }
+                }
+            }
+        }
+
+        if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
+            Scannable.LOGGER.info("[ItemScannerService] Chunks: {}, Containers: {}, Matches: {}",
+                    chunksChecked, containersFound, results.size());
+        }
+
+        return results;
     }
+
     private ItemScannerService() {}
 }

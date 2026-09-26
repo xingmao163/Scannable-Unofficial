@@ -1,8 +1,10 @@
 package com.starmao.scannable.common.network.message;
 
 import com.starmao.scannable.Scannable;
+import com.starmao.scannable.api.ClientScanHandler;
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
+import com.starmao.scannable.common.util.ClientAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -65,7 +67,10 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
             if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
             }
-            // TODO: ScanManager.setServerItemResults for 26.1.2
+            final ClientScanHandler h = ClientAccessor.getHandler();
+            if (h != null) {
+                h.setServerItemResults(msg.center(), msg.results());
+            }
         });
     }
 }

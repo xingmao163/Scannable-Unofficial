@@ -8,6 +8,8 @@ import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.ScannerModule;
 import com.starmao.scannable.client.renderer.ScannerRenderer;
+import com.starmao.scannable.client.scanning.ScanResultProviderItem;
+import com.starmao.scannable.client.scanning.ScanResultProviders;
 import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
@@ -254,18 +256,49 @@ public final class ScanManager {
     }
 
     /**
-     * 26.1.2 桩：服务端物品扫描结果注入。
+     * Injects item scan results received from the server into the render pipeline.
      *
-     * <p>主树实现把 {@link ItemScanResultData} 转成 {@code ItemScanResult} 放进
-     * {@code pendingResults} 走原有的 tick/render 展开动画；26.1.2 的结果渲染已改为
-     * {@code SubmitNodeCollector} 管线，该路径尚未接通，所以这里故意留空。
-     * 调用方 {@code S2CItemScanResult} 中同样留有对应 TODO。
+     * <p>Item results originate from a server-side scan
+     * ({@code ItemScannerService}) and arrive via {@code S2CItemScanResult},
+     * unlike block/entity results which are collected locally. They are pushed
+     * into {@code pendingResults} so the existing reveal animation in
+     * {@link #tick()} picks them up unchanged.
      *
-     * <p>保留此方法是为了让从主树继承下来的 {@code ClientScanHandlerImpl} 能编译通过；
-     * 接通该功能时请与 {@code S2CItemScanResult} 的 TODO 一并处理。
+     * @param center     scan centre, used as the origin of the reveal animation
+     * @param rawResults container matches reported by the server
      */
     public static void setServerItemResults(final Vec3 center, final List<ItemScanResultData> rawResults) {
-        // 未接通：见上方 @implNote 与 S2CItemScanResult 的 TODO
+        if (rawResults.isEmpty()) return;
+
+        final ScanResultProviderItem provider = ScanResultProviders.ITEMS.get();
+
+        final List<ScanResult> converted = new ArrayList<>(rawResults.size());
+        for (final ItemScanResultData data : rawResults) {
+            converted.add(provider.createResult(data));
+        }
+
+        // tick() pops from the END of the list and reveals outward-in, so the
+        // nearest result must sit at the end: sort ascending by negative distance.
+        converted.sort(Comparator.comparing(
+                result -> -center.distanceTo(result.getPosition())));
+
+        // Clear previous item results first: a container may have been broken or
+        // moved since the last scan, and renderingResults would otherwise keep
+        // drawing its highlight until the stay duration expires.
+        pendingResults.remove(provider);
+        synchronized (renderingResults) {
+            final List<ScanResult> old = renderingResults.remove(provider);
+            if (old != null) {
+                provider.reset();
+                old.forEach(ScanResult::close);
+            }
+        }
+
+        pendingResults.put(provider, converted);
+
+        lastScanCenter = center;
+        currentStart = System.currentTimeMillis();
+        ScannerRenderer.INSTANCE.ping(center);
     }
 
     @Nullable
