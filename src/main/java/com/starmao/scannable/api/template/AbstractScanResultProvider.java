@@ -20,37 +20,34 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+
+import com.starmao.scannable.util.UnitConversion;
 
 /**
  * Abstract base for scan result providers on 26.1.2.
  * <p>
  * Provides helper methods for rendering using the new RenderPipeline / RenderType system.
  */
-@OnlyIn(Dist.CLIENT)
 public abstract class AbstractScanResultProvider implements ScanResultProvider {
     protected Player player;
     protected Vec3 center;
     protected int radius;
 
-    protected static final int MAX_ICONS = 4;
-    protected static final float ICON_CONE_DOT = 0.999f;
-
     @Override
     public void initialize(Player player, Collection<ItemStack> modules, Vec3 center, float radius, int scanTicks) {
         this.player = player;
         this.center = center;
-        this.radius = (int) Math.ceil(radius);
+        this.radius = (int) radius;
     }
 
     @Override
     public void reset() {
         this.player = null;
         this.center = null;
+        this.radius = 0;
     }
 
-    // -- Icon labels (billboarded) -------------------------------------------
+    // ---- Icon labels (billboarded) -------------------------------------------
 
     protected static <T> void renderIconLabels(MultiBufferSource bufferSource, PoseStack poseStack,
                                                 float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
@@ -67,27 +64,58 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
         }
     }
 
+    /**
+     * Renders a billboarded label that is only shown when the result is looked at.
+     */
     protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
                                            float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                            float displayDistance, Vec3 resultPos,
                                            Identifier icon, @Nullable Component label) {
-        // Billboarding + label rendering using the icon pipeline.
-        // Can be extended with 26.1.2 specific billboard rendering when needed.
+        final Vec3 toResult = resultPos.subtract(viewerEyes);
+        final float distance = (float) toResult.length();
+        final float lookDirDot = (float) lookVec.dot(toResult.normalize());
+        final float sqLookDirDot = lookDirDot * lookDirDot;
+        final float sq2LookDirDot = sqLookDirDot * sqLookDirDot;
+        final float focusScale = Mth.clamp(sq2LookDirDot * sq2LookDirDot + 0.005f, 0.5f, 1f);
+        final float scale = distance * focusScale * 0.005f;
+
+        poseStack.pushPose();
+        poseStack.translate(resultPos.x, resultPos.y, resultPos.z);
+        poseStack.mulPose(new Quaternionf().rotationY(UnitConversion.toRadians(-yaw)));
+        poseStack.mulPose(new Quaternionf().rotationX(UnitConversion.toRadians(pitch)));
+        poseStack.scale(-scale, -scale, scale);
+
+        if (lookDirDot > 0.999f && label != null) {
+            final Component text = displayDistance > 0 ? withDistance(label, Mth.ceil(displayDistance)) : label;
+
+            final Font font = Minecraft.getInstance().font;
+            final int width = font.width(text) + 16;
+
+            poseStack.pushPose();
+            poseStack.translate(width / 2f, 0, 0);
+            drawQuad(bufferSource.getBuffer(ScanResultRenderType.TYPE), poseStack, width, font.lineHeight + 5, 0, 0, 0, 0.6f);
+            poseStack.popPose();
+
+            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
+        }
+
+        drawTexturedQuad(bufferSource.getBuffer(ScanResultRenderType.icon(icon)), poseStack, 16, 16);
+
+        poseStack.popPose();
     }
 
-    // -- Drawing primitives --------------------------------------------------
+    // ---- Drawing primitives --------------------------------------------------
 
     /**
-     * Draws a filled, textured quad centered at the current pose origin.
-     * Uses the shimmer pipeline for additive blending with the scan_result shader.
+     * Draws a solid-colour quad centered at the current pose origin.
      */
     protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
         drawQuad(buffer, poseStack, width, height, 1, 1, 1, 1);
     }
 
     /**
-     * Draws a filled, textured quad centered at the current pose origin
-     * with the given tint colour. Uses the shimmer pipeline.
+     * Draws a solid-colour quad centered at the current pose origin
+     * with the given tint colour.
      */
     protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height,
                                     float r, float g, float b, float a) {
@@ -103,8 +131,20 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
     }
 
     /**
+     * Draws a textured quad centered at the current pose origin.
+     */
+    protected static void drawTexturedQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
+        var pose = poseStack.last();
+        var matrix = pose.pose();
+
+        buffer.addVertex(matrix, -width * 0.5f, height * 0.5f, 0).setUv(0, 1).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix,  width * 0.5f, height * 0.5f, 0).setUv(1, 1).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix,  width * 0.5f, -height * 0.5f, 0).setUv(1, 0).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix, -width * 0.5f, -height * 0.5f, 0).setUv(0, 0).setColor(1f, 1f, 1f, 1f);
+    }
+
+    /**
      * Draws a solid-colour box bounded by the given AABB.
-     * Uses the result-box pipeline (POSITION_COLOR, through-wall, translucent).
      */
     protected static void drawBox(VertexConsumer buffer, PoseStack poseStack,
                                    double minX, double minY, double minZ,
@@ -139,5 +179,9 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
         buffer.addVertex(matrix, (float) x2, (float) y1, (float) z2).setColor(r, g, b, a);
         buffer.addVertex(matrix, (float) x2, (float) y2, (float) z2).setColor(r, g, b, a);
         buffer.addVertex(matrix, (float) x1, (float) y2, (float) z1).setColor(r, g, b, a);
+    }
+
+    private static Component withDistance(Component caption, float distance) {
+        return Component.translatable("gui.scannable.overlay.distance", caption, Mth.ceil(distance));
     }
 }

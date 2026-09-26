@@ -44,6 +44,9 @@ def dataGenArgs = ['--mod', project.mod_id, '--all',
 neoForge {
     version = project.neo_version
 
+    // 扫描逻辑需要放宽 PalettedContainer#get(int) 与 Level#getEntities() 的可见性。
+    accessTransformers.from 'src/main/resources/META-INF/accesstransformer.cfg'
+
     if (project.parchment_mappings_version) {
         parchment {
             mappingsVersion = project.parchment_mappings_version

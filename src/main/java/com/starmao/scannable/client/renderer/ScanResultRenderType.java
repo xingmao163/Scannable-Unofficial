@@ -11,7 +11,10 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.starmao.scannable.Scannable;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -86,6 +89,52 @@ public final class ScanResultRenderType {
     public static final RenderType SHIMMER_TYPE = RenderType.create(
             Scannable.MOD_ID + ":scan_shimmer",
             RenderSetup.builder(SHIMMER_PIPELINE).createRenderSetup());
+
+    // -- Label background + icon ------------------------------------------------
+
+    /**
+     * Translucent, no-depth quad for label backgrounds (e.g. the dark bar behind
+     * a result's name label). Built on vanilla's translucent POSITION_COLOR snippet.
+     */
+    public static final RenderPipeline TYPE_PIPELINE = RenderPipeline.builder()
+            .withLocation(Scannable.id("pipeline/scan_label"))
+            .withVertexShader("core/position_color")
+            .withFragmentShader("core/position_color")
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
+            .withCull(false)
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
+            .build();
+
+    public static final RenderType TYPE = RenderType.create(
+            Scannable.MOD_ID + ":scan_label",
+            RenderSetup.builder(TYPE_PIPELINE).createRenderSetup());
+
+    /**
+     * Textured, translucent, two-sided, through-wall pipeline for the billboarded result icons.
+     * Derived from the GUI textured snippet (core/position_tex_color / Sampler0 / NO_DEPTH_TEST).
+     */
+    public static final RenderPipeline ICON_PIPELINE = RenderPipeline.builder()
+            .withLocation(Scannable.id("pipeline/scan_icon"))
+            .withVertexShader("core/position_tex_color")
+            .withFragmentShader("core/position_tex_color")
+            .withSampler("Sampler0")
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
+            .withCull(false)
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+            .build();
+
+    private static final Map<Identifier, RenderType> ICON_TYPES = new HashMap<>();
+
+    /**
+     * Returns a RenderType bound to the given icon texture, cached per-texture.
+     */
+    public static RenderType icon(final Identifier texture) {
+        return ICON_TYPES.computeIfAbsent(texture, tex -> RenderType.create(
+                Scannable.MOD_ID + ":scan_icon/" + tex,
+                RenderSetup.builder(ICON_PIPELINE).withTexture("Sampler0", tex).createRenderSetup()));
+    }
 
     private ScanResultRenderType() {}
 }

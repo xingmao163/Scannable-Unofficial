@@ -54,7 +54,7 @@ public final class ScanManager {
     private static final ByteBufferBuilder RENDER_BUFFER = new ByteBufferBuilder(256);
 
     private static float computeTargetRadius() {
-        return Minecraft.getInstance().options.getEffectiveRenderDistance();
+        return Minecraft.getInstance().options.getEffectiveRenderDistance() * 16.0f;
     }
 
     public static int computeScanGrowthDuration() {
@@ -102,58 +102,62 @@ public final class ScanManager {
             scanRadius = module.adjustGlobalRange(scanRadius);
         }
 
+        if (collectingProviders.isEmpty()) {
+            return;
+        }
+
         Vec3 center = player.position();
 
         for (ScanResultProvider provider : collectingProviders) {
             provider.initialize(player, stacks, center, scanRadius, SCAN_COMPUTE_DURATION);
         }
-
-        scanningTicks = 0;
     }
 
     public static void updateScan(Entity entity, boolean finished) {
-        if (!collectingProviders.isEmpty() && entity != null) {
-            for (ScanResultProvider provider : collectingProviders) {
-                provider.computeScanResults();
+        final int remaining = SCAN_COMPUTE_DURATION - scanningTicks;
+
+        if (!finished) {
+            if (remaining <= 0) {
+                return;
             }
+
+            if (!collectingProviders.isEmpty() && entity != null) {
+                for (ScanResultProvider provider : collectingProviders) {
+                    provider.computeScanResults();
+                }
+            }
+
+            ++scanningTicks;
+            return;
         }
 
-        Minecraft mc = Minecraft.getInstance();
-        if (!collectingProviders.isEmpty() && mc.level != null) {
-            for (ScanResultProvider provider : collectingProviders) {
-                List<ScanResult> collected = new ArrayList<>();
-                provider.collectScanResults(mc.level, collected::add);
-                if (!collected.isEmpty()) {
-                    collectingResults.put(provider, collected);
+        if (!collectingProviders.isEmpty() && entity != null) {
+            for (int i = 0; i < remaining; i++) {
+                for (ScanResultProvider provider : collectingProviders) {
+                    provider.computeScanResults();
                 }
             }
         }
 
-        if (finished) {
-            // Complete: move results to rendering
-            for (ScanResultProvider provider : collectingProviders) {
-                provider.reset();
-            }
-
-            lastScanCenter = entity != null ? entity.position() : null;
-            currentStart = System.currentTimeMillis();
-
-            pendingResults.putAll(collectingResults);
-            pendingResults.values().forEach(list ->
-                list.sort(Comparator.comparing(result ->
-                    lastScanCenter != null ? -lastScanCenter.distanceTo(result.getPosition()) : 0)));
-
-            synchronized (renderingResults) {
-                pendingResults.forEach((provider, results) ->
-                    renderingResults.put(provider, new ArrayList<>(results)));
-            }
-            pendingResults.clear();
-
-            if (lastScanCenter != null) {
-                ScannerRenderer.INSTANCE.ping(lastScanCenter);
-            }
-            cancelScan();
+        Minecraft mc = Minecraft.getInstance();
+        for (ScanResultProvider provider : collectingProviders) {
+            provider.collectScanResults(mc.level, result ->
+                collectingResults.computeIfAbsent(provider, p -> new ArrayList<>()).add(result));
+            provider.reset();
         }
+
+        lastScanCenter = entity != null ? entity.position() : null;
+        currentStart = System.currentTimeMillis();
+
+        pendingResults.putAll(collectingResults);
+        pendingResults.values().forEach(list ->
+            list.sort(Comparator.comparing(result ->
+                lastScanCenter != null ? -lastScanCenter.distanceTo(result.getPosition()) : 0)));
+
+        if (lastScanCenter != null) {
+            ScannerRenderer.INSTANCE.ping(lastScanCenter);
+        }
+        cancelScan();
     }
 
     public static void cancelScan() {

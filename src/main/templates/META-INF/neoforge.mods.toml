@@ -32,3 +32,6 @@ description='''Unofficial high-level port of Scannable'''
     type="optional"
     ordering="NONE"
     side="CLIENT"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
