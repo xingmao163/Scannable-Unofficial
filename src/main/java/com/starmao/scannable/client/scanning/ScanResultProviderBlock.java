@@ -160,8 +160,11 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
             for (int idx = 0; idx < 16 * 16 * 16; idx++) {
                 BlockState state = palette.get(idx);
                 Block block = state.getBlock();
-                Map<BlockPos, BlockScanResult> clusters = resultClusters.computeIfAbsent(block, b -> new HashMap<>());
-                if (clusters.size() > MAX_RESULTS_PER_BLOCK) {
+                // Check the per-block cap *before* touching the map: computeIfAbsent would
+                // otherwise create an entry for every block type seen, so a wide scan would
+                // grow resultClusters with empty buckets for blocks already at the cap.
+                Map<BlockPos, BlockScanResult> clusters = resultClusters.get(block);
+                if (clusters != null && clusters.size() >= MAX_RESULTS_PER_BLOCK) {
                     continue;
                 }
                 if (IgnoredBlocks.contains(state)) {
@@ -184,6 +187,9 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
                     for (Predicate<BlockState> filter : layer.filters) {
                         if (filter.test(state)) {
                             BlockPos pos = new BlockPos(gx, gy, gz);
+                            // Only create the bucket once a block actually passes a filter,
+                            // so blocks that are merely present never allocate an entry.
+                            clusters = resultClusters.computeIfAbsent(block, b -> new HashMap<>());
                             if (!tryAddToCluster(clusters, pos)) {
                                 BlockScanResult result = new BlockScanResult(block, pos);
                                 clusters.put(pos, result);

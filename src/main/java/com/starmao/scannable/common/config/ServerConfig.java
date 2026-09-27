@@ -217,11 +217,17 @@ public final class ServerConfig {
             .comment("Enable debug logging for item scanner operations (scanning process and statistics).")
             .define("debug.logItemScanner", false);
 
-    /** Enable verbose logging of scan highlight rendering. */
+    /**
+     * Verbose logging of scan highlight rendering.
+     *
+     * <p><b>Currently has no effect on 26.1.2.</b> The 1.21.1 code logged VBO rebuilds, the
+     * hand-depth pass and frustum state through this flag; the 26.1 render rewrite replaced the
+     * VBO path with {@code MultiBufferSource} and the hand-depth pass is not implemented, so
+     * every call site is gone. Declared but unread — kept so existing config files stay valid.
+     */
     public static final ModConfigSpec.BooleanValue DEBUG_RENDER = BUILDER
-            .comment("Enable verbose logging of scan highlight rendering",
-                    "(VBO rebuilds, hand-depth pass, frustum state).",
-                    "Use this to diagnose highlight visibility issues.",
+            .comment("Enable verbose logging of scan highlight rendering.",
+                    "NOTE: not implemented on 26.1.2 — no effect.",
                     "Requires restart or '/reload' to take effect.")
             .define("debug.renderScanner", false);
 

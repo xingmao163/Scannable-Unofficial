@@ -53,7 +53,13 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
         }
 
         entities.clear();
-        player.level().getEntities().getAll().forEach(entities::add);
+        // Query only the entities inside the scan sphere instead of walking every loaded
+        // entity in the level. LevelEntityGetter#get(AABB, Consumer) is spatially indexed,
+        // so the cost scales with what is actually in range.
+        final AABB scanBounds = new AABB(
+                center.x - radius, center.y - radius, center.z - radius,
+                center.x + radius, center.y + radius, center.z + radius);
+        player.level().getEntities().get(scanBounds, entities::add);
         currentEntityIndex = 0;
         entitiesStep = Mth.ceil(entities.size() / (float) scanTicks);
     }

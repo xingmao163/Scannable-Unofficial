@@ -63,31 +63,26 @@ public class ConfigurableEntityScannerModuleContainerScreen
         return entityType.getDescription();
     }
 
+    /**
+     * Draws the entity's 3D model into its configuration slot.
+     *
+     * <p>Called by {@link AbstractConfigurableScannerModuleContainerScreen#extractLabels} with
+     * slot-relative coordinates, before the hover highlights are drawn. Rendering the model from
+     * here — rather than from an {@code extractContents} override — keeps the highlight on top of
+     * the model; drawing it after {@code super.extractContents()} would cover the highlight.
+     */
     @Override
     protected void renderConfiguredItem(GuiGraphicsExtractor graphics, EntityType<?> entityType, int x, int y) {
-    }
+        final LivingEntity entity = getRenderEntity(entityType);
+        if (entity == null) return;
 
-    @Override
-    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.extractContents(graphics, mouseX, mouseY, partialTick);
-
-        final ItemStack stack = getHeldItem();
-        final List<EntityType<?>> items = getConfiguredItems(stack);
-        for (int slot = 0; slot < Math.min(items.size(), SLOT_COUNT); slot++) {
-            final LivingEntity entity = getRenderEntity(items.get(slot));
-            if (entity == null) continue;
-
-            final int x = leftPos + SLOTS_ORIGIN_X + slot * SLOT_SIZE;
-            final int y = topPos + SLOTS_ORIGIN_Y;
-
-            // `size` is a direct pixel multiplier, so normalise by the entity's largest dimension to
-            // fit any mob into the slot, and render at a gentle fixed 3/4 angle.
-            final EntityDimensions dimensions = items.get(slot).getDimensions();
-            final int size = Math.max(1, (int) (SLOT_MODEL_SIZE / Math.max(dimensions.width(), dimensions.height())));
-            InventoryScreen.renderEntityInInventoryFollowsAngle(
-                    graphics, x, y, x + SLOT_MODEL_BOX, y + SLOT_MODEL_BOX,
-                    size, SLOT_MODEL_OFFSET_Y, SLOT_MODEL_X_ANGLE, SLOT_MODEL_Y_ANGLE, entity);
-        }
+        // `size` is a direct pixel multiplier, so normalise by the entity's largest dimension to
+        // fit any mob into the slot, and render at a gentle fixed 3/4 angle.
+        final EntityDimensions dimensions = entityType.getDimensions();
+        final int size = Math.max(1, (int) (SLOT_MODEL_SIZE / Math.max(dimensions.width(), dimensions.height())));
+        InventoryScreen.renderEntityInInventoryFollowsAngle(
+                graphics, x, y, x + SLOT_MODEL_BOX, y + SLOT_MODEL_BOX,
+                size, SLOT_MODEL_OFFSET_Y, SLOT_MODEL_X_ANGLE, SLOT_MODEL_Y_ANGLE, entity);
     }
 
     /**

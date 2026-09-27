@@ -1,5 +1,6 @@
 package com.starmao.scannable.common.energy.neoforge;
 
+import com.starmao.scannable.common.config.ServerConfig;
 import com.starmao.scannable.common.item.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -27,11 +28,15 @@ public final class ScannerEnergyStorage implements EnergyHandler {
 
     @Override
     public long getCapacityAsLong() {
-        return com.starmao.scannable.common.config.ServerConfig.SCANNER_ENERGY_CAPACITY.get();
+        return ServerConfig.SCANNER_ENERGY_CAPACITY.get();
     }
 
     @Override
     public int insert(int amount, TransactionContext transaction) {
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
+        // When chargeOnlyByModule is enabled, block external charging.
+        // The charger module bypasses this by writing directly to the DataComponent.
+        if (ServerConfig.SCANNER_CHARGE_ONLY_BY_MODULE.get()) return 0;
         int current = (int) getAmountAsLong();
         int capacity = (int) getCapacityAsLong();
         int accepted = Math.min(amount, capacity - current);
@@ -43,6 +48,7 @@ public final class ScannerEnergyStorage implements EnergyHandler {
 
     @Override
     public int extract(int amount, TransactionContext transaction) {
+        if (!ServerConfig.SCANNER_USE_ENERGY.get()) return 0;
         int current = (int) getAmountAsLong();
         int extracted = Math.min(amount, current);
         if (extracted > 0) {

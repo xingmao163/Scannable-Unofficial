@@ -231,28 +231,34 @@ public final class ScanManager {
             Vec3 cam = camera.position();
 
             poseStack.pushPose();
-            poseStack.translate(-cam.x, -cam.y, -cam.z);
+            try {
+                poseStack.translate(-cam.x, -cam.y, -cam.z);
 
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(RENDER_BUFFER);
+                MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(RENDER_BUFFER);
 
-            for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                entry.getKey().render(ScanResultRenderContext.WORLD, bufferSource, poseStack, camera, partialTick, entry.getValue());
+                for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
+                    entry.getKey().render(ScanResultRenderContext.WORLD, bufferSource, poseStack, camera, partialTick, entry.getValue());
+                }
+                for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
+                    entry.getKey().render(ScanResultRenderContext.GUI, bufferSource, poseStack, camera, partialTick, entry.getValue());
+                }
+                bufferSource.endBatch();
+            } finally {
+                // A provider throwing mid-render must not leak the pushed pose or leave
+                // uncommitted vertices in the shared RENDER_BUFFER, which would corrupt
+                // every following frame rather than just this one.
+                poseStack.popPose();
             }
-            for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                entry.getKey().render(ScanResultRenderContext.GUI, bufferSource, poseStack, camera, partialTick, entry.getValue());
-            }
-            bufferSource.endBatch();
-
-            poseStack.popPose();
         }
     }
 
+    /**
+     * No-op on 26.1.2: results are drawn in the world by {@link #renderLevel}, so there is no
+     * separate GUI overlay pass. Kept because {@code ScannerClientSetup} — shared with the
+     * 1.21.1 branch — still calls it every frame.
+     */
     public static void renderGui(final float partialTick) {
-        // GUI result overlay: currently unused in 26.1.2 (results render in world via renderLevel)
-    }
-
-    public static void setMatrices(Matrix4f viewMatrix, Matrix4f projectionMatrix) {
-        // Not needed in 26.1.2 — renderLevel receives PoseStack from the render hook.
+        // Intentionally empty.
     }
 
     /**

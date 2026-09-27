@@ -8,6 +8,7 @@ import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.api.ScanResultRenderContext;
 import com.starmao.scannable.api.template.AbstractScanResultProvider;
 import com.starmao.scannable.client.renderer.ScanResultRenderType;
+import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -111,15 +114,30 @@ public class ScanResultProviderItem extends AbstractScanResultProvider implement
     }
 
     /**
+     * Fallback colour for blocks that report no map colour (map colour {@code 0}).
+     * Matches {@code ScanResultProviderBlock#DEFAULT_COLOR} so item and block highlights
+     * of the same container look identical.
+     */
+    private static final int DEFAULT_COLOR = 0x4466CC;
+
+    /**
      * Picks the highlight colour for a container.
      *
-     * <p>Always white: the original per-item colouring was derived through the
-     * shader system, which is still a stub on 26.1.2 (see ARCHITECTURE.md §6).
-     * Kept as a named method so the colour policy has one obvious home when the
-     * shader rewrite lands.
+     * <p>Takes the block's map colour at {@code pos}, falling back to the per-block
+     * override from {@link ClientConfig#getBlockColor} when one is configured. This
+     * mirrors the 1.21.1 behaviour; the earlier 26.1.2 port returned a hard-coded
+     * white because the colour used to be applied through the old shader system.
      */
     private static int resolveColor(final BlockPos pos) {
-        return 0xFFFFFF;
+        final Level level = Minecraft.getInstance().level;
+        if (level == null) return DEFAULT_COLOR;
+        final BlockState state = level.getBlockState(pos);
+        final Integer override = ClientConfig.getBlockColor(state.getBlock());
+        if (override != null) return override;
+        // Blocks with no map colour report 0, which would tint the highlight fully
+        // transparent and make it invisible — fall back like the block provider does.
+        final int mapColor = state.getMapColor(level, pos).col;
+        return mapColor != 0 ? mapColor : DEFAULT_COLOR;
     }
 
     // ---- GUI labels ---------------------------------------------------------

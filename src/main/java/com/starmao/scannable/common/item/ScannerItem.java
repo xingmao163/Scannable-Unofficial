@@ -36,7 +36,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.Optional;
@@ -251,13 +253,14 @@ public final class ScannerItem extends ModItem {
         final ScannerContainer scannerContainer = ScannerContainer.of(stack);
         final var activeModules = scannerContainer.getActiveModules();
 
-        List<Identifier> targetItemIds = List.of();
+        // Merge the targets of *every* installed item scanner module so that
+        // multiple modules widen the scan instead of only the first one applying.
+        final Set<Identifier> targetItemIds = new HashSet<>();
         for (int slot = 0; slot < activeModules.getContainerSize(); slot++) {
             final ItemStack module = activeModules.getItem(slot);
             if (module.isEmpty()) continue;
             if (module.getItem() instanceof ConfigurableItemScannerModuleItem moduleItem) {
-                targetItemIds = moduleItem.getIds(module);
-                break;
+                targetItemIds.addAll(moduleItem.getIds(module));
             }
         }
 
@@ -276,7 +279,7 @@ public final class ScannerItem extends ModItem {
             }
 
             final List<ItemScanResultData> results = ItemScannerService.scan(
-                    level, center, (int) Math.ceil(scanRadius), targetItemIds);
+                    level, center, (int) Math.ceil(scanRadius), new ArrayList<>(targetItemIds));
 
             if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ScannerItem] Server scan: {} result(s)", results.size());

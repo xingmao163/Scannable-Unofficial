@@ -2,28 +2,30 @@ package com.starmao.scannable.common.inventory;
 
 import com.starmao.scannable.common.item.ScannerModuleItem;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 /**
- * An {@link IItemHandler} view over a {@link ScannerContainer}.
+ * A {@link ResourceHandler} view over a {@link ScannerContainer}, exposed as the
+ * {@code Capabilities.Item.ITEM} capability of the scanner item.
  *
- * <p>This is registered as the {@code Capabilities.ItemHandler.ITEM} capability
- * for the scanner item, replacing the generic {@link net.neoforged.neoforge.items.wrapper.InvWrapper}
- * that was previously used. Benefits over {@code InvWrapper}:
+ * <p>This is the 26.1 replacement for the old {@code IItemHandler}-based wrapper
+ * ({@code InvWrapper} / {@code IItemHandlerModifiable}). It keeps the same
+ * guarantees the older handler had:
  *
  * <ul>
- *   <li><b>Slot validation</b> — prevents non-module items from being inserted
- *       into scanner storage, preserving the invariant that every slot in a
- *       scanner {@link ItemStack} holds a valid module item.
- *   <li><b>Clear intent</b> — a named class documents the fact that the scanner
- *       exposes its internal module inventory to hoppers, other mods, and
- *       player interactions.
- *   <li><b>Better logging / debuggability</b> — distinct handler in stack traces.
+ *   <li><b>Slot validation</b> — only {@link ScannerModuleItem}s may be inserted,
+ *       preserving the invariant that every scanner slot holds a valid module.
+ *   <li><b>One item per slot</b> — capacity is 1 for every slot.
+ *   <li><b>Transaction safety</b> — mutations are journalled via
+ *       {@link SnapshotJournal}, so a rolled-back transaction restores the previous
+ *       contents instead of leaking partial changes.
  * </ul>
  */
-public final class ScannerItemHandler implements IItemHandlerModifiable {
+public final class ScannerItemHandler extends SnapshotJournal<ItemStack[]>
+        implements ResourceHandler<ItemResource> {
 
     private final ScannerContainer container;
 
@@ -31,62 +33,98 @@ public final class ScannerItemHandler implements IItemHandlerModifiable {
         this.container = container;
     }
 
-    // ---- IItemHandler ---- //
+    // ---- ResourceHandler ---- //
 
     @Override
-    public int getSlots() {
+    public int size() {
         return container.getContainerSize();
     }
 
     @Override
-    public @NotNull ItemStack getStackInSlot(final int slot) {
-        return container.getItem(slot);
+    public ItemResource getResource(final int index) {
+        final ItemStack stack = container.getItem(index);
+        return stack.isEmpty() ? ItemResource.EMPTY : ItemResource.of(stack);
     }
 
     @Override
-    public int getSlotLimit(final int slot) {
+    public long getAmountAsLong(final int index) {
+        return container.getItem(index).getCount();
+    }
+
+    @Override
+    public long getCapacityAsLong(final int index, final ItemResource resource) {
+        // One module per slot; report 0 for resources this slot would reject.
+        if (resource != null && !resource.isEmpty() && !isValid(index, resource)) return 0;
         return 1;
     }
 
     @Override
-    public boolean isItemValid(final int slot, final @NotNull ItemStack stack) {
-        return stack.getItem() instanceof ScannerModuleItem && container.canPlaceItem(slot, stack);
+    public boolean isValid(final int index, final ItemResource resource) {
+        if (index < 0 || index >= size()) return false;
+        if (resource == null || resource.isEmpty()) return false;
+        if (!(resource.getItem() instanceof ScannerModuleItem)) return false;
+        return container.canPlaceItem(index, resource.toStack(1));
     }
 
     @Override
-    public @NotNull ItemStack insertItem(final int slot, final @NotNull ItemStack stack, final boolean simulate) {
-        if (stack.isEmpty()) return ItemStack.EMPTY;
-        if (!isItemValid(slot, stack)) return stack;
+    public int insert(final int index, final ItemResource resource, final int amount,
+                      final TransactionContext transaction) {
+        if (amount <= 0 || resource.isEmpty() || !isValid(index, resource)) return 0;
 
-        final ItemStack existing = container.getItem(slot);
-        if (!existing.isEmpty()) return stack; // each slot holds at most 1 item
+        // Each slot holds at most a single module.
+        if (!container.getItem(index).isEmpty()) return 0;
 
-        if (!simulate) {
-            container.setItem(slot, stack.copyWithCount(1));
+        updateSnapshots(transaction);
+        // Bypass the container's module check: isValid() already verified the resource,
+        // and the checked setItem() would also reject the empty stacks used when clearing.
+        container.setItemUnchecked(index, resource.toStack(1));
+        // Must respect the per-slot capacity of 1: ResourceHandler#insert(resource, amount, tx)
+        // walks every slot passing `amount - inserted`, so returning `amount` here would both
+        // over-report and let a caller believe it moved more than one item per slot.
+        return 1;
+    }
+
+    @Override
+    public int extract(final int index, final ItemResource resource, final int amount,
+                       final TransactionContext transaction) {
+        if (amount <= 0 || resource.isEmpty()) return 0;
+
+        final ItemStack existing = container.getItem(index);
+        if (existing.isEmpty() || !resource.matches(existing)) return 0;
+
+        updateSnapshots(transaction);
+        // Must go through the unchecked path: the checked setItem() rejects ItemStack.EMPTY,
+        // so extracting through it would silently do nothing.
+        container.setItemUnchecked(index, ItemStack.EMPTY);
+        // Never report more than was asked for (the contract requires [0, amount]).
+        return Math.min(amount, existing.getCount());
+    }
+
+    // ---- SnapshotJournal ---- //
+
+    /** @return a defensive copy of every slot, used to roll this handler back. */
+    @Override
+    protected ItemStack[] createSnapshot() {
+        final int slots = size();
+        final ItemStack[] snapshot = new ItemStack[slots];
+        for (int i = 0; i < slots; i++) {
+            snapshot[i] = container.getItem(i).copy();
         }
-        final ItemStack remainder = stack.copy();
-        remainder.shrink(1);
-        return remainder;
+        return snapshot;
     }
 
     @Override
-    public @NotNull ItemStack extractItem(final int slot, final int amount, final boolean simulate) {
-        if (amount <= 0) return ItemStack.EMPTY;
-
-        final ItemStack existing = container.getItem(slot);
-        if (existing.isEmpty()) return ItemStack.EMPTY;
-
-        if (!simulate) {
-            container.setItem(slot, ItemStack.EMPTY);
+    protected void revertToSnapshot(final ItemStack[] snapshot) {
+        for (int i = 0; i < snapshot.length; i++) {
+            // Unchecked: rolling back to an empty slot has to clear it, and the checked
+            // setItem() would refuse the empty stack, leaving the aborted change in place.
+            container.setItemUnchecked(i, snapshot[i]);
         }
-        return existing.copyWithCount(1);
     }
 
-    // ---- IItemHandlerModifiable ---- //
-
     @Override
-    public void setStackInSlot(final int slot, final @NotNull ItemStack stack) {
-        container.setItem(slot, stack);
+    protected void onRootCommit(final ItemStack[] originalState) {
+        container.setChanged();
     }
 
     // ---- Object ---- //

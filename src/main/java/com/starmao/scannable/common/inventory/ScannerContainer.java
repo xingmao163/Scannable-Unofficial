@@ -65,6 +65,21 @@ public final class ScannerContainer extends SimpleContainer {
         }
     }
 
+    /**
+     * Sets a slot without the {@link #canPlaceItem(int, ItemStack)} module check.
+     *
+     * <p>{@link #setItem(int, ItemStack)} rejects anything that is not a module, which
+     * includes {@link ItemStack#EMPTY}. That is correct for normal gameplay, but the
+     * resource-handler and rollback paths must be able to <em>clear</em> a slot, so they
+     * need a way past the check.
+     *
+     * @param i    slot index
+     * @param stack the stack to store; may be empty
+     */
+    public void setItemUnchecked(int i, ItemStack stack) {
+        super.setItem(i, stack);
+    }
+
     @Override
     public boolean canPlaceItem(int i, ItemStack stack) {
         return isModule(stack) && super.canPlaceItem(i, stack);

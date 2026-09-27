@@ -24,7 +24,17 @@ import java.util.List;
  * for rendering.
  */
 public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) implements CustomPacketPayload {
+
+    /**
+     * Upper bound on the number of results accepted from the network.
+     *
+     * <p>A scan may legitimately report many containers, but the decoder pre-allocates a list
+     * from the wire-supplied count, so the value has to be bounded.
+     */
+    private static final int MAX_RESULTS = 8192;
+
     static final Identifier ID = Identifier.fromNamespaceAndPath(Scannable.MOD_ID, "s2c_item_scan");
+
     public static final Type<S2CItemScanResult> TYPE = new Type<>(ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CItemScanResult> STREAM_CODEC =
@@ -43,6 +53,12 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
                     buf -> {
                         final Vec3 center = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
                         final int count = buf.readVarInt();
+                        // Bound the pre-allocation: a corrupt or hostile packet could otherwise
+                        // make the client allocate an arbitrarily large list before reading it.
+                        if (count < 0 || count > MAX_RESULTS) {
+                            throw new io.netty.handler.codec.DecoderException(
+                                    "S2CItemScanResult result count out of range: " + count);
+                        }
                         final List<ItemScanResultData> results = new ArrayList<>(count);
                         for (int i = 0; i < count; i++) {
                             final BlockPos pos = buf.readBlockPos();
@@ -63,14 +79,16 @@ public record S2CItemScanResult(Vec3 center, List<ItemScanResultData> results) i
 
     public static void handle(final S2CItemScanResult msg, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
+            // Resolve the client handler first: it is the only thing this packet needs, and
+            // touching ctx.player() before knowing we can act risks an NPE during the
+            // configuration phase or a disconnect race.
+            final ClientScanHandler h = ClientAccessor.getHandler();
+            if (h == null) return;
             if (!ctx.player().level().isClientSide()) return;
             if (ServerConfig.DEBUG_LOG_ITEM_SCANNER.get()) {
                 Scannable.LOGGER.info("[ItemScanner] Received {} server scan result(s)", msg.results.size());
             }
-            final ClientScanHandler h = ClientAccessor.getHandler();
-            if (h != null) {
-                h.setServerItemResults(msg.center(), msg.results());
-            }
+            h.setServerItemResults(msg.center(), msg.results());
         });
     }
 }

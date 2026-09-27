@@ -87,22 +87,7 @@ public final class Scannable {
         // Item handler — exposes the scanner's internal module inventory
         // to hoppers, other mods, etc.
         event.registerItem(Capabilities.Item.ITEM,
-                (stack, ctx) -> {
-                    var handler = new com.starmao.scannable.common.inventory.ScannerItemHandler(ScannerContainer.of(stack));
-                    return new net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>() {
-                        @Override public int size() { return handler.getSlots(); }
-                        @Override public net.neoforged.neoforge.transfer.item.ItemResource getResource(int slot) { var s = handler.getStackInSlot(slot); return s.isEmpty() ? null : net.neoforged.neoforge.transfer.item.ItemResource.of(s); }
-                        @Override public long getAmountAsLong(int slot) { return handler.getStackInSlot(slot).getCount(); }
-                        @Override public long getCapacityAsLong(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource) { return handler.getSlotLimit(slot); }
-                        @Override public boolean isValid(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource) { return true; }
-                        @Override public int insert(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext ctx) {
-                            return 0;
-                        }
-                        @Override public int extract(int slot, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext ctx) {
-                            return 0;
-                        }
-                    };
-                },
+                (stack, ctx) -> new ScannerItemHandler(ScannerContainer.of(stack)),
                 Items.SCANNER.get());
 
         // ScannerModule capability — uniform access to scanning behaviour
