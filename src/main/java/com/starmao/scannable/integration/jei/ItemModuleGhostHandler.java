@@ -2,8 +2,8 @@ package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.client.gui.ConfigurableItemScannerModuleContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
@@ -22,8 +22,8 @@ public class ItemModuleGhostHandler extends AbstractModuleGhostHandler<Configura
     }
 
     @Override
-    protected Optional<ResourceLocation> getRegistryKey(final ItemStack stack) {
+    protected Optional<Identifier> getRegistryKey(final ItemStack stack) {
         return BuiltInRegistries.ITEM.getResourceKey(stack.getItem())
-                .map(ResourceKey::location);
+                .map(ResourceKey::identifier);
     }
 }

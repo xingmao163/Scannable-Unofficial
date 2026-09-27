@@ -6,6 +6,7 @@ import com.starmao.scannable.common.network.message.RemoveConfiguredModuleItemAt
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -25,19 +26,23 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     private static final int TEXTURE_SIZE = 256;
     public static final int SLOTS_ORIGIN_X = 62;
     public static final int SLOTS_ORIGIN_Y = 20;
-    /** Pitch between adjacent slot frames, and the width/height of one frame. */
+    /** Horizontal pitch between adjacent slots; also the slot frame pitch in the texture. */
     public static final int SLOT_SIZE = 18;
-    /**
-     * Distance from a slot frame's origin to its item area.
-     *
-     * <p>{@code SLOTS_ORIGIN_*} locates the inner item area, while the drawn frame (border) starts
-     * one pixel up and left of it. Used to convert between the two when drawing.
-     */
-    private static final int SLOT_BORDER_INSET = 1;
-    /** Hover target for a slot, matching the drawn frame so the highlight cannot outrun the cursor. */
+    /** Number of filter slots drawn per row. Shared with the JEI ghost-drag targets. */
+    public static final int SLOT_COUNT = 5;
+    /** Hover target for a slot. */
     private static final int SLOT_HIT_SIZE = 16;
-    /** Translucent white slot outline. */
-    private static final int SLOT_HIGHLIGHT_COLOR = 0x80FFFFFF;
+    private static final Identifier SLOT_HIGHLIGHT_SPRITE =
+            Identifier.withDefaultNamespace("container/slot_highlight_back");
+    /** Source sprite edge length. */
+    private static final int SLOT_HIGHLIGHT_SPRITE_SIZE = 24;
+    /**
+     * Draw offset from the slot's origin to the sprite's top-left corner.
+     *
+     * <p>The sprite is 24x24 and centred on an 18x18 slot, so it overhangs by
+     * {@code (24 - 18) / 2 = 3} on each side; vanilla additionally shifts by one, giving -4.
+     */
+    private static final int SLOT_HIGHLIGHT_OFFSET = -4;
 
     private final Component listCaption;
     private final Inventory inventory;
@@ -49,7 +54,8 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
         this.inventory = inventory;
     }
 
-    private ItemStack getHeldItem() {
+    /** The scanner item the player is currently configuring. */
+    protected ItemStack getHeldItem() {
         return menu.getPlayer().getItemInHand(menu.getHand());
     }
 
@@ -58,12 +64,6 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     protected abstract void renderConfiguredItem(GuiGraphicsExtractor graphics, TItem item, int x, int y);
 
     protected void configureItemAt(ItemStack stack, int slot, ItemStack value) {}
-
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
-        super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
-        renderSlotHighlights(graphics, mouseX, mouseY);
-    }
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
@@ -83,15 +83,13 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     private void renderSlotHighlights(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         ItemStack stack = getHeldItem();
         List<TItem> items = getConfiguredItems(stack);
-        for (int slot = 0; slot < Math.min(items.size(), 5); slot++) {
+        for (int slot = 0; slot < Math.min(items.size(), SLOT_COUNT); slot++) {
             int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
             int y = SLOTS_ORIGIN_Y;
             if (isHovering(x, y, SLOT_HIT_SIZE, SLOT_HIT_SIZE, mouseX, mouseY)) {
-                // outline() draws a 1px border inside the box it is given, so the box must be the
-                // full slot frame, not the item area. SLOTS_ORIGIN_* points at the item area
-                // (texture cells begin one pixel up and to the left of it), hence the -1 shift.
-                graphics.outline(x - SLOT_BORDER_INSET, y - SLOT_BORDER_INSET,
-                        SLOT_SIZE, SLOT_SIZE, SLOT_HIGHLIGHT_COLOR);
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT_HIGHLIGHT_SPRITE,
+                        x + SLOT_HIGHLIGHT_OFFSET, y + SLOT_HIGHLIGHT_OFFSET,
+                        SLOT_HIGHLIGHT_SPRITE_SIZE, SLOT_HIGHLIGHT_SPRITE_SIZE);
             }
         }
     }
@@ -106,7 +104,7 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         final double mouseX = event.x();
         final double mouseY = event.y();
-        for (int slot = 0; slot < 5; slot++) {
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
             final int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
             final int y = SLOTS_ORIGIN_Y;
             if (isHovering(x, y, SLOT_SIZE, SLOT_SIZE, mouseX, mouseY)) {
@@ -142,12 +140,13 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
         ItemStack stack = getHeldItem();
         List<TItem> items = getConfiguredItems(stack);
-        for (int slot = 0; slot < 5; slot++) {
-            int x = SLOTS_ORIGIN_X + slot * SLOT_SIZE;
-            int y = SLOTS_ORIGIN_Y;
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
             if (slot < items.size()) {
-                renderConfiguredItem(graphics, items.get(slot), x, y);
+                renderConfiguredItem(graphics, items.get(slot),
+                        SLOTS_ORIGIN_X + slot * SLOT_SIZE, SLOTS_ORIGIN_Y);
             }
         }
+
+        renderSlotHighlights(graphics, mouseX, mouseY);
     }
 }

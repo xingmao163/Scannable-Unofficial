@@ -5,7 +5,7 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * JEI (Just Enough Items) integration plugin for Scannable Unofficial.
@@ -15,10 +15,10 @@ import net.minecraft.resources.ResourceLocation;
  */
 @JeiPlugin
 public final class ScannableJeiPlugin implements IModPlugin {
-    private static final ResourceLocation UID = Scannable.id("jei_plugin");
+    private static final Identifier UID = Scannable.id("jei_plugin");
 
     @Override
-    public ResourceLocation getPluginUid() {
+    public Identifier getPluginUid() {
         return UID;
     }
 

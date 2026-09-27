@@ -7,12 +7,14 @@ import com.starmao.scannable.common.network.message.SetConfiguredModuleItemAtMes
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static com.starmao.scannable.client.gui.AbstractConfigurableScannerModuleContainerScreen.SLOT_COUNT;
 
 /**
  * Base ghost ingredient handler for configurable module configuration screens.
@@ -40,7 +42,7 @@ public abstract class AbstractModuleGhostHandler<S extends AbstractConfigurableS
      * @param stack the ingredient item stack
      * @return the registry key to send to the server, or empty if invalid
      */
-    protected abstract Optional<ResourceLocation> getRegistryKey(ItemStack stack);
+    protected abstract Optional<Identifier> getRegistryKey(ItemStack stack);
 
     @Override
     public <I> List<Target<I>> getTargetsTyped(
@@ -56,19 +58,21 @@ public abstract class AbstractModuleGhostHandler<S extends AbstractConfigurableS
         final ItemStack stack = stackOpt.get();
         if (!isValidIngredient(stack)) return List.of();
 
-        final Optional<ResourceLocation> keyOpt = getRegistryKey(stack);
+        final Optional<Identifier> keyOpt = getRegistryKey(stack);
         if (keyOpt.isEmpty()) return List.of();
-        final ResourceLocation key = keyOpt.get();
+        final Identifier key = keyOpt.get();
 
-        final int guiLeft = gui.getGuiLeft();
-        final int guiTop = gui.getGuiTop();
+        // getLeftPos()/getTopPos() rather than the deprecated getGuiLeft()/getGuiTop(): the latter
+        // are removal-marked shims that still exist only for source compatibility.
+        final int guiLeft = gui.getLeftPos();
+        final int guiTop = gui.getTopPos();
         final int originX = guiLeft + AbstractConfigurableScannerModuleContainerScreen.SLOTS_ORIGIN_X;
         final int originY = guiTop + AbstractConfigurableScannerModuleContainerScreen.SLOTS_ORIGIN_Y;
         final int slotSize = AbstractConfigurableScannerModuleContainerScreen.SLOT_SIZE;
         final int windowId = gui.getMenu().containerId;
 
-        final List<Target<I>> targets = new ArrayList<>(5);
-        for (int slot = 0; slot < 5; slot++) {
+        final List<Target<I>> targets = new ArrayList<>(SLOT_COUNT);
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
             final int slotIndex = slot;
             final int slotX = originX + slot * slotSize;
             final Rect2i area = new Rect2i(slotX, originY, slotSize, slotSize);

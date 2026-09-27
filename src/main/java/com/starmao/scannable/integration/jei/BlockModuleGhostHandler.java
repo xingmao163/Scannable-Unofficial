@@ -2,8 +2,8 @@ package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.client.gui.ConfigurableBlockScannerModuleContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -24,10 +24,10 @@ public class BlockModuleGhostHandler extends AbstractModuleGhostHandler<Configur
     }
 
     @Override
-    protected Optional<ResourceLocation> getRegistryKey(final ItemStack stack) {
+    protected Optional<Identifier> getRegistryKey(final ItemStack stack) {
         final Block block = Block.byItem(stack.getItem());
         if (block == Blocks.AIR) return Optional.empty();
         return BuiltInRegistries.BLOCK.getResourceKey(block)
-                .map(ResourceKey::location);
+                .map(ResourceKey::identifier);
     }
 }

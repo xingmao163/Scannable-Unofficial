@@ -2,8 +2,8 @@ package com.starmao.scannable.integration.jei;
 
 import com.starmao.scannable.client.gui.ConfigurableEntityScannerModuleContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 
@@ -26,9 +26,9 @@ public class EntityModuleGhostHandler extends AbstractModuleGhostHandler<Configu
     }
 
     @Override
-    protected Optional<ResourceLocation> getRegistryKey(final ItemStack stack) {
+    protected Optional<Identifier> getRegistryKey(final ItemStack stack) {
         final SpawnEggItem egg = (SpawnEggItem) stack.getItem();
         return BuiltInRegistries.ENTITY_TYPE.getResourceKey(egg.getType(stack))
-                .map(ResourceKey::location);
+                .map(ResourceKey::identifier);
     }
 }
