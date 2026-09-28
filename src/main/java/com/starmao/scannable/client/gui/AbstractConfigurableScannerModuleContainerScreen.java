@@ -61,6 +61,23 @@ public abstract class AbstractConfigurableScannerModuleContainerScreen<TContaine
 
     protected abstract List<TItem> getConfiguredItems(ItemStack stack);
     protected abstract Component getItemName(TItem item);
+
+    /**
+     * Draws one configured target into its filter slot.
+     *
+     * <p>Called from {@link #extractLabels}, which vanilla invokes with the extractor's pose
+     * already translated by {@code (leftPos, topPos)}. {@code x}/{@code y} are therefore
+     * <b>slot-relative, panel-space</b> coordinates.
+     *
+     * <p>Whether an implementation must convert them to absolute screen coordinates depends on
+     * the draw call it uses, and the two families differ:
+     * <ul>
+     *   <li>{@code GuiGraphicsExtractor#fakeItem} / {@code #item} capture the current pose
+     *       ({@code new Matrix3x2f(this.pose)}), so they take {@code x}/{@code y} as-is —
+     *       adding {@code leftPos}/{@code topPos} would offset them twice;</li>
+     *   <li>{@code GuiGraphicsExtractor#entity} captures no pose, so it needs the offset.</li>
+     * </ul>
+     */
     protected abstract void renderConfiguredItem(GuiGraphicsExtractor graphics, TItem item, int x, int y);
 
     protected void configureItemAt(ItemStack stack, int slot, ItemStack value) {}

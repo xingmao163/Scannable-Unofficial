@@ -36,6 +36,22 @@ public class ConfigurableItemScannerModuleContainerScreen
         return item.getName(item.getDefaultInstance());
     }
 
+    /**
+     * Draws the configured item's icon into its slot.
+     *
+     * <p><b>Pass the slot-relative {@code x}/{@code y} unchanged — do not add
+     * {@code leftPos}/{@code topPos}.</b> {@code AbstractContainerScreen} already translates the
+     * extractor's pose by {@code (leftPos, topPos)} before calling {@code extractLabels}, and
+     * {@code fakeItem} captures that pose into its {@code GuiItemRenderState}
+     * ({@code new Matrix3x2f(this.pose)}). Adding the offset here applies it a second time and
+     * pushes the icon a full panel-width off screen, so a configured filter appears to have no
+     * icon at all — the tooltip still lists it, because the tooltip path never draws an icon.
+     * This matches vanilla, which draws slot contents with
+     * {@code graphics.fakeItem(itemStack, slot.x, slot.y, seed)} — also un-offset.
+     *
+     * <p>Contrast {@link ConfigurableEntityScannerModuleContainerScreen}, where the offset
+     * <em>is</em> required: {@code GuiGraphicsExtractor#entity} does not capture the pose.
+     */
     @Override
     protected void renderConfiguredItem(GuiGraphicsExtractor graphics, Item item, int x, int y) {
         graphics.fakeItem(new ItemStack(item), x, y);

@@ -70,18 +70,31 @@ public class ConfigurableEntityScannerModuleContainerScreen
      * slot-relative coordinates, before the hover highlights are drawn. Rendering the model from
      * here — rather than from an {@code extractContents} override — keeps the highlight on top of
      * the model; drawing it after {@code super.extractContents()} would cover the highlight.
+     *
+     * <p><b>Why the {@code leftPos}/{@code topPos} offset is needed here but must NOT be used in
+     * the item / block screens:</b> the two paths differ in how the extractor's
+     * {@code Matrix3x2fStack} pose is handled.
+     * {@code GuiGraphicsExtractor#entity} builds a {@code GuiEntityRenderState} that carries
+     * <em>no</em> pose, so this needs absolute screen coordinates — omit the offset and the model
+     * lands in the screen's top-left corner.
+     * {@code fakeItem} is the opposite: it stores {@code new Matrix3x2f(this.pose)} in its
+     * {@code GuiItemRenderState}, so item coordinates are already panel-relative and adding the
+     * offset would double it.
      */
     @Override
     protected void renderConfiguredItem(GuiGraphicsExtractor graphics, EntityType<?> entityType, int x, int y) {
         final LivingEntity entity = getRenderEntity(entityType);
         if (entity == null) return;
 
+        final int x0 = leftPos + x;
+        final int y0 = topPos + y;
+
         // `size` is a direct pixel multiplier, so normalise by the entity's largest dimension to
         // fit any mob into the slot, and render at a gentle fixed 3/4 angle.
         final EntityDimensions dimensions = entityType.getDimensions();
         final int size = Math.max(1, (int) (SLOT_MODEL_SIZE / Math.max(dimensions.width(), dimensions.height())));
         InventoryScreen.renderEntityInInventoryFollowsAngle(
-                graphics, x, y, x + SLOT_MODEL_BOX, y + SLOT_MODEL_BOX,
+                graphics, x0, y0, x0 + SLOT_MODEL_BOX, y0 + SLOT_MODEL_BOX,
                 size, SLOT_MODEL_OFFSET_Y, SLOT_MODEL_X_ANGLE, SLOT_MODEL_Y_ANGLE, entity);
     }
 

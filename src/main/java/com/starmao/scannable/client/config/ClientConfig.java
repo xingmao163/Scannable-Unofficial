@@ -77,6 +77,36 @@ public final class ClientConfig {
 
     static { BUILDER.pop(); }
 
+    static { BUILDER.push("rendering"); }
+
+    /**
+     * Whether to re-render the first-person hand into the depth buffer before drawing scan
+     * highlights, so the highlights do not bleed over the hand or the held item.
+     *
+     * <p><b>Currently without effect on 26.1.2.</b> The pass itself is a no-op here — see
+     * {@link com.starmao.scannable.client.renderer.HandDepthRenderer} for why the 1.21.1
+     * implementation could not be ported to the 26.1 render pipeline. The option is kept so
+     * that:
+     * <ul>
+     *   <li>the config file layout and key stay identical to 1.21.1, so a config copied
+     *       between the two versions does not silently lose the setting;</li>
+     *   <li>users who saw hand artefacts on 1.21.1 can still express that intent, and it
+     *       takes effect again the moment the pass is implemented.</li>
+     * </ul>
+     *
+     * <p>Defaults to {@code true}, matching 1.21.1 — the value records the user's
+     * <em>preference</em>, not whether the pass currently does anything.
+     */
+    public static final ModConfigSpec.BooleanValue HAND_DEPTH_PASS = BUILDER
+            .comment("Re-render the first-person hand into the depth buffer before drawing scan highlights,",
+                    "so the highlights do not bleed over the hand or the held item.",
+                    "Disable this if you see hand / held-item artefacts, or if a mod that takes over",
+                    "first-person hand rendering (e.g. Yes Steve Model) reports render errors.",
+                    "NOTE: no effect on 26.1.2 yet - the depth pass is not implemented on this",
+                    "version, so scan highlights may draw over the hand regardless of this setting.")
+            .define("handDepthPass", true);
+
+    static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
     // ========================================================================
