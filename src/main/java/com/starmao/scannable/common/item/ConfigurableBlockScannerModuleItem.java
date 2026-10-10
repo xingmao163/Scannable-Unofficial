@@ -69,7 +69,7 @@ public final class ConfigurableBlockScannerModuleItem extends ConfigurableModule
         if (player == null) return InteractionResult.PASS;
 
         if (addValue(player.getItemInHand(context.getHand()), block)) {
-            player.swing(context.getHand());
+            player.swing(context.getHand(), net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
             player.getInventory().setChanged();
         }
         return InteractionResult.SUCCESS;

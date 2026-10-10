@@ -2,8 +2,6 @@ package com.starmao.scannable.api;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 
 import java.util.function.Predicate;
@@ -47,6 +45,5 @@ public interface BlockScannerModule extends ScannerModule {
      * @param module the specific item stack instance of this module
      * @return a predicate that returns {@code true} for detectable blocks
      */
-    @OnlyIn(Dist.CLIENT)
     Predicate<BlockState> getFilter(ItemStack module);
 }

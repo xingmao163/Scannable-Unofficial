@@ -7,8 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 
@@ -16,11 +14,10 @@ import java.util.List;
  * Client-only implementation of {@link ClientScanHandler}.
  * <p>
  * Delegates to {@link ScanManager} and {@link SoundManager}.
- * This class is annotated {@link OnlyIn @OnlyIn(Dist.CLIENT)} so it is
+ * This class is annotated {@link OnlyIn } so it is
  * safe to reference only from client-side initialisation code; it must
  * never be imported directly from common (server-side) classes.
  */
-@OnlyIn(Dist.CLIENT)
 public final class ClientScanHandlerImpl implements ClientScanHandler {
 
     @Override

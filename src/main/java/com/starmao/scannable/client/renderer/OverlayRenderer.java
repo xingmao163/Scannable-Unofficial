@@ -1,6 +1,6 @@
 package com.starmao.scannable.client.renderer;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.starmao.scannable.Scannable;
 import com.starmao.scannable.common.config.Strings;

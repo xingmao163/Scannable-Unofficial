@@ -56,25 +56,12 @@ public final class Scannable {
 
         modEventBus.addListener(Scannable::onModConfigEvent);
 
-        // --- Client-only setup ---
-        if (FMLEnvironment.getDist().isClient()) {
-            com.starmao.scannable.client.ScannerClientSetup.initialize(modEventBus);
-
-            // Make the Config button clickable in the Mods screen.
-            // Uses ClientRegistrations (method annotated @OnlyIn(Dist.CLIENT))
-            // so RuntimeDistCleaner strips the client-only class references on server.
-            com.starmao.scannable.client.ClientRegistrations.registerConfigScreen(modContainer);
-
-        }
     }
 
     private static void onModConfigEvent(final ModConfigEvent event) {
         if (event.getConfig().getSpec() == ServerConfig.SPEC) {
             FluidBlockScannerModule.clearCache();
             com.starmao.scannable.common.scanning.filter.IgnoredBlocks.clearCache();
-        } else if (event.getConfig().getSpec() == ClientConfig.SPEC) {
-            com.starmao.scannable.client.config.ClientConfig.clearCache();
-            com.starmao.scannable.client.scanning.ProviderCacheManager.clearCache();
         }
     }
 

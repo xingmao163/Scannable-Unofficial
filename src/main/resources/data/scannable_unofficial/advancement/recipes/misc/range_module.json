@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "scannable_unofficial:range_module"
+        "recipes": "scannable_unofficial:range_module"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

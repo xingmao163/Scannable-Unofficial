@@ -11,8 +11,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,19 +65,16 @@ public abstract class AbstractOreBlockScannerModule implements BlockScannerModul
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get(ScanResultProviderRegistry.BLOCKS);
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public Predicate<BlockState> getFilter(final ItemStack module) {
         validateFilter();
         return filter;
     }
 
-    @OnlyIn(Dist.CLIENT)
     private void validateFilter() {
         if (filter != null) return;
 

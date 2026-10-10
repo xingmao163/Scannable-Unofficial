@@ -3,12 +3,8 @@
   "category": "misc",
   "group": "scanner_module",
   "ingredients": [
-    {
-      "item": "scannable_unofficial:blank_module"
-    },
-    {
-      "tag": "c:bones"
-    }
+    "scannable_unofficial:blank_module",
+    "#c:bones"
   ],
   "result": {
     "count": 1,

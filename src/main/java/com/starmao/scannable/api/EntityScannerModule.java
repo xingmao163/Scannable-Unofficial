@@ -4,8 +4,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -49,6 +47,5 @@ public interface EntityScannerModule extends ScannerModule {
      * @param module the specific item stack instance of this module
      * @return a predicate that returns {@code true} for detectable entities
      */
-    @OnlyIn(Dist.CLIENT)
     Predicate<Entity> getFilter(ItemStack module);
 }

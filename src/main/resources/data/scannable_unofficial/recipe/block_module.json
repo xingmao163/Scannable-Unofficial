@@ -3,12 +3,8 @@
   "category": "misc",
   "group": "scanner_module",
   "ingredients": [
-    {
-      "item": "scannable_unofficial:blank_module"
-    },
-    {
-      "tag": "c:stones"
-    }
+    "scannable_unofficial:blank_module",
+    "#c:stones"
   ],
   "result": {
     "count": 1,

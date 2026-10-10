@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build.properties
+
+# IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+bin/
+eclipse/
+.project
+.classpath
+.settings/
+
+# Minecraft & NeoForge run directories
+run/
+logs/
+crash-reports/
+
+# Python / Scripts
+__pycache__/
+*.pyc
+
+# Extracted resources (scratch)
+assets/
+data/
+net/
+
+# OS specific
+.DS_Store
+Thumbs.db

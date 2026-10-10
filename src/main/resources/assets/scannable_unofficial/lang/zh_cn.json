@@ -175,5 +175,18 @@
   "scannable_unofficial.configuration.allowJeiDragDrop": "允许 JEI 拖拽",
   "scannable_unofficial.configuration.allowJeiDragDrop.tooltip": "允许从 JEI 拖拽配置扫描模块",
   "scannable_unofficial.configuration.allowEmiDragDrop": "允许 EMI 拖拽",
-  "scannable_unofficial.configuration.allowEmiDragDrop.tooltip": "允许从 EMI 拖拽配置扫描模块"
+  "scannable_unofficial.configuration.allowEmiDragDrop.tooltip": "允许从 EMI 拖拽配置扫描模块",
+  "block.scannable_unofficial.scanner": "Scanner",
+  "scannable_unofficial.configuration.rendering": "Rendering",
+  "scannable_unofficial.configuration.rendering.button": "Rendering",
+  "scannable_unofficial.configuration.rendering.tooltip": "Client-side rendering options",
+  "scannable_unofficial.configuration.handDepthPass": "Hand Depth Pass",
+  "scannable_unofficial.configuration.handDepthPass.button": "Hand Depth Pass",
+  "scannable_unofficial.configuration.handDepthPass.tooltip": "Re-render hand into depth buffer",
+  "scannable_unofficial.configuration.hoverAnyBlock": "Hover Any Block",
+  "scannable_unofficial.configuration.hoverAnyBlock.button": "Hover Any Block",
+  "scannable_unofficial.configuration.hoverAnyBlock.tooltip": "Show label when aiming at any highlighted block in the cluster, not only its center",
+  "scannable_unoffcial.configuration.hoverTextAtBlock.": "Hover Text At Block",
+  "scannable_unofficial.configuration.hoverTextAtBlock.button": "Hover Text At Block",
+  "scannable_unofficial.configuration.hoverTextAtBlock.tooltip": "Show label at block's center or at cluster's center"
 }

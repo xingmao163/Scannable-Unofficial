@@ -3,12 +3,8 @@
   "category": "misc",
   "group": "charger_module",
   "ingredients": [
-    {
-      "item": "scannable_unofficial:blank_module"
-    },
-    {
-      "item": "minecraft:lightning_rod"
-    }
+    "scannable_unofficial:blank_module",
+    "minecraft:lightning_rod"
   ],
   "result": {
     "count": 1,

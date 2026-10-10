@@ -6,7 +6,6 @@ import com.starmao.scannable.api.ScanResultProvider;
 import com.starmao.scannable.client.renderer.ScanResultRenderType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -58,7 +57,7 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
 
     // ---- Icon labels (billboarded) -------------------------------------------
 
-    protected static <T> void renderIconLabels(MultiBufferSource bufferSource, PoseStack poseStack,
+    protected static <T> void renderIconLabels(net.minecraft.client.renderer.SubmitNodeCollector nodeCollector, PoseStack poseStack,
                                                 float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                                 boolean showDistance, List<T> results,
                                                 Function<T, Vec3> position, Function<T, Identifier> icon,
@@ -68,45 +67,38 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
             if (maxIcons-- <= 0) break;
             Vec3 pos = position.apply(result);
             if (pos == null || !visible.test(result)) continue;
-            renderIconLabel(bufferSource, poseStack, yaw, pitch, lookVec, viewerEyes,
+            renderIconLabel(nodeCollector, poseStack, yaw, pitch, lookVec, viewerEyes,
                     (float) viewerEyes.distanceTo(pos), pos, icon.apply(result), name.apply(result));
         }
     }
 
-    /**
-     * Renders a billboarded icon, plus the name label once the result is being looked at.
-     *
-     * <p>The two are gated differently, matching the 1.21.1 overlay: the icon is drawn for every
-     * result the caller hands over, while the text label only appears when the crosshair is aimed
-     * at the result ({@code lookDirDot > 0.999f}). Callers are responsible for any wider
-     * visibility filtering; the icon must not be gated on the look direction here, or scanning
-     * would appear to produce no results until the player aims at each one.
-     *
-     * <p>Callers are expected to pass a real icon texture — in practice every provider uses
-     * {@code ModTextures.ICON_INFO} or a module-supplied icon. The {@code null} guard is defensive
-     * only: it skips the icon quad rather than forwarding the value to
-     * {@link ScanResultRenderType#icon}, which would bind a null texture and crash later, in
-     * {@code endBatch()}, far from the offending call.
-     */
-    protected static void renderIconLabel(MultiBufferSource bufferSource, PoseStack poseStack,
+    protected static void renderIconLabel(net.minecraft.client.renderer.SubmitNodeCollector nodeCollector, PoseStack poseStack,
                                            float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
                                            float displayDistance, Vec3 resultPos,
                                            @Nullable Identifier icon, @Nullable Component label) {
+        renderIconLabel(nodeCollector, poseStack, yaw, pitch, lookVec, viewerEyes, displayDistance, resultPos, icon, label, false);
+    }
+
+    protected static void renderIconLabel(net.minecraft.client.renderer.SubmitNodeCollector nodeCollector, PoseStack poseStack,
+                                           float yaw, float pitch, Vec3 lookVec, Vec3 viewerEyes,
+                                           float displayDistance, Vec3 resultPos,
+                                           @Nullable Identifier icon, @Nullable Component label,
+                                           boolean forceShowLabel) {
         final Vec3 toResult = resultPos.subtract(viewerEyes);
         final float distance = (float) toResult.length();
         final float lookDirDot = (float) lookVec.dot(toResult.normalize());
         final float sqLookDirDot = lookDirDot * lookDirDot;
         final float sq2LookDirDot = sqLookDirDot * sqLookDirDot;
-        final float focusScale = Mth.clamp(sq2LookDirDot * sq2LookDirDot + 0.005f, 0.5f, 1f);
+        final float focusScale = forceShowLabel ? 1f : Mth.clamp(sq2LookDirDot * sq2LookDirDot + 0.005f, 0.5f, 1f);
         final float scale = distance * focusScale * 0.005f;
 
         poseStack.pushPose();
         poseStack.translate(resultPos.x, resultPos.y, resultPos.z);
-        poseStack.mulPose(new Quaternionf().rotationY(UnitConversion.toRadians(-yaw)));
-        poseStack.mulPose(new Quaternionf().rotationX(UnitConversion.toRadians(pitch)));
+        poseStack.rotate(new org.joml.Quaternionf().rotationY(UnitConversion.toRadians(-yaw)));
+        poseStack.rotate(new org.joml.Quaternionf().rotationX(UnitConversion.toRadians(pitch)));
         poseStack.scale(-scale, -scale, scale);
 
-        if (lookDirDot > 0.999f && label != null) {
+        if ((lookDirDot > 0.999f || forceShowLabel) && label != null) {
             final Component text = displayDistance > 0 ? withDistance(label, Mth.ceil(displayDistance)) : label;
 
             final Font font = Minecraft.getInstance().font;
@@ -114,14 +106,18 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
 
             poseStack.pushPose();
             poseStack.translate(width / 2f, 0, 0);
-            drawQuad(bufferSource.getBuffer(ScanResultRenderType.TYPE), poseStack, width, font.lineHeight + 5, 0, 0, 0, 0.6f);
+            nodeCollector.submitCustomGeometry(poseStack, ScanResultRenderType.TYPE, (pose, buffer) -> {
+                drawQuad(buffer, pose, width, font.lineHeight + 5, 0, 0, 0, 0.6f);
+            });
             poseStack.popPose();
 
-            font.drawInBatch(text, 12, -4, 0xFFFFFFFF, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.SEE_THROUGH, 0, 0xf000f0);
+            nodeCollector.submitText(poseStack, 12, -4, text.getVisualOrderText(), false, Font.DisplayMode.SEE_THROUGH, 15728880, 0xFFFFFFFF, 0, 0);
         }
 
         if (icon != null) {
-            drawTexturedQuad(bufferSource.getBuffer(ScanResultRenderType.icon(icon)), poseStack, 16, 16);
+            nodeCollector.submitCustomGeometry(poseStack, ScanResultRenderType.icon(icon), (pose, buffer) -> {
+                drawTexturedQuad(buffer, pose, 16, 16);
+            });
         }
 
         poseStack.popPose();
@@ -132,17 +128,16 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
     /**
      * Draws a solid-colour quad centered at the current pose origin.
      */
-    protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
-        drawQuad(buffer, poseStack, width, height, 1, 1, 1, 1);
+    protected static void drawQuad(VertexConsumer buffer, PoseStack.Pose pose, float width, float height) {
+        drawQuad(buffer, pose, width, height, 1, 1, 1, 1);
     }
 
     /**
      * Draws a solid-colour quad centered at the current pose origin
      * with the given tint colour.
      */
-    protected static void drawQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height,
+    protected static void drawQuad(VertexConsumer buffer, PoseStack.Pose pose, float width, float height,
                                     float r, float g, float b, float a) {
-        var pose = poseStack.last();
         var matrix = pose.pose();
         var halfW = width / 2;
         var halfH = height / 2;
@@ -156,14 +151,13 @@ public abstract class AbstractScanResultProvider implements ScanResultProvider {
     /**
      * Draws a textured quad centered at the current pose origin.
      */
-    protected static void drawTexturedQuad(VertexConsumer buffer, PoseStack poseStack, float width, float height) {
-        var pose = poseStack.last();
+    protected static void drawTexturedQuad(VertexConsumer buffer, PoseStack.Pose pose, float width, float height) {
         var matrix = pose.pose();
 
-        buffer.addVertex(matrix, -width * 0.5f, height * 0.5f, 0).setUv(0, 1).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(matrix,  width * 0.5f, height * 0.5f, 0).setUv(1, 1).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(matrix,  width * 0.5f, -height * 0.5f, 0).setUv(1, 0).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(matrix, -width * 0.5f, -height * 0.5f, 0).setUv(0, 0).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix, -width * 0.5f, height * 0.5f, -0.01f).setUv(0, 1).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix,  width * 0.5f, height * 0.5f, -0.01f).setUv(1, 1).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix,  width * 0.5f, -height * 0.5f, -0.01f).setUv(1, 0).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(matrix, -width * 0.5f, -height * 0.5f, -0.01f).setUv(0, 0).setColor(1f, 1f, 1f, 1f);
     }
 
     /**

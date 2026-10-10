@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "scannable_unofficial:entity_module"
+        "recipes": "scannable_unofficial:entity_module"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

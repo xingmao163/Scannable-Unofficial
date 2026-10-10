@@ -15,7 +15,6 @@ import com.starmao.scannable.common.item.ModuleHelper;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -223,30 +222,29 @@ public final class ScanManager {
         }
     }
 
-    public static void renderLevel(final PoseStack poseStack, final float partialTick) {
+    public static void renderLevel(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent event) {
         synchronized (renderingResults) {
             if (renderingResults.isEmpty()) return;
 
-            Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-            Vec3 cam = camera.position();
+            net.minecraft.client.renderer.state.level.CameraRenderState camera = event.getLevelRenderState().cameraRenderState;
+            net.minecraft.world.phys.Vec3 cam = camera.pos;
 
+            com.mojang.blaze3d.vertex.PoseStack poseStack = event.getPoseStack();
             poseStack.pushPose();
             try {
                 poseStack.translate(-cam.x, -cam.y, -cam.z);
 
-                MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(RENDER_BUFFER);
+                net.minecraft.client.renderer.SubmitNodeCollector bufferSource = event.getSubmitNodeCollector();
+                float partialTick = net.minecraft.client.Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+                net.minecraft.client.Camera cameraObj = net.minecraft.client.Minecraft.getInstance().gameRenderer.mainCamera();
 
-                for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                    entry.getKey().render(ScanResultRenderContext.WORLD, bufferSource, poseStack, camera, partialTick, entry.getValue());
+                for (java.util.Map.Entry<com.starmao.scannable.api.ScanResultProvider, java.util.List<com.starmao.scannable.api.ScanResult>> entry : renderingResults.entrySet()) {
+                    entry.getKey().render(com.starmao.scannable.api.ScanResultRenderContext.WORLD, bufferSource, poseStack, cameraObj, partialTick, entry.getValue());
                 }
-                for (Map.Entry<ScanResultProvider, List<ScanResult>> entry : renderingResults.entrySet()) {
-                    entry.getKey().render(ScanResultRenderContext.GUI, bufferSource, poseStack, camera, partialTick, entry.getValue());
+                for (java.util.Map.Entry<com.starmao.scannable.api.ScanResultProvider, java.util.List<com.starmao.scannable.api.ScanResult>> entry : renderingResults.entrySet()) {
+                    entry.getKey().render(com.starmao.scannable.api.ScanResultRenderContext.GUI, bufferSource, poseStack, cameraObj, partialTick, entry.getValue());
                 }
-                bufferSource.endBatch();
             } finally {
-                // A provider throwing mid-render must not leak the pushed pose or leave
-                // uncommitted vertices in the shared RENDER_BUFFER, which would corrupt
-                // every following frame rather than just this one.
                 poseStack.popPose();
             }
         }
