@@ -68,10 +68,7 @@ neoForge {
         // DataGen 入口随版本而异：1.21.1~1.21.3 用 `data`，
         // 1.21.4+ 拆成 `serverData` + `clientData`，26.1.2 只用 `clientData`。
         // 版本不适用的 run 在本分支直接删除即可 —— 其余内容请与本项目其它版本分支保持一致。
-        data {
-            data()
-            programArguments.addAll dataGenArgs
-        }
+
         serverData {
             serverData()
             programArguments.addAll dataGenArgs

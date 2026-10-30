@@ -3,12 +3,8 @@
   "category": "misc",
   "group": "scanner_module",
   "ingredients": [
-    {
-      "item": "scannable_unofficial:blank_module"
-    },
-    {
-      "item": "minecraft:water_bucket"
-    }
+    "scannable_unofficial:blank_module",
+    "minecraft:water_bucket"
   ],
   "result": {
     "count": 1,

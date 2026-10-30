@@ -60,7 +60,7 @@ public final class ConfigurableEntityScannerModuleItem extends ConfigurableModul
     @Override
     public InteractionResult interactLivingEntity(final ItemStack stack, final Player player, final LivingEntity target, final InteractionHand hand) {
         if (addValue(player.getItemInHand(hand), target.getType())) {
-            player.swing(hand);
+            player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
             player.getInventory().setChanged();
         } else {
             if (!player.level().isClientSide() && !isLocked(stack)) {

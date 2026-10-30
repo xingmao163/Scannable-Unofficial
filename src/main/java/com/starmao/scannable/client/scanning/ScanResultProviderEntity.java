@@ -11,7 +11,6 @@ import com.starmao.scannable.common.item.ModuleHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
@@ -101,7 +100,7 @@ public final class ScanResultProviderEntity extends AbstractScanResultProvider i
     }
 
     @Override
-    public void render(ScanResultRenderContext ctx, MultiBufferSource buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
+    public void render(ScanResultRenderContext ctx, net.minecraft.client.renderer.SubmitNodeCollector buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
         if (ctx != ScanResultRenderContext.GUI || results.isEmpty()) {
             return;
         }

@@ -3,8 +3,6 @@ package com.starmao.scannable.api;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 
 /**
@@ -14,7 +12,7 @@ import net.neoforged.api.distmarker.OnlyIn;
  * Scanning behavior is <em>client side only</em>; only {@link #getEnergyCost}
  * and {@link #hasResultProvider} are called on the server.
  * <p>
- * Methods annotated with {@link OnlyIn @OnlyIn(Dist.CLIENT)} use client-only
+ * Methods annotated with {@link OnlyIn } use client-only
  * classes and MUST NOT be called on a dedicated server. They are safe to call
  * on the client where providers are registered via
  * {@link ScanResultProviderRegistry}.
@@ -58,7 +56,6 @@ public interface ScannerModule {
      * @return the provider, or {@code null} if this module produces no results
      */
     @Nullable
-    @OnlyIn(Dist.CLIENT)
     ScanResultProvider getResultProvider();
 
     /**

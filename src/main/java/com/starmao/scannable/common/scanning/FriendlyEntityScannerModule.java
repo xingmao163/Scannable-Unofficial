@@ -9,8 +9,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Predicate;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Scanner module that detects friendly / passive entities (animals, villagers, etc.).
@@ -31,7 +29,6 @@ public enum FriendlyEntityScannerModule implements EntityScannerModule {
     /**
      * {@return the result provider that displays entity scan results}
      */
-    @OnlyIn(Dist.CLIENT)
     @Override
     public ScanResultProvider getResultProvider() {
         return ScanResultProviderRegistry.get(ScanResultProviderRegistry.ENTITIES);
@@ -40,7 +37,6 @@ public enum FriendlyEntityScannerModule implements EntityScannerModule {
     /**
      * {@return the filter predicate that matches friendly entities}
      */
-    @OnlyIn(Dist.CLIENT)
     @Override
     public Predicate<Entity> getFilter(ItemStack module) {
         return FriendlyEntityScanFilter.INSTANCE;

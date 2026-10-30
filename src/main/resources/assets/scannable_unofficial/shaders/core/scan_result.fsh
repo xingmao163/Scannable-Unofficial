@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // Animated shimmer drawn over each scan-result box (additive): horizontal scanlines that scroll
 // over time, a gentle global brightness pulse, and an edge glow that brightens face borders.
@@ -15,10 +16,10 @@ layout(std140) uniform Globals {
     int UseRgss;
 };
 
-in vec2 texCoord0;
-in vec4 vertexColor;
+layout(location = 0) in vec2 texCoord0;
+layout(location = 1) in vec4 vertexColor;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main() {
     float time = GameTime * 1200.0;

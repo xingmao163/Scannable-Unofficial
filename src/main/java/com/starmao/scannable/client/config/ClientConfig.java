@@ -106,6 +106,17 @@ public final class ClientConfig {
                     "version, so scan highlights may draw over the hand regardless of this setting.")
             .define("handDepthPass", true);
 
+    public static final ModConfigSpec.BooleanValue HOVER_ANY_BLOCK = BUILDER
+            .comment("Show label when aiming at any highlighted block in the cluster, not only its center.",
+                    "If true, hovering over any block belonging to the scanned cluster will display its label.",
+                    "If false, you must aim directly at the center of the cluster (original behavior).")
+            .define("hoverAnyBlock", true);
+
+    public static final ModConfigSpec.BooleanValue HOVER_TEXT_AT_BLOCK = BUILDER
+            .comment("If true, the label will be drawn directly over the specific block you are aiming at.",
+                    "If false, the label will always be drawn at the center of the whole ore cluster.")
+            .define("hoverTextAtBlock", true);
+
     static { BUILDER.pop(); }
 
     public static final ModConfigSpec SPEC = BUILDER.build();
@@ -267,13 +278,13 @@ public final class ClientConfig {
      */
     private static List<String> defaultBlockTagColors() {
         Object2IntMap<Identifier> map = new Object2IntOpenHashMap<>();
-        map.put(BlockTags.COAL_ORES.location(), MapColor.COLOR_GRAY.col);
+        map.put(net.minecraft.resources.Identifier.parse("c:ores/coal"), MapColor.COLOR_GRAY.col);
         map.put(BlockTags.IRON_ORES.location(), MapColor.COLOR_BROWN.col);
         map.put(BlockTags.GOLD_ORES.location(), MapColor.GOLD.col);
-        map.put(BlockTags.LAPIS_ORES.location(), MapColor.LAPIS.col);
-        map.put(BlockTags.DIAMOND_ORES.location(), MapColor.DIAMOND.col);
-        map.put(BlockTags.REDSTONE_ORES.location(), MapColor.COLOR_RED.col);
-        map.put(BlockTags.EMERALD_ORES.location(), MapColor.EMERALD.col);
+        map.put(net.minecraft.resources.Identifier.parse("c:ores/lapis"), MapColor.LAPIS.col);
+        map.put(net.minecraft.resources.Identifier.parse("c:ores/diamond"), MapColor.DIAMOND.col);
+        map.put(net.minecraft.resources.Identifier.parse("c:ores/redstone"), MapColor.COLOR_RED.col);
+        map.put(net.minecraft.resources.Identifier.parse("c:ores/emerald"), MapColor.EMERALD.col);
         map.put(Identifier.parse("c:ores/quartz"), MapColor.QUARTZ.col);
         map.put(Identifier.parse("c:ores/tin"), MapColor.COLOR_CYAN.col);
         map.put(Identifier.parse("c:ores/copper"), MapColor.TERRACOTTA_ORANGE.col);

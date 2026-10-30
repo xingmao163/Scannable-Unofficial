@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "scannable_unofficial:rare_ores_module"
+        "recipes": "scannable_unofficial:rare_ores_module"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

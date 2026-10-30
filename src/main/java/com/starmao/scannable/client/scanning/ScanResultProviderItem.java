@@ -12,7 +12,7 @@ import com.starmao.scannable.client.config.ClientConfig;
 import com.starmao.scannable.common.network.data.ItemScanResultData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -64,7 +64,7 @@ public class ScanResultProviderItem extends AbstractScanResultProvider implement
     }
 
     @Override
-    public void render(final ScanResultRenderContext context, final MultiBufferSource bufferSource,
+    public void render(final ScanResultRenderContext context, final net.minecraft.client.renderer.SubmitNodeCollector bufferSource,
                        final PoseStack poseStack, final Camera renderInfo, final float partialTicks,
                        final List<ScanResult> results) {
         if (results.isEmpty()) return;
@@ -95,22 +95,23 @@ public class ScanResultProviderItem extends AbstractScanResultProvider implement
 
     // ---- World highlights ---------------------------------------------------
 
-    private void renderWorldHighlights(final MultiBufferSource bufferSource, final PoseStack poseStack,
+    private void renderWorldHighlights(final net.minecraft.client.renderer.SubmitNodeCollector bufferSource, final PoseStack poseStack,
                                        final List<ScanResult> results) {
-        final VertexConsumer fill = bufferSource.getBuffer(ScanResultRenderType.SHIMMER_TYPE);
-        for (final ScanResult result : results) {
-            final ItemScanResult ir = (ItemScanResult) result;
-            final int c = resolveColor(ir.pos);
-            final float r = ((c >> 16) & 0xFF) / 255.0f;
-            final float g = ((c >> 8) & 0xFF) / 255.0f;
-            final float b = (c & 0xFF) / 255.0f;
-            // Slightly inset so the highlight hugs the block rather than z-fighting it.
-            drawBox(fill, poseStack,
-                    ir.pos.getX() + 0.002, ir.pos.getY() + 0.002, ir.pos.getZ() + 0.002,
-                    ir.pos.getX() + 0.998, ir.pos.getY() + 0.998, ir.pos.getZ() + 0.998,
-                    ((int) (0.55f * 255) << 24) | ((int) (r * 255) << 16)
-                            | ((int) (g * 255) << 8) | (int) (b * 255));
-        }
+        bufferSource.submitCustomGeometry(poseStack, ScanResultRenderType.SHIMMER_TYPE, (poseEntry, fill) -> {
+            for (final ScanResult result : results) {
+                final ItemScanResult ir = (ItemScanResult) result;
+                final int c = resolveColor(ir.pos);
+                final float r = ((c >> 16) & 0xFF) / 255.0f;
+                final float g = ((c >> 8) & 0xFF) / 255.0f;
+                final float b = (c & 0xFF) / 255.0f;
+                // Slightly inset so the highlight hugs the block rather than z-fighting it.
+                drawBox(fill, poseStack,
+                        ir.pos.getX() + 0.002, ir.pos.getY() + 0.002, ir.pos.getZ() + 0.002,
+                        ir.pos.getX() + 0.998, ir.pos.getY() + 0.998, ir.pos.getZ() + 0.998,
+                        ((int) (0.55f * 255) << 24) | ((int) (r * 255) << 16)
+                                | ((int) (g * 255) << 8) | (int) (b * 255));
+            }
+        });
     }
 
     /**
@@ -142,7 +143,7 @@ public class ScanResultProviderItem extends AbstractScanResultProvider implement
 
     // ---- GUI labels ---------------------------------------------------------
 
-    private void renderItemLabels(final MultiBufferSource bufferSource, final PoseStack poseStack,
+    private void renderItemLabels(final net.minecraft.client.renderer.SubmitNodeCollector bufferSource, final PoseStack poseStack,
                                   final Camera camera, final List<ScanResult> results) {
         // Merge duplicate entries for the same container into one label listing
         // every matched item and its total count.

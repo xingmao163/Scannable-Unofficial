@@ -2,13 +2,10 @@ package com.starmao.scannable.api;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +28,6 @@ import java.util.function.Consumer;
  *
  * @see ScanResultProviderRegistry
  */
-@OnlyIn(Dist.CLIENT)
 public interface ScanResultProvider {
 
     /**
@@ -81,7 +77,7 @@ public interface ScanResultProvider {
      * @param partialTicks  the frame's partial tick for interpolation
      * @param results       the scan results to render
      */
-    void render(ScanResultRenderContext context, MultiBufferSource bufferSource, PoseStack poseStack,
+    void render(ScanResultRenderContext context, net.minecraft.client.renderer.SubmitNodeCollector nodeCollector, PoseStack poseStack,
                 Camera renderInfo, float partialTicks, List<ScanResult> results);
 
     /**

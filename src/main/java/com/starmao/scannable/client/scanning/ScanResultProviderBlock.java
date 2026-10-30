@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -214,7 +214,7 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
     }
 
     @Override
-    public void render(ScanResultRenderContext ctx, MultiBufferSource buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
+    public void render(ScanResultRenderContext ctx, net.minecraft.client.renderer.SubmitNodeCollector buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
         if (results.isEmpty()) return;
 
         if (ctx == ScanResultRenderContext.WORLD) {
@@ -224,29 +224,28 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
         }
     }
 
-    private void renderBlockWorld(MultiBufferSource buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
-        final PoseStack.Pose poseEntry = pose.last();
-        VertexConsumer fill = buf.getBuffer(ScanResultRenderType.SHIMMER_TYPE);
-
-        for (ScanResult result : results) {
-            BlockScanResult br = (BlockScanResult) result;
-            int c = br.color;
-            float r = ((c >> 16) & 0xFF) / 255.0f;
-            float g = ((c >> 8) & 0xFF) / 255.0f;
-            float b = (c & 0xFF) / 255.0f;
-            if (br.blocks.size() <= MAX_CONTOUR_CELLS) {
-                Set<BlockPos> cells = visibleCells(br);
-                if (cells.isEmpty()) {
-                    continue;
+    private void renderBlockWorld(net.minecraft.client.renderer.SubmitNodeCollector buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
+        buf.submitCustomGeometry(pose, ScanResultRenderType.SHIMMER_TYPE, (poseEntry, fill) -> {
+            for (ScanResult result : results) {
+                BlockScanResult br = (BlockScanResult) result;
+                int c = br.color;
+                float r = ((c >> 16) & 0xFF) / 255.0f;
+                float g = ((c >> 8) & 0xFF) / 255.0f;
+                float b = (c & 0xFF) / 255.0f;
+                if (br.blocks.size() <= MAX_CONTOUR_CELLS) {
+                    Set<BlockPos> cells = visibleCells(br);
+                    if (cells.isEmpty()) {
+                        continue;
+                    }
+                    addClusterFill(fill, poseEntry, cells, br.bounds, r, g, b, 1.0f);
+                } else {
+                    addBox(fill, poseEntry, br.bounds, r, g, b, 1.0f);
                 }
-                addClusterFill(fill, poseEntry, cells, br.bounds, r, g, b, 1.0f);
-            } else {
-                addBox(fill, poseEntry, br.bounds, r, g, b, 1.0f);
             }
-        }
+        });
     }
 
-    private void renderBlockIcons(MultiBufferSource buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
+    private void renderBlockIcons(net.minecraft.client.renderer.SubmitNodeCollector buf, PoseStack pose, Camera cam, float pt, List<ScanResult> results) {
         org.joml.Vector3fc forward = cam.forwardVector();
         Vec3 lookVec = new Vec3(forward.x(), forward.y(), forward.z());
         Vec3 viewerEyes = cam.position();
@@ -255,9 +254,20 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
         Player player = Minecraft.getInstance().player;
         boolean showDistance = player != null && player.isShiftKeyDown();
 
+        final boolean hoverAnyBlock = ClientConfig.HOVER_ANY_BLOCK.get();
+        final Vec3 rayEnd = viewerEyes.add(lookVec.scale(128.0));
+
         // Sort ascending by how closely each result is aimed at, so the best-aimed results sit at
         // the END of the list — the loop below walks backwards from there.
-        results.sort(Comparator.comparing((ScanResult result) -> {
+        results.sort(Comparator.comparing((ScanResult res) -> {
+            BlockScanResult result = (BlockScanResult) res;
+            if (hoverAnyBlock && result.bounds != null && result.bounds.inflate(0.05).clip(viewerEyes, rayEnd).isPresent()) {
+                for (BlockPos p : result.blocks) {
+                    if (new AABB(p).clip(viewerEyes, rayEnd).isPresent()) {
+                        return 2.0; // Prioritize directly hovered block cluster
+                    }
+                }
+            }
             Vec3 pos = result.getPosition();
             return lookVec.dot(pos.subtract(viewerEyes).normalize());
         }));
@@ -271,15 +281,28 @@ public final class ScanResultProviderBlock extends AbstractScanResultProvider im
             if (!hasVisibleCells(br)) {
                 continue;
             }
-            // No look-direction gate here: renderIconLabel draws the icon for every visible
-            // result and gates only the text label on the crosshair, matching the 1.21.1 overlay.
-            // Filtering on the look vector at this level would hide the icons too, making a scan
-            // appear to have found nothing until the player aims at each result.
+
+            boolean isHovered = false;
             Vec3 pos = br.getPosition();
+            if (hoverAnyBlock && br.bounds != null && br.bounds.inflate(0.05).clip(viewerEyes, rayEnd).isPresent()) {
+                double closestDist = Double.MAX_VALUE;
+                for (BlockPos p : br.blocks) {
+                    var hit = new AABB(p).clip(viewerEyes, rayEnd);
+                    if (hit.isPresent()) {
+                        isHovered = true;
+                        double d = viewerEyes.distanceToSqr(hit.get());
+                        if (d < closestDist && ClientConfig.HOVER_TEXT_AT_BLOCK.get()) {
+                            closestDist = d;
+                            pos = Vec3.atCenterOf(p);
+                        }
+                    }
+                }
+            }
+
             Component label = br.label != null ? br.label : br.block.getName();
             float distance = showDistance ? (float) pos.subtract(viewerEyes).length() : 0f;
             renderIconLabel(buf, pose, yaw, pitch, lookVec, viewerEyes, distance, pos,
-                    ModTextures.ICON_INFO, label);
+                    ModTextures.ICON_INFO, label, isHovered);
             shown++;
         }
     }

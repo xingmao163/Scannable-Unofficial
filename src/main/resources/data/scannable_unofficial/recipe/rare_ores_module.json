@@ -3,12 +3,8 @@
   "category": "misc",
   "group": "scanner_module",
   "ingredients": [
-    {
-      "item": "scannable_unofficial:blank_module"
-    },
-    {
-      "item": "minecraft:diamond"
-    }
+    "scannable_unofficial:blank_module",
+    "minecraft:diamond"
   ],
   "result": {
     "count": 1,

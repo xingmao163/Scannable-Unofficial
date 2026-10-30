@@ -31,7 +31,7 @@ import java.util.function.Supplier;
  * }</pre>
  * <p>The provider class ({@code MyScanResultProvider}) MUST implement
  * {@link ScanResultProvider} and be kept in client-side code
- * (annotated with {@link net.neoforged.api.distmarker.OnlyIn @OnlyIn(Dist.CLIENT)}).
+ * (annotated with {@link net.neoforged.api.distmarker.OnlyIn }).
  *
  * <p>Existing providers can be discovered via {@link #getProviderNames()} and {@link #getAll()}.
  * Built-in provider names are {@value #BLOCKS}, {@value #ENTITIES}, {@value #ITEMS}.
